@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're offline — Mom's Dragonfly</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f9fafb;
+      color: #111827;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .icon { font-size: 4rem; margin-bottom: 1rem; }
+    h1 { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.5rem; color: #14532d; }
+    p { font-size: 0.95rem; color: #4b5563; max-width: 320px; line-height: 1.5; margin: 0 0 1.5rem; }
+    button {
+      padding: 0.85rem 2rem;
+      border-radius: 0.75rem;
+      background: #16a34a;
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      min-height: 48px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    button:active { transform: scale(0.98); }
+  </style>
+</head>
+<body>
+  <div class="icon">🦋</div>
+  <h1>You are currently offline</h1>
+  <p>Your saved maps, expenses, reminders, and tickets are cached safely on this device.</p>
+  <button onclick="window.location.reload()">Refresh Connection</button>
+</body>
+</html>
