@@ -1,9 +1,39 @@
 "use client";
 import React from "react";
+import { List } from "react-window";
 import type { NormalizedPOI } from "@/types";
 import { POICard } from "./POICard";
 
 interface POIListProps {
+  pois: NormalizedPOI[];
+  onVerify: (placeId: string) => void;
+}
+
+const ITEM_HEIGHT = 120;
+
+interface POIRowProps {
+  index: number;
+  style: React.CSSProperties;
+  pois: NormalizedPOI[];
+  onVerify: (placeId: string) => void;
+  ariaAttributes: {
+    "aria-posinset": number;
+    "aria-setsize": number;
+    role: "listitem";
+  };
+}
+
+function POIRow({ index, style, pois, onVerify }: POIRowProps): React.ReactElement {
+  const poi = pois[index];
+
+  return (
+    <div style={style}>
+      <POICard poi={poi} onVerify={() => onVerify(poi.placeId)} />
+    </div>
+  );
+}
+
+interface ListRowProps {
   pois: NormalizedPOI[];
   onVerify: (placeId: string) => void;
 }
@@ -25,15 +55,27 @@ export function POIList({ pois, onVerify }: POIListProps) {
     );
   }
 
+  const rowProps: ListRowProps = { pois, onVerify };
+
   return (
-    <div className="flex flex-col gap-2.5">
-      {pois.map((poi) => (
-        <POICard
-          key={poi.placeId}
-          poi={poi}
-          onVerify={() => onVerify(poi.placeId)}
-        />
-      ))}
+    <div className="h-[400px] w-full">
+      {/* eslint-disable @typescript-eslint/no-explicit-any */}
+      {React.createElement(
+        List as any,
+        {
+          height: 400,
+          itemCount: pois.length,
+          itemSize: ITEM_HEIGHT,
+          rowProps,
+          width: "100%",
+          overscanCount: 3,
+          rowComponent: POIRow,
+          rowHeight: ITEM_HEIGHT,
+          rowCount: pois.length,
+        } as any,
+        null
+      )}
+      {/* eslint-enable @typescript-eslint/no-explicit-any */}
     </div>
   );
 }
