@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --touch-target: 44px;
+  --font-base: 1rem;
+}
+
+html.elderly {
+  --touch-target: 56px;
+  --font-base: 1.2rem;
+  font-size: var(--font-base);
+}
