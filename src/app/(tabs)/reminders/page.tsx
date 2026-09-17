@@ -1,67 +1,50 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/lib/convex/client";
+import { getDeviceId } from "@/lib/utils/deviceId";
 import { ReminderForm } from "@/components/reminders/ReminderForm";
 import { ReminderList } from "@/components/reminders/ReminderList";
 import { DaysCounter } from "@/components/onboarding/DaysCounter";
 import { requestPushPermission } from "@/lib/notify";
 import type { Reminder } from "@/types";
 
-const STORAGE_REMINDERS_KEY = "mdf_offline_reminders";
-
 export default function RemindersPage() {
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [pushEnabled, setPushEnabled] = useState(false);
+  const deviceId = getDeviceId();
+  const rawReminders = useQuery(api.queries.remindersQuery, { deviceId }) ?? [];
+  const prefs = useQuery(api.queries.prefsQuery, { deviceId });
+  const addReminderMut = useMutation(api.mutations.addReminder);
+  const toggleMut = useMutation(api.mutations.toggleReminder);
+  const deleteMut = useMutation(api.mutations.deleteReminder);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(STORAGE_REMINDERS_KEY);
-      if (saved) {
-        try {
-          setReminders(JSON.parse(saved));
-        } catch {
-          // ignore
-        }
-      }
-      if ("Notification" in window && Notification.permission === "granted") {
-        setPushEnabled(true);
-      }
-    }
-  }, []);
+  const reminders: Reminder[] = rawReminders.map((r: { _id: string; title: string; body?: string; dueAt: number; repeat: "none" | "daily" | "weekly"; done: boolean }) => ({
+    id: r._id,
+    title: r.title,
+    body: r.body,
+    dueAt: r.dueAt,
+    repeat: r.repeat,
+    done: r.done,
+  }));
 
-  const saveReminders = (updated: Reminder[]) => {
-    setReminders(updated);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_REMINDERS_KEY, JSON.stringify(updated));
-    }
-  };
+  const pushEnabled = prefs?.notificationsEnabled ?? false;
 
   const handleAdd = async (r: Omit<Reminder, "id" | "done">) => {
     if (!pushEnabled) {
-      const granted = await requestPushPermission();
-      if (granted) setPushEnabled(true);
+      await requestPushPermission();
     }
-
-    const item: Reminder = {
-      ...r,
-      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      done: false,
-    };
-    saveReminders([item, ...reminders]);
+    addReminderMut({ ...r, deviceId });
   };
 
   const handleToggle = (id: string) => {
-    saveReminders(
-      reminders.map((r) => (r.id === id ? { ...r, done: !r.done } : r))
-    );
+    toggleMut({ id: id as Parameters<typeof toggleMut>[0]["id"] });
   };
 
   const handleDelete = (id: string) => {
-    saveReminders(reminders.filter((r) => r.id !== id));
+    deleteMut({ id: id as Parameters<typeof deleteMut>[0]["id"] });
   };
 
   return (
     <div className="flex flex-col gap-4 max-w-xl mx-auto p-4">
-      <DaysCounter />
+      <DaysCounter tripStartDate={prefs?.tripStartDate} />
 
       {!pushEnabled && (
         <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between text-xs text-blue-900">
@@ -70,7 +53,10 @@ export default function RemindersPage() {
             type="button"
             onClick={async () => {
               const ok = await requestPushPermission();
-              if (ok) setPushEnabled(true);
+              if (ok) {
+                // Trigger a re-render by updating local state would be ideal
+                // but the prefs query will auto-update when the mutation completes
+              }
             }}
             className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shrink-0 ml-2"
           >

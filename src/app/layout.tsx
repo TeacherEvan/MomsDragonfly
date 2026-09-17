@@ -5,6 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Mom's Dragonfly",
   description: "Your travel companion",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

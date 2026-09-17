@@ -87,6 +87,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.1.1
         version: 6.1.1(vite@8.3.0(@types/node@20.19.43)(esbuild@0.27.0)(jiti@1.21.7)(terser@5.51.2))
+      babel-loader:
+        specifier: ^10.1.1
+        version: 10.1.1(@babel/core@7.29.7(supports-color@7.2.0))(webpack@5.111.0(esbuild@0.27.0)(lightningcss@1.33.0)(postcss@8.5.28)(sharp@0.35.4(@types/node@20.19.43)))
       eslint:
         specifier: ^8
         version: 8.57.1(supports-color@7.2.0)
@@ -1933,6 +1936,19 @@ packages:
       react-native-b4a: '*'
     peerDependenciesMeta:
       react-native-b4a:
+        optional: true
+
+  babel-loader@10.1.1:
+    resolution: {integrity: sha512-JwKSzk2kjIe7mgPK+/lyZ2QAaJcpahNAdM+hgR2HI8D0OJVkdj8Rl6J3kaLYki9pwF7P2iWnD8qVv80Lq1ABtg==}
+    engines: {node: ^18.20.0 || ^20.10.0 || >=22.0.0}
+    peerDependencies:
+      '@babel/core': ^7.12.0 || ^8.0.0-beta.1
+      '@rspack/core': ^1.0.0 || ^2.0.0-0
+      webpack: '>=5.61.0'
+    peerDependenciesMeta:
+      '@rspack/core':
+        optional: true
+      webpack:
         optional: true
 
   babel-loader@8.4.1:
@@ -6908,6 +6924,13 @@ snapshots:
   axobject-query@4.1.0: {}
 
   b4a@1.9.0: {}
+
+  babel-loader@10.1.1(@babel/core@7.29.7(supports-color@7.2.0))(webpack@5.111.0(esbuild@0.27.0)(lightningcss@1.33.0)(postcss@8.5.28)(sharp@0.35.4(@types/node@20.19.43))):
+    dependencies:
+      '@babel/core': 7.29.7(supports-color@7.2.0)
+      find-up: 5.0.0
+    optionalDependencies:
+      webpack: 5.111.0(esbuild@0.27.0)(lightningcss@1.33.0)(postcss@8.5.28)(sharp@0.35.4(@types/node@20.19.43))
 
   babel-loader@8.4.1(@babel/core@7.29.7(supports-color@7.2.0))(webpack@5.111.0(esbuild@0.27.0)(lightningcss@1.33.0)(postcss@8.5.28)(sharp@0.35.4(@types/node@20.19.43))):
     dependencies:
