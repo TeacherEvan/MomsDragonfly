@@ -7,5 +7,5 @@ test("tickets page loads", async ({ page }) => {
 
 test("ticket gallery shows empty state", async ({ page }) => {
   await page.goto("/tickets");
-  await expect(page.getByText("No tickets yet")).toBeVisible();
+  await expect(page.getByText("No tickets saved")).toBeVisible();
 });
