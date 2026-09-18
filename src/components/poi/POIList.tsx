@@ -37,7 +37,7 @@ export function POIList({ pois, onVerify, onShowOnMap, category }: POIListProps)
 
   if (pois.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center text-gray-400 bg-white rounded-xl border border-dashed border-gray-200" role="status" aria-live="polite">
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center text-gray-400 bg-white rounded-xl border border-dashed border-gray-200" role="status" aria-live="polite" aria-label="No places found">
         <span className="text-4xl mb-2" role="img" aria-label="location pin">
           📍
         </span>

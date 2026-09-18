@@ -77,10 +77,11 @@ export function ReminderForm({ onAdd }: ReminderFormProps) {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">
+          <label className="block text-xs font-semibold text-gray-600 mb-1" htmlFor="repeat-select">
             Repeat
           </label>
           <select
+            id="repeat-select"
             value={repeat}
             onChange={(e) => setRepeat(e.target.value as ReminderRepeat)}
             className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 min-h-[var(--touch-target)] bg-white"

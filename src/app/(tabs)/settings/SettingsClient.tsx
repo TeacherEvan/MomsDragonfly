@@ -81,8 +81,11 @@ export default function SettingsClient() {
 
         {/* Default Search Radius */}
         <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Default Search Radius</h3>
+          <label htmlFor="default-radius" className="block font-semibold text-gray-900 mb-3">
+            Default Search Radius
+          </label>
           <select
+            id="default-radius"
             value={defaultRadius}
             onChange={(e) => setDefaultRadius(Number(e.target.value))}
             className="w-full px-3 py-2 border rounded-lg text-sm min-h-[var(--touch-target)]"
@@ -97,8 +100,11 @@ export default function SettingsClient() {
 
         {/* Currency */}
         <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Currency</h3>
+          <label htmlFor="currency" className="block font-semibold text-gray-900 mb-3">
+            Currency
+          </label>
           <select
+            id="currency"
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
             className="w-full px-3 py-2 border rounded-lg text-sm min-h-[var(--touch-target)]"

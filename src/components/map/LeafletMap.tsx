@@ -107,7 +107,7 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
 
     map.getContainer().addEventListener("keydown", handleKeyDown);
     map.getContainer().setAttribute("tabIndex", "0");
-    map.getContainer().setAttribute("role", "application");
+    map.getContainer().setAttribute("role", "region");
     map.getContainer().setAttribute("aria-label", "Interactive map of nearby places");
 
     return () => {
@@ -121,9 +121,14 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
 
     markersRef.current = {};
     pois.forEach((poi) => {
-      const marker = L.marker([poi.lat, poi.lng], {
-        alt: poi.name,
-        title: poi.name,
+      const marker = L.marker([poi.lat, poi.lng]);
+      marker.on('add', () => {
+        const iconEl = marker.getElement();
+        if (iconEl) {
+          iconEl.setAttribute('role', 'button');
+          iconEl.setAttribute('tabIndex', '0');
+          iconEl.setAttribute('aria-label', poi.name);
+        }
       });
       markersRef.current[poi.placeId] = marker;
     });
@@ -150,8 +155,6 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
         <Marker
           key={poi.placeId}
           position={[poi.lat, poi.lng]}
-          alt={poi.name}
-          title={poi.name}
         >
           <Popup>
             <POIMarker poi={poi} onVerify={() => onVerify(poi.placeId)} />

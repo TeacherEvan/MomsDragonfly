@@ -13,6 +13,25 @@ html.elderly {
   font-size: var(--font-base);
 }
 
+/* Focus styles for keyboard accessibility */
+.leaflet-container:focus-visible {
+  outline: 3px solid #22c55e;
+  outline-offset: 2px;
+}
+
+/* Leaflet marker focus styles */
+.leaflet-marker-icon:focus-visible {
+  outline: 3px solid #22c55e;
+  outline-offset: 2px;
+}
+
+/* Accessible zoom control focus */
+.leaflet-control-zoom-in:focus-visible,
+.leaflet-control-zoom-out:focus-visible {
+  outline: 3px solid #22c55e;
+  outline-offset: 2px;
+}
+
 @keyframes slide-up {
   from {
     opacity: 0;
