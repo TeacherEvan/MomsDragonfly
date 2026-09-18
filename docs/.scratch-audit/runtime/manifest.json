@@ -1,0 +1,18 @@
+{
+  "runId": "mdf-2026-09-18-001",
+  "workflow": "surgical-implementation-v2",
+  "startedAt": "2026-09-18T18:30:00Z",
+  "version": "2.0.0",
+  "gates": {
+    "consistency": { "required": true, "passed": true, "attempts": 1, "maxAttempts": 5 },
+    "verification": { "required": true, "passed": false, "attempts": 0, "maxAttempts": 3, "note": "Unit/build/type PASS; E2E BLOCKED by Convex backend; Lighthouse BLOCKED" },
+    "security": { "required": true, "passed": true, "note": "PASS WITH WARNINGS — no leaks, real secrets not configured" }
+  },
+  "statesVisited": [
+    "INIT", "DISCOVER", "REQUIREMENTS", "RESEARCH", "CODEBASE_STATE", "ARCHITECT",
+    "PLAN", "CONSISTENCY_GATE", "IMPLEMENT", "SECURITY_AUDIT", "FINAL_AUDIT", "DEBRIEF"
+  ],
+  "currentState": "DEBRIEF",
+  "finalStatus": "READY WITH WARNINGS",
+  "notes": "Promotion to READY blocked by OBJ-008 (Convex env setup) → OBJ-012 (full E2E + Lighthouse verification). See HANDOFF.md for promotion sequence."
+}
