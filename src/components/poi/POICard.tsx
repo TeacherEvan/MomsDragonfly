@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils/cn";
 interface POICardProps {
   poi: NormalizedPOI;
   onVerify: () => void;
+  onShowOnMap?: (poi: NormalizedPOI) => void;
 }
 
-export function POICard({ poi, onVerify }: POICardProps) {
+export function POICard({ poi, onVerify, onShowOnMap }: POICardProps) {
   return (
     <div className="flex items-center justify-between gap-3 p-3.5 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-gray-200 transition-colors">
       <div className="flex-1 min-w-0">
@@ -48,18 +49,34 @@ export function POICard({ poi, onVerify }: POICardProps) {
           )}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onVerify}
-        className={cn(
-          "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
-          "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",
-          "border-brand-500 text-brand-600 hover:bg-brand-50 active:scale-95"
+      <div className="flex items-center gap-1.5 shrink-0">
+        {onShowOnMap && (
+          <button
+            type="button"
+            onClick={() => onShowOnMap(poi)}
+            className={cn(
+              "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
+              "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",
+              "border-gray-300 text-gray-600 hover:bg-gray-50 active:scale-95"
+            )}
+            aria-label={`Show ${poi.name} on map`}
+          >
+            📍
+          </button>
         )}
-        aria-label={`Verify ${poi.name}`}
-      >
-        ✓ {poi.verifiedCount}
-      </button>
+        <button
+          type="button"
+          onClick={onVerify}
+          className={cn(
+            "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
+            "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",
+            "border-brand-500 text-brand-600 hover:bg-brand-50 active:scale-95"
+          )}
+          aria-label={`Verify ${poi.name}`}
+        >
+          ✓ {poi.verifiedCount}
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
-import React from "react";
+import React, { forwardRef } from "react";
 import dynamic from "next/dynamic";
 import type { NormalizedPOI } from "@/types";
+import type { LeafletMapRef } from "./LeafletMap";
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
   ssr: false,
@@ -18,10 +19,19 @@ interface MapViewProps {
   onVerify: (placeId: string) => void;
 }
 
-export function MapView({ pois, center, onVerify }: MapViewProps) {
-  return (
-    <div className="w-full h-64 md:h-80 rounded-xl overflow-hidden shadow-inner border border-gray-200">
-      <LeafletMap pois={pois} center={center} onVerify={onVerify} />
-    </div>
-  );
-}
+export const MapView = forwardRef<LeafletMapRef, MapViewProps>(
+  ({ pois, center, onVerify }, ref) => {
+    return (
+      <div className="w-full h-64 md:h-80 rounded-xl overflow-hidden shadow-inner border border-gray-200">
+        <LeafletMap
+          ref={ref}
+          pois={pois}
+          center={center}
+          onVerify={onVerify}
+        />
+      </div>
+    );
+  }
+);
+
+MapView.displayName = "MapView";

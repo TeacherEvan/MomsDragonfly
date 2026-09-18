@@ -1,11 +1,12 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { MapView } from "@/components/map/MapView";
 import { POIList } from "@/components/poi/POIList";
 import { POIFilter } from "@/components/poi/POIFilter";
 import { IntroVideo } from "@/components/onboarding/IntroVideo";
 import type { NormalizedPOI } from "@/types";
+import type { LeafletMapRef } from "@/components/map/LeafletMap";
 import { haversine } from "@/lib/utils/geo";
 
 const MOCK_POIS: NormalizedPOI[] = [
@@ -64,9 +65,9 @@ export default function ExplorePage() {
   const [category, setCategory] = useState("all");
   const [showIntro, setShowIntro] = useState(true);
   const [pois, setPois] = useState<NormalizedPOI[]>(MOCK_POIS);
+  const mapRef = useRef<LeafletMapRef>(null);
 
   useEffect(() => {
-    // Check if intro was dismissed previously
     if (typeof window !== "undefined") {
       const dismissed = localStorage.getItem("mdf_intro_dismissed");
       if (dismissed) setShowIntro(false);
@@ -90,7 +91,10 @@ export default function ExplorePage() {
     );
   };
 
-  // Calculate dynamic distance if user coordinates available
+  const handleShowOnMap = (poi: NormalizedPOI) => {
+    mapRef.current?.panToPOI(poi);
+  };
+
   const computedPois = pois
     .map((p) => {
       if (lat && lng) {
@@ -109,6 +113,7 @@ export default function ExplorePage() {
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-xl mx-auto">
+      <h1 className="text-xl font-bold text-gray-900">Explore</h1>
       {showIntro && <IntroVideo onDismiss={dismissIntro} />}
 
       {geoError && (
@@ -118,7 +123,12 @@ export default function ExplorePage() {
         </div>
       )}
 
-      <MapView pois={computedPois} center={mapCenter} onVerify={handleVerify} />
+      <MapView
+        ref={mapRef}
+        pois={computedPois}
+        center={mapCenter}
+        onVerify={handleVerify}
+      />
 
       <div>
         <div className="flex items-center justify-between mb-1">
@@ -132,7 +142,12 @@ export default function ExplorePage() {
         <POIFilter category={category} onChange={setCategory} />
       </div>
 
-      <POIList pois={computedPois} onVerify={handleVerify} />
+      <POIList
+        pois={computedPois}
+        onVerify={handleVerify}
+        onShowOnMap={handleShowOnMap}
+        category={category}
+      />
     </div>
   );
 }
