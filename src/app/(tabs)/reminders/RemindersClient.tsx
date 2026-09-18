@@ -44,6 +44,7 @@ export default function RemindersClient() {
 
   return (
     <div className="flex flex-col gap-4 max-w-xl mx-auto p-4">
+      <h1 className="text-xl font-bold text-gray-900">Reminders</h1>
       <DaysCounter tripStartDate={prefs?.tripStartDate} />
 
       {!pushEnabled && (
