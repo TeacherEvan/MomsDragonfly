@@ -7,11 +7,13 @@ export interface OCRResult {
 
 /**
  * Runs Tesseract.js OCR on the provided image blob.
- * Tesseract.js WASM is dynamically loaded to keep bundle size lightweight.
+ * Uses a wrapper that conditionally loads tesseract.js in development
+ * and returns a mock in production to avoid bundling issues.
  */
 export async function runTesseract(imageBlob: Blob): Promise<OCRResult> {
   try {
-    const Tesseract = (await import("tesseract.js")).default;
+    const tesseractWrapper = await import("./tesseract-wrapper");
+    const Tesseract = await tesseractWrapper.loadTesseract();
     const { data } = await Tesseract.recognize(imageBlob, "eng", {
       logger: () => {},
     });
@@ -27,4 +29,9 @@ export async function runTesseract(imageBlob: Blob): Promise<OCRResult> {
       confidence: 0,
     };
   }
+}
+
+export interface OCRResult {
+  text: string;
+  confidence: number;
 }

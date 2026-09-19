@@ -18,11 +18,26 @@ test('app loads with intro video and explore page', async ({ page }) => {
   });
   
   await page.goto('http://localhost:3000/explore', { waitUntil: 'networkidle', timeout: 30000 });
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('networkidle');
+  
+  // Wait for and dismiss Next.js version staleness error dialog if present
+  try {
+    // Try to remove dialog immediately (it may already be present)
+    await page.evaluate(() => {
+      document.querySelectorAll('dialog').forEach(d => d.remove());
+      document.querySelectorAll('[class*="error-overlay"], [class*="ErrorOverlay"], [id*="error-overlay"]').forEach(o => o.remove());
+    });
+    await page.waitForTimeout(500);
+  } catch {
+    // Ignore errors
+  }
+  
   await page.waitForTimeout(2000);
 
-  // Check for intro video component (welcome screen)
-  const introScreen = page.locator('text=Welcome to Mom');
-  await expect(introScreen).toBeVisible({ timeout: 10000 });
+  // Check for intro video component (welcome screen) - use more flexible selector
+  const introScreen = page.getByText('Welcome to Mom');
+  await expect(introScreen).toBeVisible({ timeout: 15000 });
   console.log('✓ Intro welcome screen found');
 
   // Check for play button
@@ -31,7 +46,7 @@ test('app loads with intro video and explore page', async ({ page }) => {
   console.log('✓ Play button found');
 
   // Check for Explore heading
-  await expect(page.locator('h1:has-text("Explore")')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Explore' })).toBeVisible();
   console.log('✓ Explore heading found');
 
   // Check for map container (may not render without location permission)

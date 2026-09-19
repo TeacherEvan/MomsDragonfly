@@ -13,7 +13,6 @@ import { haversine } from "@/lib/utils/geo";
 import { getDeviceId } from "@/lib/utils/deviceId";
 
 const DEFAULT_CENTER: [number, number] = [13.7563, 100.5018];
-const CATEGORIES = ["restaurant", "toilets", "pharmacy", "attraction", "entertainment", "park"];
 
 export default function ExplorePage() {
   const { lat, lng, error: geoError } = useGeolocation();
@@ -74,14 +73,13 @@ export default function ExplorePage() {
     mapRef.current?.panToPOI(poi);
   }, []);
 
-  const rawPois = (poisQuery ?? []) as Array<{ _id: string; placeId: string; source: "google" | "osm" | "brave"; name: string; category: string; lat: number; lng: number; address?: string; rating?: number; phone?: string; openNow?: boolean; verifiedCount: number; fetchedAt: number; deviceIds: string[] }>;
-
   interface ComputedPOI extends NormalizedPOI {
     id: string;
     distanceMetres?: number;
   }
 
   const computedPois = useMemo(() => {
+    const rawPois = (poisQuery ?? []) as Array<{ _id: string; placeId: string; source: "google" | "osm" | "brave"; name: string; category: string; lat: number; lng: number; address?: string; rating?: number; phone?: string; openNow?: boolean; verifiedCount: number; fetchedAt: number; deviceIds: string[] }>;
     const result = rawPois
       .map((p): ComputedPOI => {
         if (lat && lng) {
@@ -96,7 +94,7 @@ export default function ExplorePage() {
       .filter((p) => (category === "all" ? true : p.category === category))
       .sort((a, b) => (a.distanceMetres ?? 0) - (b.distanceMetres ?? 0));
     return result;
-  }, [rawPois, lat, lng, category]);
+  }, [poisQuery, lat, lng, category]);
 
   const mapCenter: [number, number] = lat && lng ? [lat, lng] : DEFAULT_CENTER;
 

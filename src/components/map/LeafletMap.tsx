@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useImperativeHandle, forwardRef, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
 import type { NormalizedPOI } from "@/types";
 import { POIMarker } from "./POIMarker";
 import L from "leaflet";

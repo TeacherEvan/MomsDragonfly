@@ -9,6 +9,7 @@ import { ExpenseList } from "./ExpenseList";
 import type { Expense } from "@/types";
 import { sumExpenses, remainingBudget } from "@/lib/utils/budget";
 import { formatAmount } from "@/lib/utils/currency";
+import type { Id } from "convex/_generated/dataModel";
 
 export function BudgetDashboard() {
   const deviceId = getDeviceId();
@@ -22,20 +23,22 @@ export function BudgetDashboard() {
   const [newBudgetValue, setNewBudgetValue] = useState("");
   const [currency, setCurrency] = useState("USD");
 
-  const rawExpenses = expensesQuery ?? [];
   const budget = budgetQuery;
   const totalBudget = budget?.totalBudget ?? 500;
 
   // Map Convex documents to frontend Expense type
-  const expenses = useMemo(() => rawExpenses.map((e) => ({
-    id: e._id,
-    amount: e.amount,
-    currency: e.currency,
-    category: e.category,
-    note: e.note,
-    date: e.date,
-    ticketId: e.ticketId,
-  })), [rawExpenses]);
+  const expenses = useMemo(() => {
+    const rawExpenses = expensesQuery ?? [];
+    return rawExpenses.map((e) => ({
+      id: e._id,
+      amount: e.amount,
+      currency: e.currency,
+      category: e.category,
+      note: e.note,
+      date: e.date,
+      ticketId: e.ticketId,
+    }));
+  }, [expensesQuery]);
 
   useEffect(() => {
     if (budget) {
@@ -45,11 +48,11 @@ export function BudgetDashboard() {
   }, [budget]);
 
   const handleAddExpense = (newExp: Omit<Expense, "id">) => {
-    addExpenseMut({ ...newExp, deviceId, ticketId: newExp.ticketId as any });
+    addExpenseMut({ ...newExp, deviceId, ticketId: newExp.ticketId as Id<"tickets"> | undefined });
   };
 
   const handleDeleteExpense = (id: string) => {
-    deleteExpenseMut({ id: id as Parameters<typeof deleteExpenseMut>[0]["id"], deviceId });
+    deleteExpenseMut({ id: id as Id<"expenses">, deviceId });
   };
 
   const handleSaveBudget = (e: React.FormEvent) => {

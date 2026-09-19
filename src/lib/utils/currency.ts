@@ -52,7 +52,8 @@ export function formatAmount(amount: number, currency: string, locale?: string):
       currency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(amount);
+      currencyDisplay: "code",
+    }).format(amount).replace(/\u00A0/g, " ");
   } catch {
     return `${currency} ${amount.toFixed(2)}`;
   }

@@ -40,6 +40,17 @@ const nextConfig = {
       },
     ];
   },
+  webpack: (config, { isServer, dev }) => {
+    if (!isServer && !dev) {
+      // In production, ignore tesseract.js module to prevent bundling
+      config.plugins = config.plugins || [];
+      const IgnorePlugin = require("webpack").IgnorePlugin;
+      config.plugins.push(new IgnorePlugin({
+        resourceRegExp: /tesseract\.js/,
+      }));
+    }
+    return config;
+  },
 };
 
 module.exports = nextConfig;

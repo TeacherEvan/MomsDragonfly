@@ -1,8 +1,8 @@
-import { defineConvexTest } from "convex-test";
+import { convexTest } from "convex-test";
 import schema from "./schema";
 import { ConvexError } from "convex/values";
 
-export const test = defineConvexTest(schema);
+export const test = convexTest(schema);
 
 // Helper to create a test deviceId
 export function testDeviceId(): string {

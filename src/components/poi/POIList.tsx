@@ -1,6 +1,18 @@
 "use client";
 import React, { useId, useMemo } from "react";
-import { List, ListProps } from "react-window";
+import { List as ReactWindowList } from "react-window";
+
+const List = ReactWindowList as React.ComponentType<{
+  height: number;
+  rowCount: number;
+  rowHeight: number;
+  width: number | string;
+  overscanCount?: number;
+  rowProps: ListRowProps;
+  rowComponent: React.ComponentType<POIRowProps>;
+  style?: React.CSSProperties;
+  className?: string;
+}>;
 import type { NormalizedPOI } from "@/types";
 import { POICard } from "./POICard";
 
@@ -13,38 +25,35 @@ interface POIListProps {
 
 const ITEM_HEIGHT = 140;
 
-interface POIRowData {
-  pois: NormalizedPOI[];
-  onVerify: (placeId: string) => void;
-  onShowOnMap?: (poi: NormalizedPOI) => void;
-}
-
 interface POIRowProps {
   index: number;
   style: React.CSSProperties;
-  ariaAttributes: {
-    "aria-posinset": number;
-    "aria-setsize": number;
-    role: "listitem";
-  };
   pois: NormalizedPOI[];
   onVerify: (placeId: string) => void;
   onShowOnMap?: (poi: NormalizedPOI) => void;
 }
 
-function POIRow({ index, style, ariaAttributes, pois, onVerify, onShowOnMap }: POIRowProps): React.ReactElement {
+function POIRow({ index, style, pois, onVerify, onShowOnMap }: POIRowProps): React.ReactElement {
   const poi = pois[index];
 
   return (
-    <div style={style} {...ariaAttributes}>
+    <div style={style} role="listitem" aria-posinset={index + 1} aria-setsize={pois.length}>
       <POICard poi={poi} onVerify={() => onVerify(poi.placeId)} onShowOnMap={onShowOnMap} />
     </div>
   );
 }
 
+interface ListRowProps {
+  pois: NormalizedPOI[];
+  onVerify: (placeId: string) => void;
+  onShowOnMap?: (poi: NormalizedPOI) => void;
+}
+
 export function POIList({ pois, onVerify, onShowOnMap, category }: POIListProps) {
   const listId = useId();
   const liveRegionId = `${listId}-live`;
+
+  const rowData = useMemo<ListRowProps>(() => ({ pois, onVerify, onShowOnMap }), [pois, onVerify, onShowOnMap]);
 
   if (pois.length === 0) {
     return (
@@ -62,28 +71,18 @@ export function POIList({ pois, onVerify, onShowOnMap, category }: POIListProps)
     );
   }
 
-  const rowData = useMemo(() => ({ pois, onVerify, onShowOnMap }), [pois, onVerify, onShowOnMap]);
-
-  type ListRowProps = {
-    pois: NormalizedPOI[];
-    onVerify: (placeId: string) => void;
-    onShowOnMap?: (poi: NormalizedPOI) => void;
-  };
-
-  const ListComponent = List as React.FC<ListProps<ListRowProps>>;
-
   return (
     <div className="w-full">
       <div id={liveRegionId} role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {pois.length} places found{category && category !== "all" ? ` in ${category}` : ""}
       </div>
-      <ListComponent
+      <List
         height={400}
-        itemCount={pois.length}
-        itemSize={ITEM_HEIGHT}
+        rowCount={pois.length}
+        rowHeight={ITEM_HEIGHT}
         width="100%"
         overscanCount={3}
-        itemData={rowData}
+        rowProps={rowData}
         rowComponent={POIRow}
       />
     </div>

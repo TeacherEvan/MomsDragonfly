@@ -21,11 +21,11 @@ test("savePrefs updates existing prefs", async (t) => {
   const deviceId = testDeviceId();
   await insertPrefs(t, deviceId, { currency: "EUR", defaultRadius: 500 });
 
-  await t.mutation((ctx) => {
-    return ctx.db.patch(
-      (await ctx.db.query("userPrefs").withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId)).unique())!._id,
-      { currency: "GBP", elderlyMode: true }
-    );
+  await t.mutation(async (ctx) => {
+    const prefs = await ctx.db.query("userPrefs").withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId)).unique();
+    if (prefs) {
+      return ctx.db.patch(prefs._id, { currency: "GBP", elderlyMode: true });
+    }
   });
 
   const prefs = await t.query((ctx) =>

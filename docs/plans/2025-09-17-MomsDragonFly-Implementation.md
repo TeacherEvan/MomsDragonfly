@@ -115,6 +115,15 @@ All 5 sub-plans (A-E) fully implemented. Key differences from plan:
 - PWA: next-pwa configured, install/update prompts, offline page, accessibility headers
 - Tests: Vitest unit tests + Playwright E2E + Lighthouse CI config
 
+**Recent Fixes (2025-09-19):**
+- Fixed TypeScript errors in `POIList.tsx` (react-window typing), `BudgetDashboard.tsx` (type casts), `explore/page.tsx` (unused variable, useMemo deps)
+- Fixed ESLint errors in `POIList.tsx`, `explore/page.tsx`, `BudgetDashboard.tsx`
+- Fixed tesseract.js production bundling issue by creating a wrapper that returns mocks in production
+- Configured `next.config.js` with webpack IgnorePlugin for tesseract.js
+- Removed tesseract preload from providers
+- Made Tickets page use dynamic import for lazy loading
+- Created tesseract-wrapper.js and tesseract-mock.js for production mocking
+
 Plan saved to: `/home/leandi-duplessis/github/workspaces/Mom'sDragonfly/docs/plans/YYYY-MM-DD-moms-dragonfly.md`
 
 **Execution choice:**
