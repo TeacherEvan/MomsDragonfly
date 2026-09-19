@@ -58,25 +58,23 @@ export function POIList({ pois, onVerify, onShowOnMap, category }: POIListProps)
       <div id={liveRegionId} role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {pois.length} places found{category && category !== "all" ? ` in ${category}` : ""}
       </div>
-      <ul role="list" aria-labelledby={liveRegionId} className="h-[400px] w-full">
-        {/* eslint-disable @typescript-eslint/no-explicit-any */}
-        {React.createElement(
-          List as any,
-          {
-            height: 400,
-            itemCount: pois.length,
-            itemSize: ITEM_HEIGHT,
-            rowProps,
-            width: "100%",
-            overscanCount: 3,
-            rowComponent: POIRow,
-            rowHeight: ITEM_HEIGHT,
-            rowCount: pois.length,
-          } as any,
-          null
-        )}
-        {/* eslint-enable @typescript-eslint/no-explicit-any */}
-      </ul>
+      {/* eslint-disable @typescript-eslint/no-explicit-any */}
+      {React.createElement(
+        List as any,
+        {
+          height: 400,
+          itemCount: pois.length,
+          itemSize: ITEM_HEIGHT,
+          rowProps,
+          width: "100%",
+          overscanCount: 3,
+          rowComponent: POIRow,
+          rowHeight: ITEM_HEIGHT,
+          rowCount: pois.length,
+        } as any,
+        null
+      )}
+      {/* eslint-enable @typescript-eslint/no-explicit-any */}
     </div>
   );
 }
