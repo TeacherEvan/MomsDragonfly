@@ -78,9 +78,9 @@ export function BudgetDashboard() {
       {/* Header Summary with Animated Ring */}
       <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center">
         <div className="w-full flex justify-between items-center mb-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">
             Trip Budget Tracker
-          </span>
+          </h2>
           <button
             type="button"
             onClick={() => setIsEditingBudget(!isEditingBudget)}

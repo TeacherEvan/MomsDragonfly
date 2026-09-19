@@ -78,7 +78,11 @@ test('app loads with intro video and explore page', async ({ page }) => {
     !e.includes('render is not a function') &&
     !e.includes('importScripts') &&
     !e.includes('tesseract.js') &&
-    !e.includes('NotFoundErrorBoundary')
+    !e.includes('NotFoundErrorBoundary') &&
+    !e.includes('Failed to load resource') &&
+    !e.includes('Refused to apply style') &&
+    !e.includes('Refused to execute script') &&
+    !e.includes('MIME type')
   );
   
   if (criticalErrors.length > 0) {

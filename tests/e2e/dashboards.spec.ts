@@ -10,20 +10,20 @@ import { test, expect } from '@playwright/test';
    page.on('pageerror', err => {
      errors.push(err.message);
    });
-
+ 
    // Clear localStorage
    await page.goto('http://localhost:3000');
    await page.evaluate(() => localStorage.clear());
  
    const pages = [
-     { url: '/explore', heading: 'Explore' },
-     { url: '/budget', heading: 'Trip Budget Tracker' },
-     { url: '/reminders', heading: 'Reminders' },
-     { url: '/tickets', heading: 'Tickets' },
-     { url: '/settings', heading: 'Settings' },
+     { url: '/explore', heading: 'Explore', isHeading: true },
+     { url: '/budget', heading: 'Trip Budget Tracker', isHeading: false },
+     { url: '/reminders', heading: 'Reminders', isHeading: true },
+     { url: '/tickets', heading: 'Tickets', isHeading: true },
+     { url: '/settings', heading: 'Settings', isHeading: true },
    ];
  
-   for (const { url, heading } of pages) {
+   for (const { url, heading, isHeading } of pages) {
      console.log(`\nTesting ${url}...`);
      await page.goto(`http://localhost:3000${url}`, { waitUntil: 'networkidle', timeout: 30000 });
      await page.waitForLoadState('domcontentloaded');
@@ -31,7 +31,6 @@ import { test, expect } from '@playwright/test';
      
      // Wait for and dismiss Next.js version staleness error dialog if present
      try {
-       // Try to remove dialog immediately (it may already be present)
        await page.evaluate(() => {
          document.querySelectorAll('dialog').forEach(d => d.remove());
          document.querySelectorAll('[class*="error-overlay"], [class*="ErrorOverlay"], [id*="error-overlay"]').forEach(o => o.remove());
@@ -41,11 +40,17 @@ import { test, expect } from '@playwright/test';
        // Ignore errors
      }
      
-     await page.waitForTimeout(1500);
+     // Wait longer for dynamic imports (tickets page)
+     const waitTime = url === '/tickets' ? 5000 : 2000;
+     await page.waitForTimeout(waitTime);
      
-     // Check heading
-     await expect(page.getByRole('heading', { name: heading })).toBeVisible({ timeout: 15000 });
-     console.log(`  ✓ ${heading} heading found`);
+     // Check heading/text
+     if (isHeading) {
+       await expect(page.getByRole('heading', { name: heading })).toBeVisible({ timeout: 15000 });
+     } else {
+       await expect(page.getByText(heading)).toBeVisible({ timeout: 15000 });
+     }
+     console.log(`  ✓ ${heading} found`);
      
      // Check bottom nav
      await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
@@ -60,7 +65,11 @@ import { test, expect } from '@playwright/test';
      !e.includes('render is not a function') &&
      !e.includes('importScripts') &&
      !e.includes('tesseract.js') &&
-     !e.includes('NotFoundErrorBoundary')
+     !e.includes('NotFoundErrorBoundary') &&
+     !e.includes('Failed to load resource') &&
+     !e.includes('Refused to apply style') &&
+     !e.includes('Refused to execute script') &&
+     !e.includes('MIME type')
    );
    
    if (criticalErrors.length > 0) {

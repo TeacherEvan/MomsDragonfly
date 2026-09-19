@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { BottomNav } from "@/components/shell/BottomNav";
 import { CookieConsent } from "@/components/shell/CookieConsent";

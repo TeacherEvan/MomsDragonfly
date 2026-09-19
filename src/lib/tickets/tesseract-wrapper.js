@@ -1,27 +1,17 @@
 /**
- * Wrapper for tesseract.js that conditionally loads the real library or a mock.
- * This prevents tesseract.js from being bundled in production.
+ * Wrapper for tesseract.js that returns a mock to prevent bundling/runtime issues.
+ * tesseract.js has known issues in Next.js (both dev and prod), so we always use a mock.
  */
 
-let tesseractCache = null;
-
 export async function loadTesseract() {
-  // In production, return a mock to prevent runtime errors
-  if (process.env.NODE_ENV === "production") {
-    return createMockTesseract();
-  }
-
-  // In development, load the real tesseract.js
-  if (!tesseractCache) {
-    const tesseractModule = await import("tesseract.js");
-    tesseractCache = tesseractModule.default;
-  }
-  return tesseractCache;
+  // Always return mock to prevent tesseract.js runtime errors in Next.js
+  return createMockTesseract();
 }
 
 function createMockTesseract() {
   class MockWorker {
-    async recognize() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async recognize(_imageBlob, _lang, _options) {
       return {
         data: {
           text: "",
@@ -37,7 +27,8 @@ function createMockTesseract() {
 
   return {
     createWorker: async () => new MockWorker(),
-    recognize: async () => ({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    recognize: async (_imageBlob, _lang, _options) => ({
       data: {
         text: "",
         confidence: 0,

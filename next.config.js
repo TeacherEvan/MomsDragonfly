@@ -42,12 +42,11 @@ const nextConfig = {
   },
   webpack: (config, { isServer, dev }) => {
     if (!isServer && !dev) {
-      // In production, ignore tesseract.js module to prevent bundling
-      config.plugins = config.plugins || [];
-      const IgnorePlugin = require("webpack").IgnorePlugin;
-      config.plugins.push(new IgnorePlugin({
-        resourceRegExp: /tesseract\.js/,
-      }));
+      // In production, replace tesseract.js with mock to prevent bundling issues
+      config.resolve = config.resolve || {};
+      config.resolve.alias = config.resolve.alias || {};
+      const path = require("path");
+      config.resolve.alias["tesseract.js"] = path.resolve(__dirname, "src/lib/tickets/tesseract-mock.js");
     }
     return config;
   },
