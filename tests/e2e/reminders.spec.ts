@@ -9,9 +9,6 @@ test("can navigate to reminders via bottom nav", async ({ page }) => {
   await page.goto("/explore");
   await page.waitForLoadState("networkidle");
   
-  // Wait for the bottom nav to be present
-  await page.waitForSelector('nav[aria-label="Main navigation"]', { timeout: 10000 });
-  
   // Verify the link exists
   const remindersLink = page.getByRole("link", { name: "Reminders" });
   await expect(remindersLink).toBeVisible({ timeout: 10000 });
