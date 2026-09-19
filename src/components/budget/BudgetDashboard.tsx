@@ -1,5 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/app/providers";
+import { getDeviceId } from "@/lib/utils/deviceId";
 import { BudgetRing } from "./BudgetRing";
 import { ExpenseForm } from "./ExpenseForm";
 import { ExpenseList } from "./ExpenseList";
@@ -7,61 +10,59 @@ import type { Expense } from "@/types";
 import { sumExpenses, remainingBudget } from "@/lib/utils/budget";
 import { formatAmount } from "@/lib/utils/currency";
 
-const STORAGE_EXPENSES_KEY = "mdf_offline_expenses";
-const STORAGE_BUDGET_KEY = "mdf_offline_total_budget";
-
 export function BudgetDashboard() {
-  const [currency] = useState("USD");
-  const [totalBudget, setTotalBudget] = useState(500);
+  const deviceId = getDeviceId();
+  const expensesQuery = useQuery(api.queries.expensesQuery, { deviceId });
+  const budgetQuery = useQuery(api.queries.budgetQuery, { deviceId });
+  const addExpenseMut = useMutation(api.mutations.addExpense);
+  const deleteExpenseMut = useMutation(api.mutations.deleteExpense);
+  const upsertBudgetMut = useMutation(api.mutations.upsertBudget);
+
   const [isEditingBudget, setIsEditingBudget] = useState(false);
-  const [newBudgetValue, setNewBudgetValue] = useState("500");
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [newBudgetValue, setNewBudgetValue] = useState("");
+  const [currency, setCurrency] = useState("USD");
+
+  const rawExpenses = expensesQuery ?? [];
+  const budget = budgetQuery;
+  const totalBudget = budget?.totalBudget ?? 500;
+
+  // Map Convex documents to frontend Expense type
+  const expenses = useMemo(() => rawExpenses.map((e) => ({
+    id: e._id,
+    amount: e.amount,
+    currency: e.currency,
+    category: e.category,
+    note: e.note,
+    date: e.date,
+    ticketId: e.ticketId,
+  })), [rawExpenses]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedExp = localStorage.getItem(STORAGE_EXPENSES_KEY);
-      if (savedExp) {
-        try {
-          setExpenses(JSON.parse(savedExp));
-        } catch {
-          // ignore
-        }
-      }
-      const savedBudget = localStorage.getItem(STORAGE_BUDGET_KEY);
-      if (savedBudget) {
-        setTotalBudget(Number(savedBudget) || 500);
-        setNewBudgetValue(savedBudget);
-      }
+    if (budget) {
+      setCurrency(budget.currency);
+      setNewBudgetValue(String(budget.totalBudget));
     }
-  }, []);
-
-  const saveExpensesToStorage = (updated: Expense[]) => {
-    setExpenses(updated);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_EXPENSES_KEY, JSON.stringify(updated));
-    }
-  };
+  }, [budget]);
 
   const handleAddExpense = (newExp: Omit<Expense, "id">) => {
-    const item: Expense = {
-      ...newExp,
-      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-    };
-    saveExpensesToStorage([item, ...expenses]);
+    addExpenseMut({ ...newExp, deviceId, ticketId: newExp.ticketId as any });
   };
 
   const handleDeleteExpense = (id: string) => {
-    saveExpensesToStorage(expenses.filter((e) => e.id !== id));
+    deleteExpenseMut({ id: id as Parameters<typeof deleteExpenseMut>[0]["id"], deviceId });
   };
 
   const handleSaveBudget = (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(newBudgetValue);
     if (!isNaN(val) && val > 0) {
-      setTotalBudget(val);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_BUDGET_KEY, String(val));
-      }
+      upsertBudgetMut({
+        deviceId,
+        totalBudget: val,
+        currency,
+        period: "trip",
+        startDate: Date.now(),
+      });
     }
     setIsEditingBudget(false);
   };

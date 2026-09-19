@@ -1,10 +1,10 @@
 "use client";
-import React, { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useRef, useImperativeHandle, forwardRef, useState, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import type { NormalizedPOI } from "@/types";
 import { POIMarker } from "./POIMarker";
-import L from "leaflet";
+import L, { Marker as LeafletMarker } from "leaflet";
 
 if (typeof window !== "undefined") {
   delete (L.Icon.Default.prototype as { _getIconUrl?: () => string })._getIconUrl;
@@ -61,20 +61,25 @@ export interface LeafletMapRef {
   panToPOI: (poi: NormalizedPOI) => void;
 }
 
+interface MarkerWithRef {
+  leafletElement?: LeafletMarker;
+}
+
 const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
   const { pois, center, onVerify } = props;
   const defaultCenter: [number, number] = center ?? [13.7563, 100.5018];
   const mapRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<Record<string, L.Marker>>({});
+  const markerRefs = useRef<Map<string, React.RefObject<LeafletMarker>>>(new Map());
+  const [remountKey, setRemountKey] = useState(0);
 
   useImperativeHandle(ref, () => ({
     panToPOI: (poi: NormalizedPOI) => {
       const map = mapRef.current;
       if (!map) return;
       map.setView([poi.lat, poi.lng], 16, { animate: true });
-      const marker = markersRef.current[poi.placeId];
-      if (marker) {
-        marker.openPopup();
+      const markerRef = markerRefs.current.get(poi.placeId);
+      if (markerRef?.current) {
+        markerRef.current.openPopup();
       }
     },
   }));
@@ -116,24 +121,32 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
   }, []);
 
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    markersRef.current = {};
-    pois.forEach((poi) => {
-      const marker = L.marker([poi.lat, poi.lng]);
-      marker.on('add', () => {
-        const iconEl = marker.getElement();
-        if (iconEl) {
-          iconEl.setAttribute('role', 'button');
-          iconEl.setAttribute('tabIndex', '0');
-          iconEl.setAttribute('aria-label', poi.name);
-        }
-      });
-      markersRef.current[poi.placeId] = marker;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const currentPois = new Set(pois.map((p) => p.placeId));
+    for (const key of markerRefs.current.keys()) {
+      if (!currentPois.has(key)) {
+        markerRefs.current.delete(key);
+      }
+    }
   }, [pois]);
+
+  const markers = useMemo(() => pois.map((poi) => {
+    let markerRef = markerRefs.current.get(poi.placeId);
+    if (!markerRef) {
+      markerRef = React.createRef<LeafletMarker>();
+      markerRefs.current.set(poi.placeId, markerRef);
+    }
+    return (
+      <Marker
+        ref={markerRef}
+        key={poi.placeId}
+        position={[poi.lat, poi.lng]}
+      >
+        <Popup>
+          <POIMarker poi={poi} onVerify={() => onVerify(poi.placeId)} />
+        </Popup>
+      </Marker>
+    );
+  }), [pois, onVerify]);
 
   return (
     <MapContainer
@@ -144,6 +157,7 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
       style={{ height: "100%", width: "100%" }}
       zoomControl={false}
       attributionControl={false}
+      key={remountKey}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -151,16 +165,7 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
       />
       <AccessibleZoomControl />
       {center && <RecenterMap center={center} />}
-      {pois.map((poi) => (
-        <Marker
-          key={poi.placeId}
-          position={[poi.lat, poi.lng]}
-        >
-          <Popup>
-            <POIMarker poi={poi} onVerify={() => onVerify(poi.placeId)} />
-          </Popup>
-        </Marker>
-      ))}
+      {markers}
     </MapContainer>
   );
 });

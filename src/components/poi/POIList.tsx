@@ -1,6 +1,6 @@
 "use client";
-import React, { useId } from "react";
-import { List } from "react-window";
+import React, { useId, useMemo } from "react";
+import { List, ListProps } from "react-window";
 import type { NormalizedPOI } from "@/types";
 import { POICard } from "./POICard";
 
@@ -13,19 +13,30 @@ interface POIListProps {
 
 const ITEM_HEIGHT = 140;
 
-interface POIRowProps {
-  index: number;
-  style: React.CSSProperties;
+interface POIRowData {
   pois: NormalizedPOI[];
   onVerify: (placeId: string) => void;
   onShowOnMap?: (poi: NormalizedPOI) => void;
 }
 
-function POIRow({ index, style, pois, onVerify, onShowOnMap }: POIRowProps): React.ReactElement {
+interface POIRowProps {
+  index: number;
+  style: React.CSSProperties;
+  ariaAttributes: {
+    "aria-posinset": number;
+    "aria-setsize": number;
+    role: "listitem";
+  };
+  pois: NormalizedPOI[];
+  onVerify: (placeId: string) => void;
+  onShowOnMap?: (poi: NormalizedPOI) => void;
+}
+
+function POIRow({ index, style, ariaAttributes, pois, onVerify, onShowOnMap }: POIRowProps): React.ReactElement {
   const poi = pois[index];
 
   return (
-    <div style={style} role="listitem" aria-posinset={index + 1} aria-setsize={pois.length}>
+    <div style={style} {...ariaAttributes}>
       <POICard poi={poi} onVerify={() => onVerify(poi.placeId)} onShowOnMap={onShowOnMap} />
     </div>
   );
@@ -51,30 +62,30 @@ export function POIList({ pois, onVerify, onShowOnMap, category }: POIListProps)
     );
   }
 
-  const rowProps = { pois, onVerify, onShowOnMap };
+  const rowData = useMemo(() => ({ pois, onVerify, onShowOnMap }), [pois, onVerify, onShowOnMap]);
+
+  type ListRowProps = {
+    pois: NormalizedPOI[];
+    onVerify: (placeId: string) => void;
+    onShowOnMap?: (poi: NormalizedPOI) => void;
+  };
+
+  const ListComponent = List as React.FC<ListProps<ListRowProps>>;
 
   return (
     <div className="w-full">
       <div id={liveRegionId} role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {pois.length} places found{category && category !== "all" ? ` in ${category}` : ""}
       </div>
-      {/* eslint-disable @typescript-eslint/no-explicit-any */}
-      {React.createElement(
-        List as any,
-        {
-          height: 400,
-          itemCount: pois.length,
-          itemSize: ITEM_HEIGHT,
-          rowProps,
-          width: "100%",
-          overscanCount: 3,
-          rowComponent: POIRow,
-          rowHeight: ITEM_HEIGHT,
-          rowCount: pois.length,
-        } as any,
-        null
-      )}
-      {/* eslint-enable @typescript-eslint/no-explicit-any */}
+      <ListComponent
+        height={400}
+        itemCount={pois.length}
+        itemSize={ITEM_HEIGHT}
+        width="100%"
+        overscanCount={3}
+        itemData={rowData}
+        rowComponent={POIRow}
+      />
     </div>
   );
 }

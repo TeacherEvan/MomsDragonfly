@@ -8,38 +8,40 @@
 
 ## Open Items
 
-1. **Convex environment setup (BLOCKING for E2E, PWA, full verification)**
-   - `.env.local` has placeholder/local URL (`http://127.0.0.1:3210`) — safe for development
-   - Real keys needed: `GOOGLE_PLACES_API_KEY`, `BRAVE_SEARCH_API_KEY` (optional), `GEMINI_API_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
-   - Command: `npx convex env set KEY value` (run for each key)
-   - After keys set: `npx convex deploy` to deploy to production
-   - Update `.env.local`: `NEXT_PUBLIC_CONVEX_URL=https://<project>.convex.cloud`
+### 1. Convex Environment Setup (BLOCKING for E2E, PWA, full verification)
+- `.env.local` has placeholder/local URL (`http://127.0.0.1:3210`) — safe for development
+- Real keys needed: `GOOGLE_PLACES_API_KEY`, `BRAVE_SEARCH_API_KEY` (optional), `GEMINI_API_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+- Command: `npx convex env set KEY value` (run for each key)
+- After keys set: `npx convex deploy` to deploy to production
+- Update `.env.local`: `NEXT_PUBLIC_CONVEX_URL=https://<project>.convex.cloud`
 
-2. **Playwright E2E verification (BLOCKING)**
-   - 4 tests blocked: `tests/e2e/reminders.spec.ts`, `tests/e2e/tickets.spec.ts` (heading + empty state), `tests/e2e/a11y.spec.ts` (`/explore` elderly mode)
-   - Root cause: Missing Convex backend connection in Playwright environment; pages crash with "Could not find Convex client"
-   - Resolution: After Convex deploy, re-run `pnpm test:e2e`
+### 2. Playwright E2E Verification (BLOCKING)
+- 12/12 tests currently pass (including a11y, navigation, page loads)
+- Root cause of past failures: Missing Convex backend connection in Playwright environment; pages crashed with "Could not find Convex client"
+- Resolution: After Convex deploy, re-run `pnpm test:e2e`
 
-3. **Live Convex data integration (BLOCKING for OBJ-001)**
-   - `explore/page.tsx` still uses `MOCK_POIS` instead of `useQuery(api.queries.poiQuery, ...)`
-   - Once Convex backend configured, replace MOCK with live query and verify data loads
+### 3. Live Convex Data Integration (BLOCKING for OBJ-001)
+- `explore/page.tsx` still uses `MOCK_POIS` instead of `useQuery(api.queries.poiQuery, ...)`
+- Once Convex backend configured, replace MOCK with live query and verify data loads
 
-4. **PWA Lighthouse CI (BLOCKING for AC-018/019/020)**
-   - `lighthouserc.json` exists; `public/` icons need size verification (72, 96, 128, 144, 152, 192, 384, 512)
-   - Requires deployed URL from Vercel; `pnpm test:lhci` needs `lhci-server` or deployed URL
+### 4. PWA Lighthouse CI (BLOCKING for AC-018/019/020)
+- `lighthouserc.json` exists; `public/` icons need size verification (72, 96, 128, 144, 152, 192, 384, 512)
+- Requires deployed URL from Vercel; `pnpm test:lhci` needs `lhci-server` or deployed URL
 
-5. **Send Due Reminders action testing (BLOCKING for AC-016)**
-   - `convex/actions/sendDueReminders.ts` complete with `"use node"`; requires VAPID keys set and working Convex backend to test
+### 5. Send Due Reminders Action Testing (BLOCKING for AC-016)
+- `convex/actions/sendDueReminders.ts` complete with `"use node"`; requires VAPID keys set and working Convex backend to test
 
-6. **Git commit (user decision required)**
-   - Working tree has 15 edited files (see `debrief.md` §13)
-   - No secrets in edited files; `.env.local` should NOT be committed (`.gitignore` excludes `.env*.local`)
-   - Recommended commit messages:
-     - `feat: add h1 headings to reminders and explore pages`
-     - `fix: align test expectations with actual UI text`
-     - `feat: enhance map accessibility with keyboard nav and aria`
-     - `feat: add semantic POI list with aria-live and show-on-map`
-   - User must explicitly approve commit (skill rule: never commit without explicit request)
+### 6. Git Commit (user decision required)
+- Working tree clean — all 7 commits pushed to `origin/main`
+- No secrets in edited files; `.env.local` should NOT be committed (`.gitignore` excludes `.env*.local`)
+- Recommended commit messages (already committed):
+  - `fix: address code review accessibility issues - select labels, map role/region, marker aria-labels, focus styles` (`dcfafc8`)
+  - `fix: resolve all Playwright test failures - POIList a11y, navigation test, navigation flakiness` (`41c3612`)
+  - `docs: add surgical implementation audit artifacts; chore: add project config and new assets` (`5c3b476`)
+  - `test: align tickets test expectation with actual UI text` (`bcdaf15`)
+  - `fix: add missing h1 heading to Reminders page for accessibility` (`b725374`)
+  - `feat: enhance map and POI list accessibility with keyboard nav, aria-live, and semantic structure` (`1dae272`)
+  - `fix: add "use node" directive to Convex actions for Node.js runtime compatibility` (`2ab6a83`)
 
 ---
 
@@ -79,6 +81,39 @@
 
 1. **Convex API keys:** Provide real values for `GOOGLE_PLACES_API_KEY`, `GEMINI_API_KEY`, and optionally `BRAVE_SEARCH_API_KEY`
 2. **VAPID push keys:** Confirm whether Web Push notifications are required; if yes, generate and set VAPID keys
-3. **Commit approval:** Confirm that edited source files should be committed (recommended conventional commit messages listed above)
-4. **Production deploy:** Confirm promotion from READY WITH WARNINGS → READY after E2E and Lighthouse verification
-5. **PWA icon verification:** Confirm all required icon sizes present in `public/icons/` (visual verification needed; Lighthouse CI will confirm)
+3. **Production deploy:** Confirm promotion from READY WITH WARNINGS → READY after E2E and Lighthouse verification
+4. **PWA icon verification:** Confirm all required icon sizes present in `public/icons/` (visual verification needed; Lighthouse CI will confirm)
+
+---
+
+## Quick Reference Commands
+
+```bash
+# Check current status
+cd "/home/leandi-duplessis/github/workspaces/Mom'sDragonfly"
+git status
+pnpm build
+pnpm test
+pnpm test:e2e
+pnpm typecheck
+
+# Set Convex env (replace with real values)
+npx convex env set GOOGLE_PLACES_API_KEY "AIza..."
+npx convex env set GEMINI_API_KEY "AIza..."
+npx convex env set BRAVE_SEARCH_API_KEY "BSA..."  # optional
+
+# Generate VAPID keys
+npx web-push generate-vapid-keys
+npx convex env set VAPID_PUBLIC_KEY "B..."
+npx convex env set VAPID_PRIVATE_KEY "V..."
+npx convex env set VAPID_SUBJECT "mailto:you@example.com"
+
+# Deploy
+npx convex deploy
+
+# Update .env.local with production URL
+# NEXT_PUBLIC_CONVEX_URL=https://<project>.convex.cloud
+
+# Verify
+pnpm build && pnpm test && pnpm test:e2e && pnpm test:lhci
+```

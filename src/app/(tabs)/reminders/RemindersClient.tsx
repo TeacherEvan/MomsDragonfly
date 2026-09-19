@@ -1,6 +1,6 @@
 "use client";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "@/lib/convex/client";
+import { api } from "@/app/providers";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import { ReminderForm } from "@/components/reminders/ReminderForm";
 import { ReminderList } from "@/components/reminders/ReminderList";
@@ -35,11 +35,11 @@ export default function RemindersClient() {
   };
 
   const handleToggle = (id: string) => {
-    toggleMut({ id: id as Parameters<typeof toggleMut>[0]["id"] });
+    toggleMut({ id: id as Parameters<typeof toggleMut>[0]["id"], deviceId });
   };
 
   const handleDelete = (id: string) => {
-    deleteMut({ id: id as Parameters<typeof deleteMut>[0]["id"] });
+    deleteMut({ id: id as Parameters<typeof deleteMut>[0]["id"], deviceId });
   };
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { useState, useEffect, useMemo } from "react";
-import { api } from "@/lib/convex/client";
+import { api } from "@/app/providers";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import { runTesseract, TESSERACT_CONFIDENCE_THRESHOLD } from "@/lib/tickets/ocr";
 import { parseTicket } from "@/lib/tickets/parse";
@@ -111,7 +111,7 @@ export default function TicketsClient() {
   };
 
   const handleDelete = async (id: string) => {
-    await deleteTicketMut({ id: id as Parameters<typeof deleteTicketMut>[0]["id"] });
+    await deleteTicketMut({ id: id as Parameters<typeof deleteTicketMut>[0]["id"], deviceId });
     await deleteTicketBlob(id);
   };
 

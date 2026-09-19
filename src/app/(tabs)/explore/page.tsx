@@ -1,5 +1,7 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useQuery, useMutation, useAction } from "convex/react";
+import { api } from "@/app/providers";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { MapView } from "@/components/map/MapView";
 import { POIList } from "@/components/poi/POIList";
@@ -8,64 +10,25 @@ import { IntroVideo } from "@/components/onboarding/IntroVideo";
 import type { NormalizedPOI } from "@/types";
 import type { LeafletMapRef } from "@/components/map/LeafletMap";
 import { haversine } from "@/lib/utils/geo";
+import { getDeviceId } from "@/lib/utils/deviceId";
 
-const MOCK_POIS: NormalizedPOI[] = [
-  {
-    id: "poi-1",
-    placeId: "mock-restroom-1",
-    source: "osm",
-    name: "Clean Public Restroom (Accessible)",
-    category: "toilets",
-    lat: 13.7565,
-    lng: 100.502,
-    address: "Ratchadamnoen Klang Ave",
-    verifiedCount: 14,
-  },
-  {
-    id: "poi-2",
-    placeId: "mock-food-1",
-    source: "google",
-    name: "Golden Dragon Noodles & Dim Sum",
-    category: "restaurant",
-    lat: 13.757,
-    lng: 100.503,
-    address: "Old Town Market Alley",
-    rating: 4.8,
-    openNow: true,
-    verifiedCount: 29,
-  },
-  {
-    id: "poi-3",
-    placeId: "mock-pharmacy-1",
-    source: "osm",
-    name: "24/7 Community Pharmacy",
-    category: "pharmacy",
-    lat: 13.7558,
-    lng: 100.501,
-    address: "Main Boulevard",
-    verifiedCount: 8,
-  },
-  {
-    id: "poi-4",
-    placeId: "mock-attraction-1",
-    source: "google",
-    name: "Heritage Clock Tower & Garden",
-    category: "attraction",
-    lat: 13.758,
-    lng: 100.504,
-    address: "Civic Plaza",
-    rating: 4.6,
-    openNow: true,
-    verifiedCount: 19,
-  },
-];
+const DEFAULT_CENTER: [number, number] = [13.7563, 100.5018];
+const CATEGORIES = ["restaurant", "toilets", "pharmacy", "attraction", "entertainment", "park"];
 
 export default function ExplorePage() {
   const { lat, lng, error: geoError } = useGeolocation();
   const [category, setCategory] = useState("all");
   const [showIntro, setShowIntro] = useState(true);
-  const [pois, setPois] = useState<NormalizedPOI[]>(MOCK_POIS);
+  const [lastFetchCategory, setLastFetchCategory] = useState<string | null>(null);
   const mapRef = useRef<LeafletMapRef>(null);
+  const deviceId = getDeviceId();
+
+  const prefs = useQuery(api.queries.prefsQuery, { deviceId });
+  const poisQuery = useQuery(api.queries.poiQuery, { deviceId, category: category === "all" ? "restaurant" : category });
+  const fetchNearbyAct = useAction(api.actions.fetchNearby);
+  const fetchOverpassAct = useAction(api.actions.fetchOverpassNearby);
+  const fetchEntertainmentAct = useAction(api.actions.fetchEntertainment);
+  const verifyPOIMut = useMutation(api.mutations.verifyPOI);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -81,35 +44,61 @@ export default function ExplorePage() {
     }
   };
 
-  const handleVerify = (placeId: string) => {
-    setPois((prev) =>
-      prev.map((p) =>
-        p.placeId === placeId
-          ? { ...p, verifiedCount: p.verifiedCount + 1 }
-          : p
-      )
-    );
-  };
+  const fetchPoisForCategory = useCallback(async (cat: string) => {
+    if (!lat || !lng || cat === "all") return;
+    if (lastFetchCategory === cat) return;
+    setLastFetchCategory(cat);
 
-  const handleShowOnMap = (poi: NormalizedPOI) => {
+    const radius = prefs?.defaultRadius ?? 1000;
+
+    if (cat === "entertainment") {
+      await fetchEntertainmentAct({ deviceId, lat, lng, radius });
+    } else if (["toilets", "pharmacy", "park"].includes(cat)) {
+      await fetchOverpassAct({ deviceId, lat, lng, radius });
+    } else {
+      await fetchNearbyAct({ deviceId, lat, lng, radius, category: cat });
+    }
+  }, [lat, lng, lastFetchCategory, deviceId, prefs?.defaultRadius, fetchEntertainmentAct, fetchOverpassAct, fetchNearbyAct]);
+
+  useEffect(() => {
+    if (category !== "all" && lat && lng) {
+      fetchPoisForCategory(category);
+    }
+  }, [category, lat, lng, fetchPoisForCategory]);
+
+  const handleVerify = useCallback((placeId: string) => {
+    verifyPOIMut({ placeId, deviceId });
+  }, [verifyPOIMut, deviceId]);
+
+  const handleShowOnMap = useCallback((poi: NormalizedPOI) => {
     mapRef.current?.panToPOI(poi);
-  };
+  }, []);
 
-  const computedPois = pois
-    .map((p) => {
-      if (lat && lng) {
-        return {
-          ...p,
-          distanceMetres: haversine(lat, lng, p.lat, p.lng),
-        };
-      }
-      return p;
-    })
-    .filter((p) => (category === "all" ? true : p.category === category))
-    .sort((a, b) => (a.distanceMetres ?? 0) - (b.distanceMetres ?? 0));
+  const rawPois = (poisQuery ?? []) as Array<{ _id: string; placeId: string; source: "google" | "osm" | "brave"; name: string; category: string; lat: number; lng: number; address?: string; rating?: number; phone?: string; openNow?: boolean; verifiedCount: number; fetchedAt: number; deviceIds: string[] }>;
 
-  const mapCenter: [number, number] =
-    lat && lng ? [lat, lng] : [13.7563, 100.5018];
+  interface ComputedPOI extends NormalizedPOI {
+    id: string;
+    distanceMetres?: number;
+  }
+
+  const computedPois = useMemo(() => {
+    const result = rawPois
+      .map((p): ComputedPOI => {
+        if (lat && lng) {
+          return {
+            ...p,
+            id: p._id,
+            distanceMetres: haversine(lat, lng, p.lat, p.lng),
+          };
+        }
+        return { ...p, id: p._id };
+      })
+      .filter((p) => (category === "all" ? true : p.category === category))
+      .sort((a, b) => (a.distanceMetres ?? 0) - (b.distanceMetres ?? 0));
+    return result;
+  }, [rawPois, lat, lng, category]);
+
+  const mapCenter: [number, number] = lat && lng ? [lat, lng] : DEFAULT_CENTER;
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-xl mx-auto">

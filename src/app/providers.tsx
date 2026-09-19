@@ -2,6 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ToastProvider, useNetworkToast } from "@/components/shell/Toast";
+import { api as generatedApi } from "../../convex/_generated/api";
+import { preloadTesseract } from "@/lib/tickets/tesseract-preload";
+
+export const api = generatedApi;
 
 function getConvexClient() {
   const url = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -45,6 +49,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
         console.warn("Service worker registration failed:", err);
       });
     }
+    // Preload Tesseract WASM in background
+    preloadTesseract().catch(() => {
+      // Ignore preload errors
+    });
   }, []);
 
   if (!convexClient) {

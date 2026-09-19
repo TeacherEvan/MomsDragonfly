@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "@/lib/convex/client";
+import { api } from "@/app/providers";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import { ElderlyModeToggle } from "@/components/shell/ElderlyModeToggle";
 import { cn } from "@/lib/utils/cn";

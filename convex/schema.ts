@@ -16,11 +16,11 @@ export default defineSchema({
     openNow: v.optional(v.boolean()),
     verifiedCount: v.number(),
     fetchedAt: v.number(),
-    deviceId: v.string(),
+    deviceIds: v.array(v.string()),
   })
     .index("by_fetchedAt", ["fetchedAt"])
     .index("by_placeId", ["placeId"])
-    .index("by_deviceId_category", ["deviceId", "category"]),
+    .index("by_deviceIds_category", ["deviceIds", "category"]),
 
   // ── User preferences (one doc per device) ───────────────────────────────────
   userPrefs: defineTable({

@@ -30,14 +30,9 @@ export function IntroVideo({ onDismiss }: IntroVideoProps) {
 
       <div className="relative aspect-video w-full rounded-xl bg-gray-900 flex flex-col items-center justify-center text-white overflow-hidden shadow-inner">
         {isPlaying ? (
-          <video
-            controls
-            autoPlay
-            className="w-full h-full object-cover"
-            src="/intro.mp4"
-          >
-            Your browser does not support video playback.
-          </video>
+          <div className="w-full h-full flex items-center justify-center text-sm text-gray-300">
+            Intro video unavailable
+          </div>
         ) : (
           <div className="text-center p-4">
             <button
