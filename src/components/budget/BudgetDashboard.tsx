@@ -76,15 +76,15 @@ export function BudgetDashboard() {
   return (
     <div className="flex flex-col gap-5 max-w-xl mx-auto p-4">
       {/* Header Summary with Animated Ring */}
-      <div className="p-5 bg-surface-900/80 backdrop-blur-sm rounded-2xl border border-neutral-800 shadow-soft flex flex-col items-center">
+      <div className="p-5 bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-2xl border border-dragonfly-navy-700 shadow-soft flex flex-col items-center">
         <div className="w-full flex justify-between items-center mb-2">
-          <h2 className="text-caption font-bold uppercase tracking-wider text-neutral-400">
+          <h2 className="text-caption font-bold uppercase tracking-wider text-dragonfly-navy-300">
             Trip Budget Tracker
           </h2>
           <button
             type="button"
             onClick={() => setIsEditingBudget(!isEditingBudget)}
-            className="text-caption text-primary-400 font-semibold hover:underline"
+            className="text-caption text-dragonfly-teal-400 font-semibold hover:underline"
           >
             {isEditingBudget ? "Cancel" : "Edit Target"}
           </button>
@@ -97,13 +97,13 @@ export function BudgetDashboard() {
               min="1"
               value={newBudgetValue}
               onChange={(e) => setNewBudgetValue(e.target.value)}
-              className="flex-1 px-3 py-2 border border-neutral-700 rounded-xl text-sm min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 placeholder-dragonfly-navy-400 focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent"
               placeholder="Total budget amount"
               required
             />
             <button
               type="submit"
-              className="bg-primary-500 text-neutral-950 px-4 py-2 rounded-xl text-xs font-bold min-h-[var(--touch-target)] hover:bg-primary-400 transition-colors duration-fast"
+              className="bg-dragonfly-teal-500 text-dragonfly-navy-950 px-4 py-2 rounded-xl text-xs font-bold min-h-[var(--touch-target)] hover:bg-dragonfly-teal-400 transition-colors duration-fast"
             >
               Save
             </button>
@@ -114,22 +114,22 @@ export function BudgetDashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4 w-full mt-3 pt-3 border-t border-neutral-800 text-center">
+        <div className="grid grid-cols-2 gap-4 w-full mt-3 pt-3 border-t border-dragonfly-navy-700 text-center">
           <div>
-            <span className="text-[11px] text-neutral-500 block font-medium">
+            <span className="text-[11px] text-dragonfly-navy-400 block font-medium">
               Total Budget
             </span>
-            <span className="text-sm font-bold text-neutral-50">
+            <span className="text-sm font-bold text-dragonfly-navy-50">
               {formatAmount(totalBudget, currency)}
             </span>
           </div>
           <div>
-            <span className="text-[11px] text-neutral-500 block font-medium">
+            <span className="text-[11px] text-dragonfly-navy-400 block font-medium">
               Remaining
             </span>
             <span
               className={`text-sm font-bold ${
-                remaining < 0 ? "text-rose-400" : "text-primary-400"
+                remaining < 0 ? "text-rose-400" : "text-dragonfly-teal-400"
               }`}
             >
               {formatAmount(remaining, currency)}
@@ -144,10 +144,10 @@ export function BudgetDashboard() {
       {/* Expense List */}
       <div>
         <div className="flex justify-between items-center mb-2 px-1">
-          <h3 className="font-bold text-neutral-50 text-sm md:text-base">
+          <h3 className="font-bold text-dragonfly-navy-50 text-sm md:text-base">
             Recent Expenses
           </h3>
-          <span className="text-caption text-neutral-500 font-medium">
+          <span className="text-caption text-dragonfly-navy-400 font-medium">
             {expenses.length} total
           </span>
         </div>
