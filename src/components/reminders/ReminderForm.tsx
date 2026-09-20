@@ -31,12 +31,12 @@ export function ReminderForm({ onAdd }: ReminderFormProps) {
 return (
     <form
       onSubmit={handleSubmit}
-      className="p-4 space-y-3 bg-surface-900/60 backdrop-blur-sm rounded-2xl border border-neutral-800 shadow-soft"
+      className="p-4 space-y-3 bg-dragonfly-navy-800/60 backdrop-blur-sm rounded-2xl border border-dragonfly-navy-700 shadow-soft"
     >
-      <h3 className="font-bold text-neutral-50 text-sm">Add Alert or Reminder</h3>
+      <h3 className="font-bold text-dragonfly-navy-50 text-sm">Add Alert or Reminder</h3>
 
       <div>
-        <label className="block text-caption font-semibold text-neutral-400 mb-1">
+        <label className="block text-caption font-semibold text-dragonfly-navy-300 mb-1">
           Title *
         </label>
         <input
@@ -45,13 +45,13 @@ return (
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Flight boarding, Train depart, Take vitamins"
           required
-          className="w-full px-3 py-2 border border-neutral-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 placeholder-neutral-500"
+          className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 placeholder-dragonfly-navy-400"
           aria-label="Reminder title"
         />
       </div>
 
       <div>
-        <label className="block text-caption font-semibold text-neutral-400 mb-1">
+        <label className="block text-caption font-semibold text-dragonfly-navy-300 mb-1">
           Note (Optional)
         </label>
         <input
@@ -59,14 +59,14 @@ return (
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Gate B12, remember passports & water"
-          className="w-full px-3 py-2 border border-neutral-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 placeholder-neutral-500"
+          className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 placeholder-dragonfly-navy-400"
           aria-label="Reminder note"
         />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
-          <label className="block text-caption font-semibold text-neutral-400 mb-1">
+          <label className="block text-caption font-semibold text-dragonfly-navy-300 mb-1">
             Date & Time *
           </label>
           <input
@@ -74,19 +74,19 @@ return (
             value={dueAt}
             onChange={(e) => setDueAt(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-neutral-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[var(--touch-target)] bg-surface-950 text-neutral-50"
+            className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50"
             aria-label="Due date and time"
           />
         </div>
         <div>
-          <label className="block text-caption font-semibold text-neutral-400 mb-1" htmlFor="repeat-select">
+          <label className="block text-caption font-semibold text-dragonfly-navy-300 mb-1" htmlFor="repeat-select">
             Repeat
           </label>
           <select
             id="repeat-select"
             value={repeat}
             onChange={(e) => setRepeat(e.target.value as ReminderRepeat)}
-            className="w-full px-3 py-2 border border-neutral-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[var(--touch-target)] bg-surface-950 text-neutral-50"
+            className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50"
           >
             <option value="none">Once only</option>
             <option value="daily">Every Day</option>
@@ -98,7 +98,7 @@ return (
       <button
         type="submit"
         className={cn(
-          "w-full bg-primary-500 hover:bg-primary-400 text-neutral-950 rounded-xl py-2.5 font-bold text-sm shadow-glow transition-all duration-fast active:scale-[0.98]",
+          "w-full bg-dragonfly-teal-500 hover:bg-dragonfly-teal-400 text-dragonfly-navy-950 rounded-xl py-2.5 font-bold text-sm shadow-[0_0_20px_rgba(49,151,149,0.3)] transition-all duration-fast active:scale-[0.98]",
           "min-h-[var(--touch-target)]"
         )}
       >

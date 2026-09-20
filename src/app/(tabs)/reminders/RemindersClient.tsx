@@ -44,11 +44,11 @@ export default function RemindersClient() {
 
   return (
     <div className="flex flex-col gap-4 max-w-xl mx-auto p-4">
-      <h1 className="text-h1 font-bold text-neutral-50">Reminders</h1>
+      <h1 className="text-h1 font-bold text-dragonfly-navy-50">Reminders</h1>
       <DaysCounter tripStartDate={prefs?.tripStartDate} />
 
       {!pushEnabled && (
-        <div className="p-3 bg-accent-500/15 border border-accent-500/30 rounded-xl flex items-center justify-between text-caption text-accent-400">
+        <div className="p-3 bg-dragonfly-teal-500/15 border border-dragonfly-teal-500/30 rounded-xl flex items-center justify-between text-caption text-dragonfly-teal-400">
           <span>Get push notifications even when this tab is closed.</span>
           <button
             type="button"
@@ -59,7 +59,7 @@ export default function RemindersClient() {
                 // but the prefs query will auto-update when the mutation completes
               }
             }}
-            className="px-2.5 py-1.5 bg-accent-500 hover:bg-accent-400 text-neutral-950 font-semibold rounded-lg shrink-0 ml-2 transition-colors duration-fast"
+            className="px-2.5 py-1.5 bg-dragonfly-teal-500 hover:bg-dragonfly-teal-400 text-dragonfly-navy-950 font-semibold rounded-lg shrink-0 ml-2 transition-colors duration-fast"
           >
             Enable
           </button>
@@ -70,10 +70,10 @@ export default function RemindersClient() {
 
       <div>
         <div className="flex justify-between items-center mb-2 px-1">
-          <h3 className="font-bold text-neutral-50 text-sm md:text-base">
+          <h3 className="font-bold text-dragonfly-navy-50 text-sm md:text-base">
             Your Schedule
           </h3>
-          <span className="text-caption text-neutral-500 font-medium">
+          <span className="text-caption text-dragonfly-navy-400 font-medium">
             {reminders.length} total
           </span>
         </div>
