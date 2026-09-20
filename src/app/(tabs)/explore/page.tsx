@@ -18,6 +18,7 @@ export default function ExplorePage() {
   const { lat, lng, error: geoError } = useGeolocation();
   const [category, setCategory] = useState("all");
   const [showIntro, setShowIntro] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [lastFetchCategory, setLastFetchCategory] = useState<string | null>(null);
   const mapRef = useRef<LeafletMapRef>(null);
   const deviceId = getDeviceId();
@@ -30,10 +31,9 @@ export default function ExplorePage() {
   const verifyPOIMut = useMutation(api.mutations.verifyPOI);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const dismissed = localStorage.getItem("mdf_intro_dismissed");
-      if (dismissed) setShowIntro(false);
-    }
+    setMounted(true);
+    const dismissed = localStorage.getItem("mdf_intro_dismissed");
+    if (dismissed) setShowIntro(false);
   }, []);
 
   const dismissIntro = () => {
@@ -101,7 +101,7 @@ export default function ExplorePage() {
   return (
     <div className="flex flex-col gap-4 p-4 max-w-xl mx-auto">
       <h1 className="text-xl font-bold text-gray-900">Explore</h1>
-      {showIntro && <IntroVideo onDismiss={dismissIntro} />}
+      {mounted && showIntro && <IntroVideo onDismiss={dismissIntro} />}
 
       {geoError && (
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center justify-between">

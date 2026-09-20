@@ -11,10 +11,10 @@ import { test, expect } from '@playwright/test';
      errors.push(err.message);
    });
  
-   // Clear localStorage
-   await page.goto('http://localhost:3000');
+// Clear localStorage
+   await page.goto('/');
    await page.evaluate(() => localStorage.clear());
- 
+
    const pages = [
      { url: '/explore', heading: 'Explore', isHeading: true },
      { url: '/budget', heading: 'Trip Budget Tracker', isHeading: false },
@@ -22,10 +22,10 @@ import { test, expect } from '@playwright/test';
      { url: '/tickets', heading: 'Tickets', isHeading: true },
      { url: '/settings', heading: 'Settings', isHeading: true },
    ];
- 
+
    for (const { url, heading, isHeading } of pages) {
      console.log(`\nTesting ${url}...`);
-     await page.goto(`http://localhost:3000${url}`, { waitUntil: 'networkidle', timeout: 30000 });
+     await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
      await page.waitForLoadState('domcontentloaded');
      await page.waitForLoadState('networkidle');
      

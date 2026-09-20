@@ -9,7 +9,7 @@ test('debug', async ({ page }) => {
     console.log('PAGE ERROR:', err.message);
   });
 
-  await page.goto('http://localhost:3000/explore', { waitUntil: 'networkidle', timeout: 30000 });
+  await page.goto('/explore', { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForTimeout(5000);
   
   const html = await page.content();
