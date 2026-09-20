@@ -6,7 +6,8 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { MapView } from "@/components/map/MapView";
 import { POIList } from "@/components/poi/POIList";
 import { POIFilter } from "@/components/poi/POIFilter";
-import { IntroVideo } from "@/components/onboarding/IntroVideo";
+import { SplashScreen } from "@/components/onboarding/SplashScreen";
+import { IntroVideoModal } from "@/components/onboarding/IntroVideoModal";
 import type { NormalizedPOI } from "@/types";
 import type { LeafletMapRef } from "@/components/map/LeafletMap";
 import { haversine } from "@/lib/utils/geo";
@@ -17,7 +18,8 @@ const DEFAULT_CENTER: [number, number] = [13.7563, 100.5018];
 export default function ExplorePage() {
   const { lat, lng, error: geoError } = useGeolocation();
   const [category, setCategory] = useState("all");
-  const [showIntro, setShowIntro] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [lastFetchCategory, setLastFetchCategory] = useState<string | null>(null);
   const mapRef = useRef<LeafletMapRef>(null);
@@ -32,14 +34,19 @@ export default function ExplorePage() {
 
   useEffect(() => {
     setMounted(true);
-    const dismissed = localStorage.getItem("mdf_intro_dismissed");
-    if (dismissed) setShowIntro(false);
+    // Always show splash on every launch
+    setShowSplash(true);
   }, []);
 
-  const dismissIntro = () => {
-    setShowIntro(false);
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    setShowVideoModal(true);
+  };
+
+  const handleVideoComplete = () => {
+    setShowVideoModal(false);
     if (typeof window !== "undefined") {
-      localStorage.setItem("mdf_intro_dismissed", "true");
+      localStorage.setItem("mdf_intro_seen", Date.now().toString());
     }
   };
 
@@ -110,8 +117,9 @@ export default function ExplorePage() {
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-xl mx-auto">
-      <h1 className="text-h1 font-bold text-neutral-50">Explore</h1>
-      {mounted && showIntro && <IntroVideo onDismiss={dismissIntro} />}
+      <h1 className="text-h1 font-bold text-dragonfly-navy-50">Explore</h1>
+      {mounted && showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+      {mounted && showVideoModal && <IntroVideoModal onComplete={handleVideoComplete} />}
 
       {geoError && (
         <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-caption text-amber-400 flex items-center justify-between">
