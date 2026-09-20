@@ -134,6 +134,7 @@ export default function SettingsClient() {
             value={tripStartDate}
             onChange={(e) => setTripStartDate(e.target.value)}
             className="w-full px-3 py-2 border border-neutral-700 rounded-lg text-sm min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            aria-label="Trip start date"
           />
         </div>
 

@@ -46,6 +46,7 @@ return (
           placeholder="e.g. Flight boarding, Train depart, Take vitamins"
           required
           className="w-full px-3 py-2 border border-neutral-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 placeholder-neutral-500"
+          aria-label="Reminder title"
         />
       </div>
 
@@ -59,6 +60,7 @@ return (
           onChange={(e) => setBody(e.target.value)}
           placeholder="Gate B12, remember passports & water"
           className="w-full px-3 py-2 border border-neutral-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 placeholder-neutral-500"
+          aria-label="Reminder note"
         />
       </div>
 

@@ -60,6 +60,16 @@ export default function ExplorePage() {
   }, [lat, lng, lastFetchCategory, deviceId, prefs?.defaultRadius, fetchEntertainmentAct, fetchOverpassAct, fetchNearbyAct]);
 
   useEffect(() => {
+    if (lat && lng) {
+      // Initial fetch when geolocation loads — always fetch restaurants for "all"
+      const initialCat = category === "all" ? "restaurant" : category;
+      if (initialCat !== "all" && initialCat !== lastFetchCategory) {
+        fetchPoisForCategory(initialCat);
+      }
+    }
+  }, [lat, lng, category, fetchPoisForCategory, lastFetchCategory]);
+
+  useEffect(() => {
     if (category !== "all" && lat && lng) {
       fetchPoisForCategory(category);
     }
@@ -110,12 +120,35 @@ export default function ExplorePage() {
         </div>
       )}
 
-      <MapView
-        ref={mapRef}
-        pois={computedPois}
-        center={mapCenter}
-        onVerify={handleVerify}
-      />
+      {!geoError ? (
+        <MapView
+          ref={mapRef}
+          pois={computedPois}
+          center={mapCenter}
+          onVerify={handleVerify}
+        />
+      ) : (
+        <div className="w-full h-64 md:h-80 rounded-xl overflow-hidden shadow-strong border border-neutral-800 bg-surface-900/80 flex flex-col items-center justify-center text-center px-6">
+          <span className="text-4xl mb-3" aria-hidden="true">🗺️</span>
+          <p className="font-semibold text-neutral-300 mb-2">Map unavailable</p>
+          <p className="text-sm text-neutral-500 mb-4 max-w-xs">
+            Enable location access to see nearby places on the map, or use the list below.
+          </p>
+          <button
+            onClick={() => {
+              if (typeof window !== "undefined" && navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                  () => window.location.reload(),
+                  () => alert("Location permission still denied. Enable in browser settings to use the map.")
+                );
+              }
+            }}
+            className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-neutral-950 rounded-lg font-semibold text-sm transition-colors min-h-[var(--touch-target)]"
+          >
+            Retry location access
+          </button>
+        </div>
+      )}
 
       <div>
         <div className="flex items-center justify-between mb-1">
