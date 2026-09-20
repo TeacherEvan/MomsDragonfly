@@ -60,6 +60,33 @@ const config: Config = {
           900: "#171717",
           950: "#111111",
         },
+        dragonfly: {
+          teal: {
+            50: "#e6fffa", 100: "#b2f5ea", 200: "#81e6d9", 300: "#4fd1c5",
+            400: "#38b2ac", 500: "#319795", 600: "#2c7a7b", 700: "#285e61",
+            800: "#234e52", 900: "#1d3f43", 950: "#0f2628"
+          },
+          cyan: {
+            50: "#ecfeff", 100: "#cffafe", 200: "#a5f3fc", 300: "#67e8f9",
+            400: "#22d3ee", 500: "#06b6d4", 600: "#0891b2", 700: "#0e7490",
+            800: "#155e75", 900: "#164e63", 950: "#083344"
+          },
+          emerald: {
+            50: "#ecfdf5", 100: "#d1fae5", 200: "#a7f3d0", 300: "#6ee7b7",
+            400: "#34d399", 500: "#10b981", 600: "#059669", 700: "#047857",
+            800: "#065f46", 900: "#064e3b", 950: "#022c22"
+          },
+          gold: {
+            50: "#fffbeb", 100: "#fef3c7", 200: "#fde68a", 300: "#fcd34d",
+            400: "#fbbf24", 500: "#D4AF37", 600: "#b8941f", 700: "#927414",
+            800: "#785c12", 900: "#634a14", 950: "#3b2a0a"
+          },
+          navy: {
+            50: "#f0f4f8", 100: "#d9e2ec", 200: "#bcccdc", 300: "#9fb3c8",
+            400: "#829ab1", 500: "#627d98", 600: "#486581", 700: "#334e68",
+            800: "#243b53", 900: "#102a43", 950: "#061416"
+          },
+        },
       },
       fontSize: {
         h1: ["3rem", { lineHeight: "1.1", letterSpacing: "-0.02em" }],
@@ -113,6 +140,16 @@ const config: Config = {
       transitionTimingFunction: {
         ease: "cubic-bezier(0.4, 0, 0.2, 1)",
         spring: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      },
+      animation: {
+        float: 'dragonfly-float 4s ease-in-out infinite',
+        'wing-shimmer': 'wing-shimmer 2s ease-in-out infinite',
+        'iridescent-shift': 'iridescent-shift 3s ease-in-out infinite',
+      },
+      backgroundImage: {
+        'iridescent': 'var(--iridescent-1)',
+        'iridescent-2': 'var(--iridescent-2)',
+        'gold-shimmer': 'var(--gold-shimmer)',
       },
     },
   },
