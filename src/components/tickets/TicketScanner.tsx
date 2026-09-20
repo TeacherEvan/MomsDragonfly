@@ -64,12 +64,12 @@ export function TicketScanner({ onCapture, isProcessing }: TicketScannerProps) {
   };
 
   return (
-    <div className="bg-surface-900/80 backdrop-blur-sm rounded-2xl border border-neutral-800 shadow-soft p-4 overflow-hidden">
+    <div className="bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-2xl border border-dragonfly-navy-700 shadow-soft p-4 overflow-hidden">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-neutral-50 text-sm md:text-base">
+        <h3 className="font-bold text-dragonfly-navy-50 text-sm md:text-base">
           Scan Receipt or Ticket
         </h3>
-        <span className="text-caption text-primary-400 bg-primary-500/15 px-2 py-0.5 rounded-full font-semibold">
+        <span className="text-caption text-dragonfly-teal-400 bg-dragonfly-teal-500/15 px-2 py-0.5 rounded-full font-semibold">
           Offline OCR
         </span>
       </div>
@@ -90,7 +90,7 @@ export function TicketScanner({ onCapture, isProcessing }: TicketScannerProps) {
               onClick={capture}
               disabled={isProcessing}
               className={cn(
-                "px-5 py-2.5 rounded-full bg-primary-500 text-neutral-950 font-bold text-xs md:text-sm shadow-glow flex items-center gap-2 transition-all duration-fast active:scale-[0.98]",
+                "px-5 py-2.5 rounded-full bg-dragonfly-teal-500 text-dragonfly-navy-950 font-bold text-xs md:text-sm shadow-[0_0_20px_rgba(49,151,149,0.3)] flex items-center gap-2 transition-all duration-fast active:scale-[0.98]",
                 isProcessing && "opacity-60 cursor-not-allowed"
               )}
             >
@@ -99,12 +99,12 @@ export function TicketScanner({ onCapture, isProcessing }: TicketScannerProps) {
           </div>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-neutral-700 rounded-xl cursor-pointer hover:border-primary-500 hover:bg-primary-500/10 transition-all text-center">
+        <label className="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-dragonfly-navy-700 rounded-xl cursor-pointer hover:border-dragonfly-teal-500 hover:bg-dragonfly-teal-500/10 transition-all text-center">
           <span className="text-3xl">📷</span>
-          <span className="text-sm font-semibold text-neutral-300">
+          <span className="text-sm font-semibold text-dragonfly-navy-200">
             Select or take ticket photo
           </span>
-          <span className="text-caption text-neutral-500">
+          <span className="text-caption text-dragonfly-navy-400">
             JPEG, PNG, WebP supported
           </span>
           <input
