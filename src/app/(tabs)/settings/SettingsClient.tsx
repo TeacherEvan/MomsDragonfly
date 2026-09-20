@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/app/providers";
 import { getDeviceId } from "@/lib/utils/deviceId";
-import { ElderlyModeToggle } from "@/components/shell/ElderlyModeToggle";
+
 import { cn } from "@/lib/utils/cn";
 import { useNetworkToast } from "@/components/shell/Toast";
 
@@ -68,17 +68,6 @@ export default function SettingsClient() {
       </header>
 
       <form onSubmit={handleSave} className="space-y-6 px-4">
-        {/* Elderly Mode */}
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-gray-900">Large Text Mode</h3>
-              <p className="text-xs text-gray-500">Increase text size and touch targets for easier reading</p>
-            </div>
-            <ElderlyModeToggle />
-          </div>
-        </div>
-
         {/* Default Search Radius */}
         <div className="bg-white rounded-xl border border-gray-100 p-4">
           <label htmlFor="default-radius" className="block font-semibold text-gray-900 mb-3">
@@ -168,7 +157,6 @@ export default function SettingsClient() {
             if (confirm("Reset all settings to defaults? This cannot be undone.")) {
               savePrefsMut({
                 deviceId,
-                elderlyMode: false,
                 defaultRadius: 1000,
                 currency: "USD",
                 notificationsEnabled: false,

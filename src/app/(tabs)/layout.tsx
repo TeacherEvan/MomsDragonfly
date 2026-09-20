@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { BottomNav } from "@/components/shell/BottomNav";
 import { CookieConsent } from "@/components/shell/CookieConsent";
-import { ElderlyModeToggle } from "@/components/shell/ElderlyModeToggle";
+
 import { InstallPrompt } from "@/components/shell/InstallPrompt";
 import { UpdateBanner } from "@/components/shell/UpdateBanner";
 import { cn } from "@/lib/utils/cn";
@@ -22,7 +22,6 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <ElderlyModeToggle />
           <Link
             href="/settings"
             className={cn(

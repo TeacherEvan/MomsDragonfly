@@ -12,12 +12,12 @@ test('app loads with intro video and explore page', async ({ page }) => {
   });
 
   // Clear localStorage to ensure intro shows
-  await page.goto('http://localhost:3000');
+  await page.goto('/');
   await page.evaluate(() => {
     localStorage.clear();
   });
   
-  await page.goto('http://localhost:3000/explore', { waitUntil: 'networkidle', timeout: 30000 });
+  await page.goto('/explore', { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForLoadState('domcontentloaded');
   await page.waitForLoadState('networkidle');
   

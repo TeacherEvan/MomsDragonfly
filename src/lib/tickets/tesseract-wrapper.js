@@ -1,17 +1,11 @@
 /**
- * Wrapper for tesseract.js that returns a mock to prevent bundling/runtime issues.
- * tesseract.js has known issues in Next.js (both dev and prod), so we always use a mock.
+ * Wrapper for tesseract.js that returns real Tesseract in development
+ * and mock in production to prevent bundling/runtime issues.
  */
-
-export async function loadTesseract() {
-  // Always return mock to prevent tesseract.js runtime errors in Next.js
-  return createMockTesseract();
-}
 
 function createMockTesseract() {
   class MockWorker {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async recognize(_imageBlob, _lang, _options) {
+    async recognize() {
       return {
         data: {
           text: "",
@@ -27,8 +21,7 @@ function createMockTesseract() {
 
   return {
     createWorker: async () => new MockWorker(),
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    recognize: async (_imageBlob, _lang, _options) => ({
+    recognize: async () => ({
       data: {
         text: "",
         confidence: 0,
@@ -38,9 +31,20 @@ function createMockTesseract() {
   };
 }
 
-const TesseractWrapper = {
-  loadTesseract,
-  createMockTesseract,
-};
+export async function loadTesseract() {
+  // In production, the webpack alias in next.config.js will make "tesseract.js" resolve to the mock
+  // In development, we can safely import the real tesseract.js
+  if (process.env.NODE_ENV === "production") {
+    return createMockTesseract();
+  }
 
-export default TesseractWrapper;
+  try {
+    const Tesseract = await import("tesseract.js");
+    return Tesseract.default || Tesseract;
+  } catch (err) {
+    console.warn("Failed to load tesseract.js, using mock", err);
+    return createMockTesseract();
+  }
+}
+
+export default { loadTesseract, createMockTesseract };

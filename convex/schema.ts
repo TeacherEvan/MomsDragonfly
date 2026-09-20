@@ -25,7 +25,6 @@ export default defineSchema({
   // ── User preferences (one doc per device) ───────────────────────────────────
   userPrefs: defineTable({
     deviceId: v.string(),
-    elderlyMode: v.boolean(),
     defaultRadius: v.number(),
     currency: v.string(),
     notificationsEnabled: v.boolean(),
