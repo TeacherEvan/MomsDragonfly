@@ -63,21 +63,21 @@ export default function SettingsClient() {
 
   return (
     <div className="flex flex-col gap-6 max-w-xl mx-auto p-4 pb-24">
-      <header className="px-4 py-3 border-b border-neutral-800">
-        <h1 className="text-h1 font-bold text-neutral-50">Settings</h1>
+      <header className="px-4 py-3 border-b border-dragonfly-navy-800">
+        <h1 className="text-h1 font-bold text-dragonfly-navy-50">Settings</h1>
       </header>
 
       <form onSubmit={handleSave} className="space-y-6 px-4">
         {/* Default Search Radius */}
-        <div className="bg-surface-900/80 backdrop-blur-sm rounded-xl border border-neutral-800 p-4">
-          <label htmlFor="default-radius" className="block font-semibold text-neutral-50 mb-3">
+        <div className="bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-700 p-4">
+          <label htmlFor="default-radius" className="block font-semibold text-dragonfly-navy-50 mb-3">
             Default Search Radius
           </label>
           <select
             id="default-radius"
             value={defaultRadius}
             onChange={(e) => setDefaultRadius(Number(e.target.value))}
-            className="w-full px-3 py-2 border border-neutral-700 rounded-lg text-sm min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-lg text-sm min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent"
           >
             {RADIUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -88,15 +88,15 @@ export default function SettingsClient() {
         </div>
 
         {/* Currency */}
-        <div className="bg-surface-900/80 backdrop-blur-sm rounded-xl border border-neutral-800 p-4">
-          <label htmlFor="currency" className="block font-semibold text-neutral-50 mb-3">
+        <div className="bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-700 p-4">
+          <label htmlFor="currency" className="block font-semibold text-dragonfly-navy-50 mb-3">
             Currency
           </label>
           <select
             id="currency"
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-3 py-2 border border-neutral-700 rounded-lg text-sm min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-lg text-sm min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent"
           >
             {CURRENCIES.map((c) => (
               <option key={c} value={c}>
@@ -107,11 +107,11 @@ export default function SettingsClient() {
         </div>
 
         {/* Notifications */}
-        <div className="bg-surface-900/80 backdrop-blur-sm rounded-xl border border-neutral-800 p-4">
+        <div className="bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-700 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-neutral-50">Push Notifications</h3>
-              <p className="text-caption text-neutral-400">Receive reminders even when the app is closed</p>
+              <h3 className="font-semibold text-dragonfly-navy-50">Push Notifications</h3>
+              <p className="text-caption text-dragonfly-navy-400">Receive reminders even when the app is closed</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -120,20 +120,20 @@ export default function SettingsClient() {
                 onChange={(e) => setNotificationsEnabled(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-primary-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
+              <div className="w-11 h-6 bg-dragonfly-navy-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-dragonfly-teal-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-dragonfly-teal-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-dragonfly-teal-500"></div>
             </label>
           </div>
         </div>
 
         {/* Trip Start Date */}
-        <div className="bg-surface-900/80 backdrop-blur-sm rounded-xl border border-neutral-800 p-4">
-          <h3 className="font-semibold text-neutral-50 mb-3">Trip Start Date</h3>
-          <p className="text-caption text-neutral-400 mb-3">Used for the Days Counter on the Reminders page</p>
+        <div className="bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-700 p-4">
+          <h3 className="font-semibold text-dragonfly-navy-50 mb-3">Trip Start Date</h3>
+          <p className="text-caption text-dragonfly-navy-400 mb-3">Used for the Days Counter on the Reminders page</p>
           <input
             type="date"
             value={tripStartDate}
             onChange={(e) => setTripStartDate(e.target.value)}
-            className="w-full px-3 py-2 border border-neutral-700 rounded-lg text-sm min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-lg text-sm min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent"
             aria-label="Trip start date"
           />
         </div>
@@ -143,7 +143,7 @@ export default function SettingsClient() {
           type="submit"
           disabled={isSaving}
           className={cn(
-            "w-full bg-primary-500 hover:bg-primary-400 text-neutral-950 font-semibold py-3 rounded-xl text-sm transition-all duration-fast active:scale-[0.98]",
+            "w-full bg-dragonfly-teal-500 hover:bg-dragonfly-teal-400 text-dragonfly-navy-950 font-semibold py-3 rounded-xl text-sm transition-all duration-fast active:scale-[0.98]",
             "min-h-[var(--touch-target)]",
             isSaving && "opacity-60 cursor-not-allowed"
           )}
@@ -167,7 +167,7 @@ export default function SettingsClient() {
               showSuccess("Settings reset to defaults");
             }
           }}
-          className="w-full text-primary-400 hover:text-primary-300 font-semibold py-2 text-sm underline transition-colors duration-fast"
+          className="w-full text-dragonfly-teal-400 hover:text-dragonfly-teal-300 font-semibold py-2 text-sm underline transition-colors duration-fast"
         >
           Reset to Defaults
         </button>
