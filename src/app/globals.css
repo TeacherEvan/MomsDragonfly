@@ -3,9 +3,41 @@
 @tailwind utilities;
 @import "leaflet/dist/leaflet.css";
 
-:root {
-  --touch-target: 44px;
-  --font-base: 1rem;
+@layer base {
+  :root {
+    --touch-target: 44px;
+    --font-base: 1rem;
+    --color-bg: #0A0F2C;
+    --color-surface: #171717;
+    --color-primary: #D4AF37;
+    --color-accent: #6A4C93;
+    --color-text: #FAFAFA;
+    --color-text-muted: #A3A3A3;
+  }
+
+  html {
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply min-h-screen bg-surface-950 text-neutral-50;
+  }
+
+  * {
+    @apply border-neutral-800;
+  }
+
+  ::selection {
+    @apply bg-primary-500/30 text-primary-50;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-surface-950;
+  }
 }
 
 html.elderly {
@@ -46,4 +78,22 @@ html.elderly {
 
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
 }

@@ -12,12 +12,12 @@ interface ExpenseListProps {
 export function ExpenseList({ expenses, currency, onDelete }: ExpenseListProps) {
   if (expenses.length === 0) {
     return (
-      <div className="text-center text-gray-400 py-10 px-4 bg-white rounded-2xl border border-dashed border-gray-200">
+      <div className="text-center text-neutral-400 py-10 px-4 bg-surface-900/60 backdrop-blur-sm rounded-2xl border border-dashed border-neutral-700">
         <span className="text-3xl mb-1 block" role="img" aria-label="receipt">
           🧾
         </span>
-        <p className="text-sm font-medium text-gray-500">No expenses recorded yet</p>
-        <p className="text-xs text-gray-400 mt-0.5">
+        <p className="text-sm font-medium text-neutral-500">No expenses recorded yet</p>
+        <p className="text-caption text-neutral-500 mt-0.5">
           Add an item above to monitor your trip spend
         </p>
       </div>
@@ -29,21 +29,21 @@ export function ExpenseList({ expenses, currency, onDelete }: ExpenseListProps) 
       {expenses.map((e) => (
         <div
           key={e.id}
-          className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm"
+          className="flex items-center justify-between p-3 bg-surface-900/80 backdrop-blur-sm rounded-xl border border-neutral-800 shadow-soft"
         >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900 text-sm">
+              <span className="font-bold text-neutral-50 text-sm">
                 {formatAmount(e.amount, currency)}
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium capitalize">
+              <span className="text-caption px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 font-medium capitalize">
                 {e.category}
               </span>
             </div>
             {e.note && (
-              <p className="text-xs text-gray-600 truncate mt-0.5">{e.note}</p>
+              <p className="text-caption text-neutral-400 truncate mt-0.5">{e.note}</p>
             )}
-            <p className="text-[10px] text-gray-400 mt-1">
+            <p className="text-[11px] text-neutral-500 mt-1">
               {new Date(e.date).toLocaleDateString(undefined, {
                 month: "short",
                 day: "numeric",
@@ -54,7 +54,7 @@ export function ExpenseList({ expenses, currency, onDelete }: ExpenseListProps) 
           <button
             type="button"
             onClick={() => onDelete(e.id)}
-            className="text-gray-300 hover:text-red-500 p-2 text-sm font-bold min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors"
+            className="text-neutral-500 hover:text-rose-400 p-2 text-sm font-bold min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors duration-fast"
             aria-label={`Delete expense ${formatAmount(e.amount, currency)}`}
           >
             ✕

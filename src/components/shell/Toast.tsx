@@ -45,10 +45,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={cn(
               "pointer-events-auto px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 animate-slide-up",
               "min-h-[var(--touch-target)] max-w-xl",
-              toast.type === "success" && "bg-green-600 text-white",
-              toast.type === "error" && "bg-red-600 text-white",
-              toast.type === "warning" && "bg-amber-600 text-white",
-              toast.type === "info" && "bg-blue-600 text-white"
+              toast.type === "success" && "bg-emerald-500 text-neutral-950",
+              toast.type === "error" && "bg-rose-500 text-neutral-50",
+              toast.type === "warning" && "bg-amber-500 text-neutral-950",
+              toast.type === "info" && "bg-accent-500 text-neutral-950"
             )}
             role="alert"
             aria-live="polite"
@@ -57,7 +57,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             {toast.action && (
               <button
                 onClick={toast.action.onClick}
-                className="px-3 py-1 text-xs font-semibold rounded-lg bg-white/20 hover:bg-white/30 transition-colors min-h-[var(--touch-target)]"
+                className="px-3 py-1 text-xs font-semibold rounded-lg bg-white/20 hover:bg-white/30 transition-colors duration-fast min-h-[var(--touch-target)]"
               >
                 {toast.action.label}
               </button>

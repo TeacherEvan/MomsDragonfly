@@ -50,27 +50,27 @@ export function InstallPrompt() {
   return (
     <aside
       aria-label="PWA install banner"
-      className="fixed top-16 inset-x-4 max-w-md mx-auto z-50 bg-brand-700 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center justify-between gap-3 border border-brand-600"
+      className="fixed top-16 inset-x-4 max-w-md mx-auto z-50 bg-primary-500/95 backdrop-blur-sm text-neutral-950 px-4 py-3 rounded-2xl shadow-strong flex items-center justify-between gap-3 border border-primary-500/30 animate-slide-up"
     >
       <div className="flex items-center gap-2.5">
         <span className="text-xl">📲</span>
-        <div className="text-xs">
+        <div className="text-caption">
           <p className="font-bold">Add Mom&apos;s Dragonfly</p>
-          <p className="text-brand-100">Install to your home screen for quick offline access</p>
+          <p className="text-primary-500/80">Install to your home screen for quick offline access</p>
         </div>
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
         <button
           type="button"
           onClick={install}
-          className="px-3 py-1.5 bg-white hover:bg-brand-50 text-brand-800 rounded-lg text-xs font-bold shadow-sm"
+          className="px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 text-primary-500 rounded-lg text-caption font-bold shadow-glow transition-colors duration-fast"
         >
           Install
         </button>
         <button
           type="button"
           onClick={dismiss}
-          className="text-brand-200 hover:text-white p-1 text-sm font-bold"
+          className="text-primary-500/70 hover:text-primary-500 p-1 text-sm font-bold transition-colors duration-fast"
           aria-label="Dismiss install banner"
         >
           ✕

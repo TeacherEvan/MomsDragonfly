@@ -15,14 +15,14 @@ export function ReminderList({
 }: ReminderListProps) {
   if (reminders.length === 0) {
     return (
-      <div className="text-center text-gray-400 py-10 px-4 bg-white rounded-2xl border border-dashed border-gray-200">
+      <div className="text-center text-neutral-400 py-10 px-4 bg-surface-900/60 backdrop-blur-sm rounded-2xl border border-dashed border-neutral-700">
         <span className="text-3xl mb-1 block" role="img" aria-label="bell">
           🔔
         </span>
-        <p className="text-sm font-medium text-gray-500">
+        <p className="text-sm font-medium text-neutral-500">
           No reminders scheduled
         </p>
-        <p className="text-xs text-gray-400 mt-0.5">
+        <p className="text-caption text-neutral-500 mt-0.5">
           Add travel alarms, flight alerts, or daily check-ins above
         </p>
       </div>

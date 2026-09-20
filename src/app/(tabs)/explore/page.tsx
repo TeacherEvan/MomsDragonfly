@@ -100,11 +100,11 @@ export default function ExplorePage() {
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-xl mx-auto">
-      <h1 className="text-xl font-bold text-gray-900">Explore</h1>
+      <h1 className="text-h1 font-bold text-neutral-50">Explore</h1>
       {mounted && showIntro && <IntroVideo onDismiss={dismissIntro} />}
 
       {geoError && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center justify-between">
+        <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-caption text-amber-400 flex items-center justify-between">
           <span>⚠️ {geoError}</span>
           <span className="font-semibold underline">Using default area</span>
         </div>
@@ -119,10 +119,10 @@ export default function ExplorePage() {
 
       <div>
         <div className="flex items-center justify-between mb-1">
-          <h2 className="font-bold text-gray-900 text-sm md:text-base">
+          <h2 className="font-bold text-neutral-50 text-sm md:text-base">
             Nearby Places
           </h2>
-          <span className="text-xs text-gray-500 font-medium">
+          <span className="text-caption text-neutral-500 font-medium">
             {computedPois.length} discovered
           </span>
         </div>

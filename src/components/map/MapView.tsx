@@ -7,7 +7,7 @@ import type { LeafletMapRef } from "./LeafletMap";
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm animate-pulse">
+    <div className="w-full h-full bg-surface-900/80 flex items-center justify-center text-neutral-400 text-sm animate-pulse">
       Loading interactive map...
     </div>
   ),
@@ -22,7 +22,7 @@ interface MapViewProps {
 export const MapView = forwardRef<LeafletMapRef, MapViewProps>(
   ({ pois, center, onVerify }, ref) => {
     return (
-      <div className="w-full h-64 md:h-80 rounded-xl overflow-hidden shadow-inner border border-gray-200">
+      <div className="w-full h-64 md:h-80 rounded-xl overflow-hidden shadow-strong border border-neutral-800 bg-surface-900">
         <LeafletMap
           ref={ref}
           pois={pois}

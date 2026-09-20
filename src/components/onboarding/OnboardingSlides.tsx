@@ -42,7 +42,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
   const slide = SLIDES[current];
 
   return (
-    <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-md flex flex-col items-center text-center relative overflow-hidden">
+    <div className="p-6 bg-surface-900/80 backdrop-blur-sm rounded-2xl border border-neutral-800 shadow-soft flex flex-col items-center text-center relative overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
@@ -56,7 +56,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-            className="w-16 h-16 rounded-2xl bg-brand-50 flex items-center justify-center text-3xl mb-4 shadow-sm"
+            className="w-16 h-16 rounded-2xl bg-primary-500/15 flex items-center justify-center text-3xl mb-4 shadow-soft"
           >
             {slide.icon}
           </motion.div>
@@ -65,7 +65,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2, ease: "easeOut" }}
-            className="text-base font-bold text-gray-900 mb-2"
+            className="text-h3 font-bold text-neutral-50 mb-2"
           >
             {slide.title}
           </motion.h3>
@@ -74,7 +74,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.3, ease: "easeOut" }}
-            className="text-xs md:text-sm text-gray-600 max-w-xs mb-6 leading-relaxed"
+            className="text-body text-neutral-400 max-w-xs mb-6 leading-relaxed"
           >
             {slide.description}
           </motion.p>
@@ -94,7 +94,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
                 transition={{ duration: 0.3, ease: "easeOut" }}
                 className={cn(
                   "h-1.5 rounded-full transition-all",
-                  idx === current ? "w-6 bg-brand-600" : "w-1.5 bg-gray-200"
+                  idx === current ? "w-6 bg-primary-500" : "w-1.5 bg-neutral-700"
                 )}
               />
             ))}
@@ -106,7 +106,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
             transition={{ duration: 0.3, delay: 0.5 }}
             onClick={next}
             className={cn(
-              "w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-98",
+              "w-full bg-primary-500 hover:bg-primary-400 text-neutral-950 font-semibold py-2.5 rounded-xl text-sm transition-all duration-fast active:scale-[0.98]",
               "min-h-[var(--touch-target)]"
             )}
             whileTap={{ scale: 0.98 }}

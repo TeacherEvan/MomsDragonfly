@@ -64,12 +64,12 @@ export function TicketScanner({ onCapture, isProcessing }: TicketScannerProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 overflow-hidden">
+    <div className="bg-surface-900/80 backdrop-blur-sm rounded-2xl border border-neutral-800 shadow-soft p-4 overflow-hidden">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-gray-900 text-sm md:text-base">
+        <h3 className="font-bold text-neutral-50 text-sm md:text-base">
           Scan Receipt or Ticket
         </h3>
-        <span className="text-xs text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full font-semibold">
+        <span className="text-caption text-primary-400 bg-primary-500/15 px-2 py-0.5 rounded-full font-semibold">
           Offline OCR
         </span>
       </div>
@@ -90,7 +90,7 @@ export function TicketScanner({ onCapture, isProcessing }: TicketScannerProps) {
               onClick={capture}
               disabled={isProcessing}
               className={cn(
-                "px-5 py-2.5 rounded-full bg-white text-gray-900 font-bold text-xs md:text-sm shadow-xl flex items-center gap-2 transition-transform active:scale-95 border-2 border-brand-500",
+                "px-5 py-2.5 rounded-full bg-primary-500 text-neutral-950 font-bold text-xs md:text-sm shadow-glow flex items-center gap-2 transition-all duration-fast active:scale-[0.98]",
                 isProcessing && "opacity-60 cursor-not-allowed"
               )}
             >
@@ -99,12 +99,12 @@ export function TicketScanner({ onCapture, isProcessing }: TicketScannerProps) {
           </div>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-brand-500 hover:bg-brand-50/30 transition-all text-center">
+        <label className="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-neutral-700 rounded-xl cursor-pointer hover:border-primary-500 hover:bg-primary-500/10 transition-all text-center">
           <span className="text-3xl">📷</span>
-          <span className="text-sm font-semibold text-gray-700">
+          <span className="text-sm font-semibold text-neutral-300">
             Select or take ticket photo
           </span>
-          <span className="text-xs text-gray-400">
+          <span className="text-caption text-neutral-500">
             JPEG, PNG, WebP supported
           </span>
           <input

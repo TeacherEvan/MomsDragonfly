@@ -11,19 +11,19 @@ interface POICardProps {
 
 export function POICard({ poi, onVerify, onShowOnMap }: POICardProps) {
   return (
-    <div className="flex items-center justify-between gap-3 p-3.5 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-gray-200 transition-colors">
+    <div className="flex items-center justify-between gap-3 p-4 bg-surface-900/80 backdrop-blur-sm rounded-xl border border-neutral-800 shadow-soft hover:border-neutral-700 transition-all duration-fast">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-gray-900 truncate text-sm md:text-base">
+          <h3 className="font-semibold text-neutral-50 truncate text-body">
             {poi.name}
           </h3>
           {poi.openNow !== undefined && (
             <span
               className={cn(
-                "text-[10px] px-1.5 py-0.5 rounded-full font-medium",
+                "text-caption px-2 py-0.5 rounded-full font-medium",
                 poi.openNow
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "bg-rose-500/20 text-rose-400"
               )}
             >
               {poi.openNow ? "Open" : "Closed"}
@@ -31,19 +31,19 @@ export function POICard({ poi, onVerify, onShowOnMap }: POICardProps) {
           )}
         </div>
         {poi.address && (
-          <p className="text-xs text-gray-500 truncate mt-0.5">{poi.address}</p>
+          <p className="text-caption text-neutral-400 truncate mt-1">{poi.address}</p>
         )}
-        <div className="flex items-center gap-3 mt-2 text-xs">
-          <span className="px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 font-medium capitalize">
+        <div className="flex items-center gap-3 mt-2 text-caption">
+          <span className="px-2 py-0.5 rounded-full bg-primary-500/15 text-primary-400 font-medium capitalize">
             {poi.category}
           </span>
           {poi.distanceMetres !== undefined && (
-            <span className="text-gray-500 font-medium">
+            <span className="text-neutral-400 font-medium">
               {formatDistance(poi.distanceMetres)}
             </span>
           )}
           {poi.rating && (
-            <span className="text-amber-500 font-medium">
+            <span className="text-amber-400 font-medium">
               ⭐ {poi.rating.toFixed(1)}
             </span>
           )}
@@ -55,9 +55,9 @@ export function POICard({ poi, onVerify, onShowOnMap }: POICardProps) {
             type="button"
             onClick={() => onShowOnMap(poi)}
             className={cn(
-              "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
+              "shrink-0 px-3 py-1.5 rounded-lg text-caption font-semibold border transition-all duration-fast",
               "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",
-              "border-gray-300 text-gray-600 hover:bg-gray-50 active:scale-95"
+              "border-neutral-700 text-neutral-300 hover:bg-neutral-800 active:scale-[0.98]"
             )}
             aria-label={`Show ${poi.name} on map`}
           >
@@ -68,9 +68,9 @@ export function POICard({ poi, onVerify, onShowOnMap }: POICardProps) {
           type="button"
           onClick={onVerify}
           className={cn(
-            "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
+            "shrink-0 px-3 py-1.5 rounded-lg text-caption font-semibold border transition-all duration-fast",
             "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",
-            "border-brand-500 text-brand-600 hover:bg-brand-50 active:scale-95"
+            "border-primary-500 text-primary-400 hover:bg-primary-500/10 active:scale-[0.98]"
           )}
           aria-label={`Verify ${poi.name}`}
         >

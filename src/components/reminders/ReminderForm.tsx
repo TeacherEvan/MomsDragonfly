@@ -28,15 +28,15 @@ export function ReminderForm({ onAdd }: ReminderFormProps) {
     setRepeat("none");
   };
 
-  return (
+return (
     <form
       onSubmit={handleSubmit}
-      className="p-4 space-y-3 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm"
+      className="p-4 space-y-3 bg-surface-900/60 backdrop-blur-sm rounded-2xl border border-neutral-800 shadow-soft"
     >
-      <h3 className="font-bold text-gray-900 text-sm">Add Alert or Reminder</h3>
+      <h3 className="font-bold text-neutral-50 text-sm">Add Alert or Reminder</h3>
 
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1">
+        <label className="block text-caption font-semibold text-neutral-400 mb-1">
           Title *
         </label>
         <input
@@ -45,12 +45,12 @@ export function ReminderForm({ onAdd }: ReminderFormProps) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Flight boarding, Train depart, Take vitamins"
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 min-h-[var(--touch-target)]"
+          className="w-full px-3 py-2 border border-neutral-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 placeholder-neutral-500"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1">
+        <label className="block text-caption font-semibold text-neutral-400 mb-1">
           Note (Optional)
         </label>
         <input
@@ -58,33 +58,33 @@ export function ReminderForm({ onAdd }: ReminderFormProps) {
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Gate B12, remember passports & water"
-          className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 min-h-[var(--touch-target)]"
+          className="w-full px-3 py-2 border border-neutral-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[var(--touch-target)] bg-surface-950 text-neutral-50 placeholder-neutral-500"
         />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">
-            Date &amp; Time *
+          <label className="block text-caption font-semibold text-neutral-400 mb-1">
+            Date & Time *
           </label>
           <input
             type="datetime-local"
             value={dueAt}
             onChange={(e) => setDueAt(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 min-h-[var(--touch-target)] bg-white"
+            className="w-full px-3 py-2 border border-neutral-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[var(--touch-target)] bg-surface-950 text-neutral-50"
             aria-label="Due date and time"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1" htmlFor="repeat-select">
+          <label className="block text-caption font-semibold text-neutral-400 mb-1" htmlFor="repeat-select">
             Repeat
           </label>
           <select
             id="repeat-select"
             value={repeat}
             onChange={(e) => setRepeat(e.target.value as ReminderRepeat)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 min-h-[var(--touch-target)] bg-white"
+            className="w-full px-3 py-2 border border-neutral-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[var(--touch-target)] bg-surface-950 text-neutral-50"
           >
             <option value="none">Once only</option>
             <option value="daily">Every Day</option>
@@ -96,7 +96,7 @@ export function ReminderForm({ onAdd }: ReminderFormProps) {
       <button
         type="submit"
         className={cn(
-          "w-full bg-brand-600 hover:bg-brand-500 text-white rounded-xl py-2.5 font-bold text-sm shadow-sm transition-all active:scale-98",
+          "w-full bg-primary-500 hover:bg-primary-400 text-neutral-950 rounded-xl py-2.5 font-bold text-sm shadow-glow transition-all duration-fast active:scale-[0.98]",
           "min-h-[var(--touch-target)]"
         )}
       >

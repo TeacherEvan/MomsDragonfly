@@ -26,11 +26,11 @@ export function POIFilter({ category, onChange }: POIFilterProps) {
           type="button"
           onClick={() => onChange(value)}
           className={cn(
-            "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all",
+            "shrink-0 px-3.5 py-1.5 rounded-full text-caption font-semibold border transition-all duration-fast",
             "min-h-[var(--touch-target)] flex items-center justify-center",
             category === value
-              ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-              : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 active:scale-95"
+              ? "bg-primary-500 text-neutral-950 border-primary-500 shadow-glow"
+              : "bg-surface-900/80 backdrop-blur-sm text-neutral-300 border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800 active:scale-[0.98]"
           )}
         >
           {label}

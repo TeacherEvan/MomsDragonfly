@@ -57,14 +57,14 @@ export function POIList({ pois, onVerify, onShowOnMap, category }: POIListProps)
 
   if (pois.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center text-gray-400 bg-white rounded-xl border border-dashed border-gray-200" role="status" aria-live="polite" aria-label="No places found">
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center text-neutral-400 bg-surface-900/60 backdrop-blur-sm rounded-xl border border-dashed border-neutral-700" role="status" aria-live="polite" aria-label="No places found">
         <span className="text-4xl mb-2" role="img" aria-label="location pin">
           📍
         </span>
-        <p className="text-sm font-medium text-gray-600">
+        <p className="text-sm font-medium text-neutral-500">
           No places found nearby
         </p>
-        <p className="text-xs text-gray-400 mt-1 max-w-xs">
+        <p className="text-caption text-neutral-500 mt-1 max-w-xs">
           Try expanding your search radius or changing categories.
         </p>
       </div>

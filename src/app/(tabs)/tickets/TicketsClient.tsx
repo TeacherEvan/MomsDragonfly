@@ -119,8 +119,8 @@ export default function TicketsClient() {
 
   return (
     <div>
-      <header className="px-4 py-3 border-b">
-        <h1 className="text-xl font-bold">Tickets</h1>
+      <header className="px-4 py-3 border-b border-neutral-800">
+        <h1 className="text-h1 font-bold text-neutral-50">Tickets</h1>
       </header>
       <div className="p-4 space-y-4">
         <TicketScanner onCapture={handleCapture} isProcessing={processing} />

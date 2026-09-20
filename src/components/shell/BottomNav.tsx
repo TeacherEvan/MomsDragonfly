@@ -14,7 +14,7 @@ export function BottomNav() {
   const pathname = usePathname();
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-40 shadow-sm"
+      className="fixed bottom-0 inset-x-0 bg-surface-900/95 backdrop-blur-sm border-t border-neutral-800 z-40 shadow-strong"
       aria-label="Main navigation"
     >
       <ul className="flex justify-around items-center h-16">
@@ -25,11 +25,11 @@ export function BottomNav() {
               <Link
                 href={href}
                 className={cn(
-                  "flex flex-col items-center justify-center py-2 text-xs transition-colors",
+                  "flex flex-col items-center justify-center py-2 text-caption transition-colors duration-fast",
                   "min-h-[var(--touch-target)] w-full",
                   isActive
-                    ? "text-brand-600 font-semibold"
-                    : "text-gray-500 hover:text-gray-900"
+                    ? "text-primary-500 font-semibold"
+                    : "text-neutral-400 hover:text-neutral-50"
                 )}
                 aria-current={isActive ? "page" : undefined}
               >

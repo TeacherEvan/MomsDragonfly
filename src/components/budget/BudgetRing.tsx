@@ -16,9 +16,9 @@ const R = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * R;
 
 function getColor(percent: number): string {
-  if (percent >= 100) return "#ef4444"; // red
-  if (percent >= 80) return "#f59e0b"; // amber
-  return "#16a34a"; // brand-600 green
+  if (percent >= 100) return "#f43f5e"; // rose-500
+  if (percent >= 80) return "#f59e0b"; // amber-500
+  return "#D4AF37"; // primary gold
 }
 
 export function BudgetRing({ spent, total, currency }: BudgetRingProps) {
@@ -35,7 +35,7 @@ export function BudgetRing({ spent, total, currency }: BudgetRingProps) {
           cy={SIZE / 2}
           r={R}
           fill="none"
-          stroke="#f3f4f6"
+          stroke="#262626"
           strokeWidth={STROKE}
         />
         {/* Animated progress ring */}
@@ -69,13 +69,13 @@ export function BudgetRing({ spent, total, currency }: BudgetRingProps) {
           textAnchor="middle"
           fontSize="11"
           fontWeight="500"
-          fill="#9ca3af"
+          fill="#737373"
         >
           SPENT
         </text>
       </svg>
-      <p className="text-xs md:text-sm text-gray-600 font-medium">
-        <span className="font-bold text-gray-900">
+      <p className="text-caption text-neutral-400 font-medium">
+        <span className="font-bold text-neutral-50">
           {formatAmount(spent, currency)}
         </span>{" "}
         of {formatAmount(total, currency)}
