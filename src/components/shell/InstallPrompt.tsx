@@ -50,7 +50,7 @@ export function InstallPrompt() {
   return (
     <aside
       aria-label="PWA install banner"
-      className="fixed top-16 inset-x-4 max-w-md mx-auto z-50 bg-primary-500/95 backdrop-blur-sm text-neutral-950 px-4 py-3 rounded-2xl shadow-strong flex items-center justify-between gap-3 border border-primary-500/30 animate-slide-up"
+      className="fixed top-16 inset-x-4 max-w-md mx-auto z-50 bg-primary-500/95 backdrop-blur-sm text-dragonfly-navy-950 px-4 py-3 rounded-2xl shadow-strong flex items-center justify-between gap-3 border border-primary-500/30 animate-slide-up"
     >
       <div className="flex items-center gap-2.5">
         <span className="text-xl">📲</span>
@@ -63,7 +63,7 @@ export function InstallPrompt() {
         <button
           type="button"
           onClick={install}
-          className="px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 text-primary-500 rounded-lg text-caption font-bold shadow-glow transition-colors duration-fast"
+          className="px-3 py-1.5 bg-dragonfly-navy-950 hover:bg-dragonfly-navy-800 text-primary-500 rounded-lg text-caption font-bold shadow-glow transition-colors duration-fast"
         >
           Install
         </button>

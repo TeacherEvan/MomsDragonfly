@@ -145,7 +145,7 @@ export function BudgetDashboard() {
             ) : (
               <span
                 className={`text-sm font-bold ${
-                  remaining < 0 ? "text-rose-400" : "text-dragonfly-teal-400"
+                  remaining < 0 ? "text-dragonfly-rose-400" : "text-dragonfly-teal-400"
                 }`}
               >
                 {formatAmount(remaining, currency)}

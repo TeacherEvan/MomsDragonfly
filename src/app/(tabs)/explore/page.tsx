@@ -144,7 +144,7 @@ export default function ExplorePage() {
           <h1 className="text-h1 font-bold text-dragonfly-navy-50">Explore</h1>
 
           {geoError && (
-            <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-caption text-amber-400 flex items-center justify-between">
+            <div className="p-3 bg-dragonfly-gold-500/15 border border-dragonfly-gold-500/30 rounded-xl text-caption text-dragonfly-gold-400 flex items-center justify-between">
               <span>⚠️ {geoError}</span>
               <span className="font-semibold underline">Using default area</span>
             </div>
