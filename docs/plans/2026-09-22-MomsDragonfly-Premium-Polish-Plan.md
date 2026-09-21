@@ -269,3 +269,17 @@
 ---
 
 *Plan authored 2026-09-22 by Fenrie. Evidence-first: every claim above was reproduced against the live deployment or backend before writing. Execute top to bottom; each phase leaves the app deployable.*
+
+
+---
+
+## Execution Status — 2026-09-22
+
+**Deployed & verified on production** (https://mom-s-dragonfly.vercel.app):
+
+- [x] Splash video — 733KB optimized build (was 3.5MB), preloaded during splash, SW media cache-first, 8s timeout fallback UI. Verified playing in a real browser.
+- [x] Theme — Inter via next/font, premium utilities (glass, iridescent text), hand-drawn icon set wired across nav/cards/filters. Verified.
+- [x] Dragonfly SVG — redesigned mark + 23-icon set. Verified.
+- [x] Locations — 50 POIs (food/parks/attractions) loading in ~4s, precise category filters, Overpass restrooms path works. Verified live.
+- [x] Tickets — local-first IndexedDB store; offline OCR fully working (self-hosted tesseract, core v7 relaxed-SIMD); venue/amount/date parsing verified; cloud sync; persists across reload; delete works. Verified end-to-end with a test receipt.
+- [x] Quality gates — 52/52 unit tests, typecheck clean, production build clean.
