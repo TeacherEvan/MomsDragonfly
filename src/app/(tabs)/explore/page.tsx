@@ -6,7 +6,6 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { MapView } from "@/components/map/MapView";
 import { POIList } from "@/components/poi/POIList";
 import { POIFilter } from "@/components/poi/POIFilter";
-import { SplashScreen } from "@/components/onboarding/SplashScreen";
 import { IntroVideoModal } from "@/components/onboarding/IntroVideoModal";
 import type { NormalizedPOI } from "@/types";
 import type { LeafletMapRef } from "@/components/map/LeafletMap";
@@ -18,8 +17,7 @@ const DEFAULT_CENTER: [number, number] = [13.7563, 100.5018];
 export default function ExplorePage() {
   const { lat, lng, error: geoError } = useGeolocation();
   const [category, setCategory] = useState("all");
-  const [showSplash, setShowSplash] = useState(true);
-  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [lastFetchCategory, setLastFetchCategory] = useState<string | null>(null);
   const mapRef = useRef<LeafletMapRef>(null);
@@ -34,14 +32,7 @@ export default function ExplorePage() {
 
   useEffect(() => {
     setMounted(true);
-    // Always show splash on every launch
-    setShowSplash(true);
   }, []);
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-    setShowVideoModal(true);
-  };
 
   const handleVideoComplete = () => {
     setShowVideoModal(false);
@@ -118,7 +109,6 @@ export default function ExplorePage() {
   return (
     <div className="flex flex-col gap-4 p-4 max-w-xl mx-auto">
       <h1 className="text-h1 font-bold text-dragonfly-navy-50">Explore</h1>
-      {mounted && showSplash && <SplashScreen onComplete={handleSplashComplete} />}
       {mounted && showVideoModal && <IntroVideoModal onComplete={handleVideoComplete} />}
 
       {geoError && (

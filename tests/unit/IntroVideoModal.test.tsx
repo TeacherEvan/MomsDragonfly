@@ -17,11 +17,22 @@ describe("IntroVideoModal", () => {
     expect(video).toHaveAttribute("poster", "/intro.jpg");
   });
 
-  it("renders play button", () => {
+  it("renders play button when auto-play blocked", () => {
+    // Mock video.play() to reject (simulating auto-play blocked by browser)
+    const mockVideo = document.createElement("video");
+    mockVideo.play = vi.fn().mockRejectedValue(new Error("Auto-play blocked"));
+    const originalCreateElement = document.createElement.bind(document);
+    document.createElement = vi.fn((tag) => {
+      if (tag === "video") return mockVideo;
+      return originalCreateElement(tag);
+    });
+
     render(<IntroVideoModal onComplete={vi.fn()} />);
     const playButton = screen.getByTestId("play-button");
     expect(playButton).toBeInTheDocument();
     expect(playButton).toHaveTextContent("▶");
+
+    document.createElement = originalCreateElement;
   });
 
   it("renders skip button", () => {

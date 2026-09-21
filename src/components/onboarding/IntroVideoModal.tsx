@@ -13,6 +13,21 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
   const prefersReducedMotion = typeof window !== "undefined" && typeof window.matchMedia === "function"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // Auto-play on mount (with fallback if blocked by browser)
+  useEffect(() => {
+    if (videoRef.current && !prefersReducedMotion) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Auto-play blocked by browser policy - user will tap to play
+          setIsPlaying(false);
+        });
+      } else {
+        setIsPlaying(true);
+      }
+    }
+  }, [prefersReducedMotion]);
+
   const handlePlay = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.muted = true;
@@ -87,6 +102,8 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
         preload="metadata"
         className="max-w-full max-h-full object-contain"
         onEnded={handleVideoEnd}
+        muted
+        playsInline
       />
       {!isPlaying && (
         <button
