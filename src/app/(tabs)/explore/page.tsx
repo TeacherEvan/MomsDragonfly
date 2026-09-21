@@ -14,10 +14,6 @@ import type { LeafletMapRef } from "@/components/map/LeafletMap";
 import { haversine } from "@/lib/utils/geo";
 import { getDeviceId } from "@/lib/utils/deviceId";
 
-// No hardcoded Bangkok default — uses actual device geolocation
-// When geo unavailable, shows empty-state prompt instead of fake location
-const DEFAULT_CENTER: [number, number] | null = null;
-
 type OnboardingStep = "splash" | "video" | "slides" | "done";
 
 export default function ExplorePage() {
@@ -124,7 +120,7 @@ export default function ExplorePage() {
     return result;
   }, [poisQuery, lat, lng, category]);
 
-  const mapCenter: [number, number] = lat && lng ? [lat, lng] : DEFAULT_CENTER || [0, 0];
+  const mapCenter = lat && lng ? [lat, lng] : null;
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-xl mx-auto">
@@ -154,11 +150,11 @@ export default function ExplorePage() {
             </div>
           )}
 
-          {!geoError ? (
+          {lat && lng && !geoError ? (
             <MapView
               ref={mapRef}
               pois={computedPois}
-              center={mapCenter}
+              center={mapCenter as [number, number]}
               onVerify={handleVerify}
             />
           ) : (

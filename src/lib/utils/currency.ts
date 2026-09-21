@@ -42,6 +42,7 @@ const LOCALE_CURRENCY_MAP: Record<string, string> = {
   "hi-IN": "INR",
   "bn-BD": "BDT",
   "ur-PK": "PKR",
+  "en-ZA": "ZAR",
 };
 
 /** Format an amount with its ISO 4217 currency code using locale-aware formatting. */
