@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('app loads with intro video and explore page', async ({ page }) => {
+test('app loads with splash screen and video intro', async ({ page }) => {
   const errors: string[] = [];
   page.on('console', msg => {
     if (msg.type() === 'error') {
@@ -11,7 +11,7 @@ test('app loads with intro video and explore page', async ({ page }) => {
     errors.push(err.message);
   });
 
-  // Clear localStorage to ensure intro shows
+  // Clear localStorage to ensure intro shows (on every launch)
   await page.goto('/');
   await page.evaluate(() => {
     localStorage.clear();
@@ -35,36 +35,46 @@ test('app loads with intro video and explore page', async ({ page }) => {
   
   await page.waitForTimeout(2000);
 
-  // Check for intro video component (welcome screen) - use more flexible selector
-  const introScreen = page.getByText('Welcome to Mom');
+  // Check for splash screen (welcome screen) - new SplashScreen component
+  const introScreen = page.locator('h1:has-text("Mom\'s Dragonfly")').first();
   await expect(introScreen).toBeVisible({ timeout: 15000 });
-  console.log('✓ Intro welcome screen found');
+  console.log('✓ Splash screen found');
 
-  // Check for play button
-  const playButton = page.locator('button[aria-label="Play introduction video"]');
+  // Check for dragonfly SVG (it has data-testid="dragonfly-silhouette" from SplashScreen)
+  const dragonfly = page.locator('[data-testid="dragonfly-silhouette"]').first();
+  await expect(dragonfly).toBeVisible();
+  console.log('✓ Dragonfly silhouette found');
+
+  // Tap splash to trigger video modal
+  await page.click('body');
+  await page.waitForTimeout(500);
+
+  // Check for video modal
+  const videoModal = page.locator('video[poster="/intro.jpg"]');
+  await expect(videoModal).toBeVisible({ timeout: 10000 });
+  console.log('✓ Video modal found');
+
+  // Check for play button in video modal
+  const playButton = page.locator('button:has-text("▶")').first();
   await expect(playButton).toBeVisible();
   console.log('✓ Play button found');
+
+  // Click play to start video
+  await playButton.click();
+  await page.waitForTimeout(1000);
+
+  // Check for skip button
+  const skipButton = page.locator('button:has-text("Skip")');
+  await expect(skipButton).toBeVisible();
+  console.log('✓ Skip button found');
+
+  // Skip the video
+  await skipButton.click();
+  await page.waitForTimeout(500);
 
   // Check for Explore heading
   await expect(page.getByRole('heading', { name: 'Explore' })).toBeVisible();
   console.log('✓ Explore heading found');
-
-  // Check for map container (may not render without location permission)
-  const mapContainer = page.locator('.leaflet-container');
-  if (await mapContainer.count() > 0) {
-    await expect(mapContainer.first()).toBeVisible();
-    console.log('✓ Map container found');
-  } else {
-    console.log('ℹ Map container not visible (needs location permission)');
-  }
-
-  // Check for POI list
-  const poiList = page.locator('[role="list"]');
-  if (await poiList.count() > 0) {
-    console.log('✓ POI list found');
-  } else {
-    console.log('ℹ POI list not found');
-  }
 
   // Check for bottom nav
   await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
