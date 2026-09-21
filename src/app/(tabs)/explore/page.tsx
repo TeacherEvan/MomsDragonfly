@@ -17,7 +17,8 @@ const DEFAULT_CENTER: [number, number] = [13.7563, 100.5018];
 export default function ExplorePage() {
   const { lat, lng, error: geoError } = useGeolocation();
   const [category, setCategory] = useState("all");
-  const [showVideoModal, setShowVideoModal] = useState(true);
+  const [showIntroImage, setShowIntroImage] = useState(true);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [lastFetchCategory, setLastFetchCategory] = useState<string | null>(null);
   const mapRef = useRef<LeafletMapRef>(null);
@@ -33,6 +34,11 @@ export default function ExplorePage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleIntroImageClick = () => {
+    setShowIntroImage(false);
+    setShowVideoModal(true);
+  };
 
   const handleVideoComplete = () => {
     setShowVideoModal(false);
@@ -59,7 +65,6 @@ export default function ExplorePage() {
 
   useEffect(() => {
     if (lat && lng) {
-      // Initial fetch when geolocation loads — always fetch restaurants for "all"
       const initialCat = category === "all" ? "restaurant" : category;
       if (initialCat !== "all" && initialCat !== lastFetchCategory) {
         fetchPoisForCategory(initialCat);
@@ -109,6 +114,24 @@ export default function ExplorePage() {
   return (
     <div className="flex flex-col gap-4 p-4 max-w-xl mx-auto">
       <h1 className="text-h1 font-bold text-dragonfly-navy-50">Explore</h1>
+      {mounted && showIntroImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/intro.jpg')" }}
+          onClick={handleIntroImageClick}
+          aria-label="Tap to play intro video"
+        >
+          <div className="relative z-10 flex flex-col items-center gap-4 text-center px-6">
+            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-dragonfly-gold-500/20 flex items-center justify-center">
+              <svg className="w-12 h-12 md:w-16 md:h-16 text-dragonfly-gold-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-dragonfly-navy-300 text-sm md:text-base">Tap to play intro</p>
+          </div>
+        </div>
+      )}
       {mounted && showVideoModal && <IntroVideoModal onComplete={handleVideoComplete} />}
 
       {geoError && (
@@ -150,10 +173,10 @@ export default function ExplorePage() {
 
       <div>
         <div className="flex items-center justify-between mb-1">
-          <h2 className="font-bold text-neutral-50 text-sm md:text-base">
+          <h2 className="font-bold text-dragonfly-navy-50 text-sm md:text-base">
             Nearby Places
           </h2>
-          <span className="text-caption text-neutral-500 font-medium">
+          <span className="text-caption text-dragonfly-navy-400 font-medium">
             {computedPois.length} discovered
           </span>
         </div>
