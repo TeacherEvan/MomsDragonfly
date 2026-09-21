@@ -10,7 +10,7 @@ export const poiQuery = query({
     return ctx.db
       .query("pois")
       .withIndex("by_deviceIds_category", (q) =>
-        q.eq("deviceIds", deviceId as any).eq("category", category)
+        q.eq("deviceIds", [deviceId] as any).eq("category", category)
       )
       .filter((q) => q.gt(q.field("fetchedAt"), cutoff))
       .collect();
@@ -49,7 +49,7 @@ export const recentFetchCheck = query({
     const recent = await ctx.db
       .query("pois")
       .withIndex("by_deviceIds_category", (q) =>
-        q.eq("deviceIds", deviceId as any).eq("category", category)
+        q.eq("deviceIds", [deviceId] as any).eq("category", category)
       )
       .filter((q) => q.gt(q.field("fetchedAt"), cutoff))
       .first();

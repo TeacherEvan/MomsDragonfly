@@ -52,15 +52,11 @@ export const upsertPOIs = mutation({
 
       const data: PoiInput = { ...poi, fetchedAt: now };
       if (existing) {
-        const deviceIds = existing.deviceIds ?? [];
-        if (!deviceIds.includes(deviceId)) {
-          await ctx.db.patch(existing._id, {
-            ...data,
-            deviceIds: [...deviceIds, deviceId],
-          });
-        } else {
-          await ctx.db.patch(existing._id, data);
-        }
+        // Replace deviceIds with current device to match query index
+        await ctx.db.patch(existing._id, {
+          ...data,
+          deviceIds: [deviceId],
+        });
       } else {
         await ctx.db.insert("pois", {
           ...data,

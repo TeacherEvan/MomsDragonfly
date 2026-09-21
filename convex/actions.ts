@@ -117,7 +117,7 @@ export const fetchNearby = action({
           locationRestriction: {
             circle: {
               center: { latitude: lat, longitude: lng },
-              radiusMeters: radius,
+              radius: radius,
             },
           },
         }),
