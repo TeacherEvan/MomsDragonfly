@@ -35,11 +35,11 @@ test('app loads with splash screen and video intro', async ({ page }) => {
   await page.waitForTimeout(2000);
 
   // Check for splash screen (welcome screen) - new SplashScreen component
-  const introScreen = page.locator('h1:has-text("Mom\'s Dragonfly")').first();
+  const introScreen = page.locator('[data-testid="splash-overlay"]').first();
   await expect(introScreen).toBeVisible({ timeout: 15000 });
   console.log('✓ Splash screen found');
 
-  // Check for dragonfly SVG (it has data-testid="dragonfly-silhouette" from SplashScreen)
+  // Check for dragonfly SVG (data-testid from SplashScreen)
   const dragonfly = page.locator('[data-testid="dragonfly-silhouette"]').first();
   await expect(dragonfly).toBeVisible();
   console.log('✓ Dragonfly silhouette found');
@@ -49,7 +49,7 @@ test('app loads with splash screen and video intro', async ({ page }) => {
   await page.waitForTimeout(500);
 
   // Check for video modal
-  const videoModal = page.locator('video[poster="/intro.jpg"]');
+  const videoModal = page.locator('[data-testid="video-modal-overlay"]').first();
   await expect(videoModal).toBeVisible({ timeout: 10000 });
   console.log('✓ Video modal found');
 
