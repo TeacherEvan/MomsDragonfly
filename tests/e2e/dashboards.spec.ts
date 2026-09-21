@@ -11,10 +11,13 @@ import { test, expect } from '@playwright/test';
      errors.push(err.message);
    });
  
-// Clear localStorage
+ // Clear localStorage and set intro as seen to skip onboarding
    await page.goto('/');
-   await page.evaluate(() => localStorage.clear());
-
+   await page.evaluate(() => {
+     localStorage.clear();
+     localStorage.setItem('mdf_intro_seen', Date.now().toString());
+   });
+ 
    const pages = [
      { url: '/explore', heading: 'Explore', isHeading: true },
      { url: '/budget', heading: 'Trip Budget Tracker', isHeading: false },
@@ -22,7 +25,7 @@ import { test, expect } from '@playwright/test';
      { url: '/tickets', heading: 'Tickets', isHeading: true },
      { url: '/settings', heading: 'Settings', isHeading: true },
    ];
-
+ 
    for (const { url, heading, isHeading } of pages) {
      console.log(`\nTesting ${url}...`);
      await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
@@ -78,4 +81,4 @@ import { test, expect } from '@playwright/test';
    expect(criticalErrors).toHaveLength(0);
    
    console.log('\n✅ All dashboard pages load correctly');
- });
+  });

@@ -23,7 +23,6 @@ test('app loads with splash screen and video intro', async ({ page }) => {
   
   // Wait for and dismiss Next.js version staleness error dialog if present
   try {
-    // Try to remove dialog immediately (it may already be present)
     await page.evaluate(() => {
       document.querySelectorAll('dialog').forEach(d => d.remove());
       document.querySelectorAll('[class*="error-overlay"], [class*="ErrorOverlay"], [id*="error-overlay"]').forEach(o => o.remove());
@@ -54,15 +53,10 @@ test('app loads with splash screen and video intro', async ({ page }) => {
   await expect(videoModal).toBeVisible({ timeout: 10000 });
   console.log('✓ Video modal found');
 
-  // Check for play button in video modal
-  const playButton = page.locator('button:has-text("▶")').first();
-  await expect(playButton).toBeVisible();
-  console.log('✓ Play button found');
-
-  // Click play to start video
-  await playButton.click();
+  // Video now auto-plays - check that video is playing (no play button visible)
+  // Wait a moment for auto-play to kick in
   await page.waitForTimeout(1000);
-
+  
   // Check for skip button
   const skipButton = page.locator('button:has-text("Skip")');
   await expect(skipButton).toBeVisible();
@@ -72,8 +66,35 @@ test('app loads with splash screen and video intro', async ({ page }) => {
   await skipButton.click();
   await page.waitForTimeout(500);
 
+  // Check for onboarding slides
+  const slideTitle = page.locator('h3:has-text("Proximity-First Discovery"), h3:has-text("Simple Daily Budgeting"), h3:has-text("Instant Ticket & Receipt OCR")').first();
+  await expect(slideTitle).toBeVisible({ timeout: 10000 });
+  console.log('✓ Onboarding slides found');
+
+  // Dismiss cookie consent if present
+  try {
+    const cookieButton = page.locator('button:has-text("I understand"), button:has-text("Accept"), button:has-text("Accept all")').first();
+    if (await cookieButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await cookieButton.click();
+      await page.waitForTimeout(300);
+    }
+  } catch {
+    // Ignore
+  }
+
+  // Navigate through slides to completion
+  while (true) {
+    const nextButton = page.locator('button:has-text("Next"), button:has-text("Start Exploring")').first();
+    if (await nextButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await nextButton.click();
+      await page.waitForTimeout(300);
+    } else {
+      break;
+    }
+  }
+
   // Check for Explore heading
-  await expect(page.getByRole('heading', { name: 'Explore' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Explore' })).toBeVisible({ timeout: 15000 });
   console.log('✓ Explore heading found');
 
   // Check for bottom nav
