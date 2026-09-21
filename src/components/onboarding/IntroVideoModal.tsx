@@ -13,6 +13,8 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [showExitAnimation, setShowExitAnimation] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
+  const hasPlayedRef = useRef(false);
   const prefersReducedMotion = typeof window !== "undefined" && typeof window.matchMedia === "function"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -28,6 +30,15 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
       });
     }
   }, [prefersReducedMotion]);
+
+  // If the video still hasn't started after 8s (slow/blocked network),
+  // offer a clear way to continue — never trap the user on a black screen.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!hasPlayedRef.current) setShowFallback(true);
+    }, 8000);
+    return () => clearTimeout(t);
+  }, []);
 
   // Entrance animation trigger
   const [mounted, setMounted] = useState(false);
@@ -48,6 +59,8 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
   }, []);
 
   const handlePlaying = useCallback(() => {
+    hasPlayedRef.current = true;
+    setShowFallback(false);
     setIsPlaying(true);
     setIsBuffering(false);
   }, []);
@@ -140,10 +153,11 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
         ref={videoRef}
         src="/Intro.mp4"
         poster="/intro.jpg"
-        preload="metadata"
+        preload="auto"
         className="max-w-full max-h-full object-contain"
         onEnded={handleVideoEnd}
         onPlaying={handlePlaying}
+        onError={() => setShowFallback(true)}
         onPause={handlePause}
         onWaiting={handleWaiting}
         muted
@@ -153,7 +167,7 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
         transition={{ duration: prefersReducedMotion ? 0.01 : 0.6, delay: 0.1, ease: "easeOut" }}
       />
       <AnimatePresence mode="wait">
-        {!isPlaying && (
+        {!isPlaying && !showFallback && (
           <motion.button
             data-testid="play-button"
             type="button"
@@ -203,6 +217,20 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
           </motion.button>
         )}
       </AnimatePresence>
+      {showFallback && (
+        <div className="fixed inset-x-0 bottom-8 z-10 flex flex-col items-center gap-3 px-6">
+          <p className="text-caption text-dragonfly-navy-300 bg-dragonfly-navy-900/90 border border-dragonfly-navy-700 rounded-xl px-4 py-2 text-center">
+            The video is slow to load — you can continue to the app.
+          </p>
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="px-5 py-2.5 rounded-full bg-dragonfly-gold-500 hover:bg-dragonfly-gold-400 text-dragonfly-navy-950 font-bold text-sm transition-colors duration-fast"
+          >
+            Continue
+          </button>
+        </div>
+      )}
       <motion.button
         data-testid="skip-button"
         type="button"

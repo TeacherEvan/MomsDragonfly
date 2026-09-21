@@ -1,76 +1,102 @@
-<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dragonfly-title">
+  <title id="dragonfly-title">Mom&apos;s Dragonfly</title>
   <defs>
-    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#319795" />
-      <stop offset="50%" stop-color="#2c7a7b" />
+    <linearGradient id="abdomenGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4fd1c5" />
+      <stop offset="45%" stop-color="#319795" />
       <stop offset="100%" stop-color="#285e61" />
     </linearGradient>
-    <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.4" />
-      <stop offset="50%" stop-color="#38b2ac" stop-opacity="0.3" />
-      <stop offset="100%" stop-color="#34d399" stop-opacity="0.2" />
+    <linearGradient id="thoraxGrad" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#38b2ac" />
+      <stop offset="100%" stop-color="#285e61" />
     </linearGradient>
-    <linearGradient id="eyeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="headGrad" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#4fd1c5" />
+      <stop offset="100%" stop-color="#2c7a7b" />
+    </linearGradient>
+    <linearGradient id="eyeGrad" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#fcd34d" />
+      <stop offset="100%" stop-color="#D4AF37" />
+    </linearGradient>
+    <linearGradient id="glintGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#fef3c7" />
       <stop offset="100%" stop-color="#fcd34d" />
     </linearGradient>
+    <linearGradient id="wingForeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.42" />
+      <stop offset="55%" stop-color="#4fd1c5" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#6ee7b7" stop-opacity="0.16" />
+    </linearGradient>
+    <linearGradient id="wingHindGrad" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6ee7b7" stop-opacity="0.34" />
+      <stop offset="50%" stop-color="#38b2ac" stop-opacity="0.26" />
+      <stop offset="100%" stop-color="#67e8f9" stop-opacity="0.16" />
+    </linearGradient>
+    <linearGradient id="wingEdgeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.75" />
+      <stop offset="50%" stop-color="#38b2ac" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#34d399" stop-opacity="0.55" />
+    </linearGradient>
+    <filter id="softGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="1.5" result="softGlow" />
+      <feMerge>
+        <feMergeNode in="softGlow" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <!-- left half of the mark, mirrored for symmetry -->
+    <g id="dragonfly-half">
+      <path d="M28.3 16.4 Q15.5 8.2 3.2 9.4 Q14.6 15.4 27.6 20 Z" fill="url(#wingForeGrad)" stroke="url(#wingEdgeGrad)" stroke-width="0.45" />
+      <path d="M28.4 21.2 Q16.4 18.2 7.1 23.2 Q16.2 28.2 27.7 25.4 Z" fill="url(#wingHindGrad)" stroke="url(#wingEdgeGrad)" stroke-width="0.45" />
+      <g fill="none" stroke="#a5f3fc" stroke-width="0.35" stroke-linecap="round" opacity="0.5">
+        <path d="M27.4 18.2 Q16 11.6 4.2 9.9" />
+        <path d="M20.8 13.6 20.2 16.2" />
+        <path d="M12.6 10.7 12.2 13.2" />
+        <path d="M27.2 23.2 Q16.5 21.4 8.2 23.2" />
+        <path d="M19.4 21.6 18.8 25" />
+      </g>
+      <ellipse cx="28.9" cy="10.6" rx="2.5" ry="2.9" fill="url(#eyeGrad)" transform="rotate(-16 28.9 10.6)" />
+      <ellipse cx="28.1" cy="9.4" rx="0.85" ry="1.05" fill="url(#glintGrad)" />
+      <path d="M30.8 7.4 C30.1 5.8 29.3 4.8 28.1 4.1" fill="none" stroke="#4fd1c5" stroke-width="0.8" stroke-linecap="round" opacity="0.75" />
+    </g>
   </defs>
 
-  <!-- Body segments -->
-  <ellipse cx="32" cy="48" rx="2" ry="3" fill="url(#bodyGrad)" />
-  <ellipse cx="32" cy="42" rx="2.5" ry="3" fill="url(#bodyGrad)" />
-  <ellipse cx="32" cy="36" rx="3" ry="3" fill="url(#bodyGrad)" />
-  <ellipse cx="32" cy="28" rx="4" ry="4" fill="url(#bodyGrad)" />
-  <ellipse cx="32" cy="20" rx="3.5" ry="3.5" fill="url(#bodyGrad)" />
-
-  <!-- Eyes -->
-  <ellipse cx="28" cy="18" rx="1.5" ry="1.5" fill="url(#eyeGrad)" />
-  <ellipse cx="36" cy="18" rx="1.5" ry="1.5" fill="url(#eyeGrad)" />
-  <ellipse cx="28" cy="18" rx="0.75" ry="0.75" fill="#102a43" />
-  <ellipse cx="36" cy="18" rx="0.75" ry="0.75" fill="#102a43" />
-
-  <!-- Upper wings -->
-  <g class="wing-animate">
-    <ellipse cx="12" cy="24" rx="8" ry="6" fill="url(#wingGrad)"
-      transform="rotate(-25 12 24)" stroke="#285e61" stroke-width="0.2" stroke-opacity="0.4" />
-    <ellipse cx="52" cy="24" rx="8" ry="6" fill="url(#wingGrad)"
-      transform="rotate(25 52 24)" stroke="#285e61" stroke-width="0.2" stroke-opacity="0.4" />
+  <g filter="url(#softGlow)">
+    <g class="wing-animate">
+      <use href="#dragonfly-half" />
+    </g>
+    <g class="wing-animate" style="animation-delay: 0.35s;">
+      <use href="#dragonfly-half" transform="translate(64 0) scale(-1 1)" />
+    </g>
   </g>
 
-  <!-- Lower wings -->
-  <g class="wing-animate" style="animation-delay: 0.3s;">
-    <ellipse cx="16" cy="34" rx="6" ry="4.5" fill="url(#wingGrad)"
-      transform="rotate(-35 16 34)" stroke="#285e61" stroke-width="0.2" stroke-opacity="0.4" />
-    <ellipse cx="48" cy="34" rx="6" ry="4.5" fill="url(#wingGrad)"
-      transform="rotate(35 48 34)" stroke="#285e61" stroke-width="0.2" stroke-opacity="0.4" />
+  <!-- abdomen: tapered teardrop with segment lines -->
+  <path d="M29.2 21.5 C27.6 26.5 27.5 34 28.6 41.5 C29.4 47 30.6 53.5 32 58.4 C33.4 53.5 34.6 47 35.4 41.5 C36.5 34 36.4 26.5 34.8 21.5 C34.1 20.1 29.9 20.1 29.2 21.5 Z" fill="url(#abdomenGrad)" />
+  <g fill="none" stroke="#102a43" stroke-width="0.5" stroke-linecap="round" opacity="0.42">
+    <path d="M28.3 28.5 Q32 29.7 35.7 28.5" />
+    <path d="M28.2 33 Q32 34.2 35.8 33" />
+    <path d="M28.35 37.5 Q32 38.7 35.65 37.5" />
+    <path d="M28.7 42 Q32 43.2 35.3 42" />
+    <path d="M29.6 46.5 Q32 47.7 34.4 46.5" />
+    <path d="M30.6 51 Q32 52 33.4 51" />
   </g>
 
-  <!-- Wing veins -->
-  <g stroke="#102a43" stroke-width="0.5" fill="none" opacity="0.6">
-    <line x1="26" y1="30" x2="20" y2="38" />
-    <line x1="38" y1="30" x2="44" y2="38" />
-    <line x1="25" y1="34" x2="22" y2="42" />
-    <line x1="39" y1="34" x2="42" y2="42" />
-  </g>
-
-  <!-- Antennae -->
-  <g stroke="#102a43" stroke-width="0.4" fill="none" stroke-linecap="round" opacity="0.6">
-    <path d="M30 16 Q26 10 28 6" />
-    <path d="M34 16 Q38 10 36 6" />
-  </g>
+  <!-- thorax + head -->
+  <path d="M32 13.2 C37.3 13.2 39.5 17.6 39.3 21.4 C39.1 24.9 36.7 26.8 32 26.8 C27.3 26.8 24.9 24.9 24.7 21.4 C24.5 17.6 26.7 13.2 32 13.2 Z" fill="url(#thoraxGrad)" />
+  <path d="M32 6.8 C35.1 6.8 36.8 8.9 36.6 11.4 C36.4 13.7 34.5 14.8 32 14.8 C29.5 14.8 27.6 13.7 27.4 11.4 C27.2 8.9 28.9 6.8 32 6.8 Z" fill="url(#headGrad)" />
 
   <style>
     .wing-animate {
       animation: wing-shimmer 2s ease-in-out infinite;
     }
     @keyframes wing-shimmer {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 0.6; }
+      0%, 100% { opacity: 0.72; }
+      50% { opacity: 1; }
     }
     @media (prefers-reduced-motion: reduce) {
       .wing-animate {
         animation: none;
-        opacity: 0.45;
+        opacity: 1;
       }
     }
   </style>

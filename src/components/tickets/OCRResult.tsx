@@ -9,6 +9,7 @@ interface OCRResultProps {
   currency: string;
   onRetryGemini: () => void;
   isRetrying?: boolean;
+  aiError?: string | null;
 }
 
 export function OCRResult({
@@ -19,6 +20,7 @@ export function OCRResult({
   currency,
   onRetryGemini,
   isRetrying,
+  aiError,
 }: OCRResultProps) {
   const hasData = parsedDate || parsedAmount || parsedVenue;
 
@@ -70,6 +72,9 @@ return (
           >
             {isRetrying ? "Analyzing with Gemini AI..." : "✨ Analyze with Gemini Vision"}
           </button>
+          {aiError && (
+            <p className="mt-2 text-[11px] text-dragonfly-rose-300">{aiError}</p>
+          )}
         </div>
       )}
 

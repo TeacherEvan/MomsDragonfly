@@ -45,4 +45,9 @@ export interface Ticket {
   parsedAmount?: number;
   parsedVenue?: string;
   createdAt: number;
+  /** Local-first extras */
+  localId?: string;
+  cloudId?: string;
+  pendingSync?: boolean;
+  enrichment?: "pending" | "done" | "failed";
 }

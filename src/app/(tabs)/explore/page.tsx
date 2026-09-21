@@ -5,6 +5,7 @@ import { api } from "@/app/providers";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { MapView } from "@/components/map/MapView";
 import { POIList } from "@/components/poi/POIList";
+import type { FetchPhase } from "@/components/poi/POIList";
 import { POIFilter } from "@/components/poi/POIFilter";
 import { IntroVideoModal } from "@/components/onboarding/IntroVideoModal";
 import { SplashScreen } from "@/components/onboarding/SplashScreen";
@@ -13,20 +14,25 @@ import type { NormalizedPOI } from "@/types";
 import type { LeafletMapRef } from "@/components/map/LeafletMap";
 import { haversine } from "@/lib/utils/geo";
 import { getDeviceId } from "@/lib/utils/deviceId";
+import { Icon } from "@/components/ui/Icon";
 
 type OnboardingStep = "splash" | "video" | "slides" | "done";
+
+/** Categories fetched in parallel on first load so "All" shows a rich mix. */
+const CORE_CATEGORIES = ["restaurant", "park", "attraction"] as const;
 
 export default function ExplorePage() {
   const { lat, lng, error: geoError } = useGeolocation();
   const [category, setCategory] = useState("all");
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("splash");
   const [mounted, setMounted] = useState(false);
-  const [lastFetchCategory, setLastFetchCategory] = useState<string | null>(null);
+  const [fetchPhases, setFetchPhases] = useState<Record<string, FetchPhase>>({});
   const mapRef = useRef<LeafletMapRef>(null);
+  const fetchedRef = useRef<Set<string>>(new Set());
   const deviceId = getDeviceId();
 
   const prefs = useQuery(api.queries.prefsQuery, { deviceId });
-  const poisQuery = useQuery(api.queries.poiQuery, { deviceId, category: category === "all" ? "restaurant" : category });
+  const poisQuery = useQuery(api.queries.poiQuery, { deviceId, category });
   const fetchNearbyAct = useAction(api.actions.fetchNearby);
   const fetchOverpassAct = useAction(api.actions.fetchOverpassNearby);
   const fetchEntertainmentAct = useAction(api.actions.fetchEntertainment);
@@ -34,17 +40,17 @@ export default function ExplorePage() {
 
   useEffect(() => {
     setMounted(true);
-    // Check if intro has been seen before
-    if (typeof window !== "undefined") {
-      const seen = localStorage.getItem("mdf_intro_seen");
-      if (seen) {
-        setOnboardingStep("done");
-      }
+    if (typeof window !== "undefined" && localStorage.getItem("mdf_intro_seen")) {
+      setOnboardingStep("done");
     }
   }, []);
 
   const handleSplashComplete = () => {
-    setOnboardingStep("video");
+    // The splash shows on every cold start; the full intro (video + slides)
+    // only plays the first time — after that, straight into the app.
+    const seen =
+      typeof window !== "undefined" && localStorage.getItem("mdf_intro_seen");
+    setOnboardingStep(seen ? "done" : "video");
   };
 
   const handleVideoComplete = () => {
@@ -58,40 +64,69 @@ export default function ExplorePage() {
     setOnboardingStep("done");
   };
 
-  const fetchPoisForCategory = useCallback(async (cat: string) => {
-    if (!lat || !lng || cat === "all") return;
-    if (lastFetchCategory === cat) return;
-    setLastFetchCategory(cat);
-
-    const radius = prefs?.defaultRadius ?? 1000;
-
-    if (cat === "entertainment") {
-      await fetchEntertainmentAct({ deviceId, lat, lng, radius });
-    } else if (["toilets", "pharmacy", "park"].includes(cat)) {
-      await fetchOverpassAct({ deviceId, lat, lng, radius });
-    } else {
-      await fetchNearbyAct({ deviceId, lat, lng, radius, category: cat });
-    }
-  }, [lat, lng, lastFetchCategory, deviceId, prefs?.defaultRadius, fetchEntertainmentAct, fetchOverpassAct, fetchNearbyAct]);
-
-  useEffect(() => {
-    if (lat && lng) {
-      const initialCat = category === "all" ? "restaurant" : category;
-      if (initialCat !== "all" && initialCat !== lastFetchCategory) {
-        fetchPoisForCategory(initialCat);
+  const fetchPoisForCategory = useCallback(
+    async (cat: string, force = false) => {
+      if (!lat || !lng || cat === "all") return;
+      if (!force && fetchedRef.current.has(cat)) return;
+      setFetchPhases((s) => ({ ...s, [cat]: "loading" }));
+      const radius = prefs?.defaultRadius ?? 1000;
+      try {
+        let result: { count?: number; mock?: boolean; cached?: boolean } | undefined;
+        if (cat === "toilets") {
+          result = await fetchOverpassAct({ deviceId, lat, lng, radius });
+        } else if (cat === "entertainment") {
+          result = await fetchEntertainmentAct({ deviceId, lat, lng, radius });
+        } else {
+          result = await fetchNearbyAct({ deviceId, lat, lng, radius, category: cat });
+        }
+        fetchedRef.current.add(cat);
+        const empty = result?.mock === true || result?.count === 0;
+        setFetchPhases((s) => ({ ...s, [cat]: empty ? "empty" : "ready" }));
+      } catch (err) {
+        console.warn("POI fetch failed:", cat, err);
+        setFetchPhases((s) => ({ ...s, [cat]: "error" }));
       }
-    }
-  }, [lat, lng, category, fetchPoisForCategory, lastFetchCategory]);
+    },
+    [
+      lat,
+      lng,
+      deviceId,
+      prefs?.defaultRadius,
+      fetchNearbyAct,
+      fetchOverpassAct,
+      fetchEntertainmentAct,
+    ]
+  );
 
+  // Initial rich load: core categories in parallel
+  useEffect(() => {
+    if (!lat || !lng) return;
+    CORE_CATEGORIES.forEach((c) => {
+      void fetchPoisForCategory(c);
+    });
+  }, [lat, lng, fetchPoisForCategory]);
+
+  // Fetch when the user selects a category
   useEffect(() => {
     if (category !== "all" && lat && lng) {
-      fetchPoisForCategory(category);
+      void fetchPoisForCategory(category);
     }
   }, [category, lat, lng, fetchPoisForCategory]);
 
-  const handleVerify = useCallback((placeId: string) => {
-    verifyPOIMut({ placeId, deviceId });
-  }, [verifyPOIMut, deviceId]);
+  const handleRetry = useCallback(() => {
+    if (category === "all") {
+      CORE_CATEGORIES.forEach((c) => void fetchPoisForCategory(c, true));
+    } else {
+      void fetchPoisForCategory(category, true);
+    }
+  }, [category, fetchPoisForCategory]);
+
+  const handleVerify = useCallback(
+    (placeId: string) => {
+      verifyPOIMut({ placeId, deviceId });
+    },
+    [verifyPOIMut, deviceId]
+  );
 
   const handleShowOnMap = useCallback((poi: NormalizedPOI) => {
     mapRef.current?.panToPOI(poi);
@@ -103,8 +138,23 @@ export default function ExplorePage() {
   }
 
   const computedPois = useMemo(() => {
-    const rawPois = (poisQuery ?? []) as Array<{ _id: string; placeId: string; source: "google" | "osm" | "brave"; name: string; category: string; lat: number; lng: number; address?: string; rating?: number; phone?: string; openNow?: boolean; verifiedCount: number; fetchedAt: number; deviceIds: string[] }>;
-    const result = rawPois
+    const rawPois = (poisQuery ?? []) as Array<{
+      _id: string;
+      placeId: string;
+      source: "google" | "osm" | "brave";
+      name: string;
+      category: string;
+      lat: number;
+      lng: number;
+      address?: string;
+      rating?: number;
+      phone?: string;
+      openNow?: boolean;
+      verifiedCount: number;
+      fetchedAt: number;
+      deviceIds: string[];
+    }>;
+    return rawPois
       .map((p): ComputedPOI => {
         if (lat && lng) {
           return {
@@ -117,10 +167,10 @@ export default function ExplorePage() {
       })
       .filter((p) => (category === "all" ? true : p.category === category))
       .sort((a, b) => (a.distanceMetres ?? 0) - (b.distanceMetres ?? 0));
-    return result;
   }, [poisQuery, lat, lng, category]);
 
   const mapCenter = lat && lng ? [lat, lng] : null;
+  const activePhase: FetchPhase = fetchPhases[category] ?? "idle";
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-xl mx-auto">
@@ -145,7 +195,10 @@ export default function ExplorePage() {
 
           {geoError && (
             <div className="p-3 bg-dragonfly-gold-500/15 border border-dragonfly-gold-500/30 rounded-xl text-caption text-dragonfly-gold-400 flex items-center justify-between">
-              <span>⚠️ {geoError}</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Icon name="alert" size={16} className="text-dragonfly-gold-400" />
+                {geoError}
+              </span>
               <span className="font-semibold underline">Using default area</span>
             </div>
           )}
@@ -159,7 +212,9 @@ export default function ExplorePage() {
             />
           ) : (
             <div className="w-full h-64 md:h-80 rounded-xl overflow-hidden shadow-strong border border-dragonfly-navy-700 bg-dragonfly-navy-900/80 flex flex-col items-center justify-center text-center px-6">
-              <span className="text-4xl mb-3" aria-hidden="true">🗺️</span>
+              <span className="mb-3 text-dragonfly-navy-500" aria-hidden="true">
+                <Icon name="map-pin" size={40} />
+              </span>
               <p className="font-semibold text-dragonfly-navy-300 mb-2">Map unavailable</p>
               <p className="text-sm text-dragonfly-navy-500 mb-4 max-w-xs">
                 Enable location access to see nearby places on the map, or use the list below.
@@ -169,7 +224,10 @@ export default function ExplorePage() {
                   if (typeof window !== "undefined" && navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                       () => window.location.reload(),
-                      () => alert("Location permission still denied. Enable in browser settings to use the map.")
+                      () =>
+                        alert(
+                          "Location permission still denied. Enable in browser settings to use the map."
+                        )
                     );
                   }
                 }}
@@ -197,6 +255,8 @@ export default function ExplorePage() {
             onVerify={handleVerify}
             onShowOnMap={handleShowOnMap}
             category={category}
+            phase={activePhase}
+            onRetry={handleRetry}
           />
         </>
       )}

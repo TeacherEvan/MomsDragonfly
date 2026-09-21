@@ -3,13 +3,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
+import { Icon, type IconName } from "@/components/ui/Icon";
 
-const tabs = [
-  { href: "/explore", label: "Explore", icon: "🗺️" },
-  { href: "/budget", label: "Budget", icon: "💰" },
-  { href: "/reminders", label: "Reminders", icon: "🔔" },
-  { href: "/tickets", label: "Tickets", icon: "🎟️" },
-] as const;
+const tabs: ReadonlyArray<{ href: string; label: string; icon: IconName }> = [
+  { href: "/explore", label: "Explore", icon: "compass" },
+  { href: "/budget", label: "Budget", icon: "wallet" },
+  { href: "/reminders", label: "Reminders", icon: "bell" },
+  { href: "/tickets", label: "Tickets", icon: "ticket" },
+];
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -57,8 +58,8 @@ export function BottomNav() {
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleTabClick(index); }}
                 >
-                  <span className="text-xl mb-0.5 relative z-10" aria-hidden="true">
-                    {icon}
+                  <span className="mb-0.5 relative z-10">
+                    <Icon name={icon} size={22} strokeWidth={isActive ? 2.1 : 1.75} />
                   </span>
                   <span className="relative z-10">{label}</span>
                 </motion.div>

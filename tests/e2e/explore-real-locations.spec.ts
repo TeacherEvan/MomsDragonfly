@@ -16,8 +16,10 @@ test('explore page loads real locations — food, parks, health, stay (user goal
     console.log('PAGE ERROR:', err.message);
   });
 
+  // Skip onboarding by setting the seen flag before navigation
+  await page.addInitScript(() => localStorage.setItem('mdf_intro_seen', Date.now().toString()));
+
   await page.goto('/explore', { waitUntil: 'networkidle', timeout: 30000 });
-  await page.waitForTimeout(3000);
 
   // Verify the app loaded (not a blank page / error)
   await expect(page.getByRole('heading', { name: 'Explore' })).toBeVisible({ timeout: 15000 });

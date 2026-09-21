@@ -1,5 +1,6 @@
-// Simple service worker for Mom's Dragonfly PWA
-const CACHE_NAME = 'moms-dragonfly-v1';
+// Service worker for Mom's Dragonfly PWA
+const CACHE_NAME = 'moms-dragonfly-v2';
+const MEDIA_CACHE = 'moms-dragonfly-media-v1';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache on install
@@ -10,6 +11,7 @@ const PRECACHE_URLS = [
   '/reminders',
   '/tickets',
   OFFLINE_URL,
+  '/intro.jpg',
 ];
 
 // Install event - precache static assets
@@ -28,7 +30,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME)
+          .filter((name) => name !== CACHE_NAME && name !== MEDIA_CACHE)
           .map((name) => caches.delete(name))
       );
     })
@@ -36,7 +38,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - network first for HTML, cache first for static assets
+// Fetch event
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -47,10 +49,38 @@ self.addEventListener('fetch', (event) => {
   // Skip chrome-extension and other non-http(s) requests
   if (!url.protocol.startsWith('http')) return;
 
+  // Intro media (splash video): cache-first so it plays instantly and
+  // reliably — even on flaky connections or offline after first view.
+  if (request.destination === 'video' || url.pathname === '/Intro.mp4') {
+    event.respondWith(
+      caches.open(MEDIA_CACHE).then(async (cache) => {
+        const cached = await cache.match(request, { ignoreSearch: true });
+        if (cached) return cached;
+        try {
+          const response = await fetch(request);
+          if (
+            response &&
+            response.status === 200 &&
+            (response.type === 'basic' || response.type === 'cors')
+          ) {
+            cache.put(request, response.clone());
+          }
+          return response;
+        } catch (err) {
+          const fallback = await cache.match(request, { ignoreSearch: true });
+          return fallback || Response.error();
+        }
+      })
+    );
+    return;
+  }
+
   // Handle navigation requests (HTML pages)
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match(OFFLINE_URL))
+      fetch(request).catch(() =>
+        caches.match(OFFLINE_URL).then((cached) => cached || Response.error())
+      )
     );
     return;
   }
@@ -66,27 +96,33 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
-        return fetch(request).then((response) => {
-          // Don't cache opaque responses
-          if (!response || response.status !== 200 || response.type !== 'basic') {
+        return fetch(request)
+          .then((response) => {
+            // Don't cache opaque responses
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseToCache);
+            });
             return response;
-          }
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
+          })
+          .catch(async (err) => {
+            console.warn('SW asset fetch failed:', request.url, err);
+            const fallback = await caches.match(request);
+            return fallback || Response.error();
           });
-          return response;
-        }).catch((err) => {
-          console.warn('SW tile fetch failed:', request.url, err);
-          return caches.match(request).then((cached) => cached || new Response('', { status: 404, statusText: 'Network Error' }));
-        });
       })
     );
     return;
   }
 
-  // Default: network first
+  // Default: network first, fall back to cache — never resolve to undefined
   event.respondWith(
-    fetch(request).catch(() => caches.match(request))
+    fetch(request).catch(async () => {
+      const cached = await caches.match(request);
+      return cached || Response.error();
+    })
   );
 });

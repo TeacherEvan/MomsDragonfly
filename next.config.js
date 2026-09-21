@@ -38,17 +38,14 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // Long-lived caching for self-hosted OCR assets (worker, wasm, langdata)
+        source: "/tesseract/:file*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
     ];
-  },
-  webpack: (config, { isServer, dev }) => {
-    if (!isServer && !dev) {
-      // In production, replace tesseract.js with mock to prevent bundling issues
-      config.resolve = config.resolve || {};
-      config.resolve.alias = config.resolve.alias || {};
-      const path = require("path");
-      config.resolve.alias["tesseract.js"] = path.resolve(__dirname, "src/lib/tickets/tesseract-mock.js");
-    }
-    return config;
   },
 };
 

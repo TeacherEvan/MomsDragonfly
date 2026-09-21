@@ -24,7 +24,7 @@
   }
 
   html {
-    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    font-family: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
     background-color: var(--color-bg);
     color: var(--color-text);
     -webkit-font-smoothing: antialiased;
@@ -118,4 +118,37 @@ html.elderly {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ── Premium surface & text utilities ─────────────────────────────── */
+.glass-panel {
+  background: linear-gradient(160deg, rgba(36, 59, 83, 0.5), rgba(6, 20, 22, 0.78));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(159, 179, 200, 0.14);
+}
+
+.text-iridescent {
+  background-image: linear-gradient(92deg, #67e8f9 0%, #4fd1c5 40%, #34d399 75%, #fcd34d 100%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: iridescent-shift 6s ease-in-out infinite;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.card-hover {
+  transition: border-color 150ms ease, box-shadow 250ms ease, transform 150ms ease;
+}
+.card-hover:hover {
+  border-color: rgba(79, 209, 197, 0.45);
+  box-shadow: 0 6px 24px rgba(6, 182, 212, 0.12);
 }

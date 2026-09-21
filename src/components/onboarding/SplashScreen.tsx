@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
 import { ParticleCanvas } from "@/components/ui/ParticleCanvas";
@@ -12,6 +12,18 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [takeOff, setTakeOff] = useState(false);
   const prefersReducedMotion = typeof window !== "undefined" && typeof window.matchMedia === "function"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Warm the intro video while the splash is visible so it plays instantly
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (!document.querySelector('link[rel="preload"][href="/Intro.mp4"]')) {
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "video";
+      link.href = "/Intro.mp4";
+      document.head.appendChild(link);
+    }
+  }, []);
 
   const handleClick = () => {
     if (prefersReducedMotion) {
@@ -41,6 +53,16 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-60"
         style={{ backgroundImage: "url('/intro.jpg')" }}
         aria-hidden="true"
+      />
+      {/* Hidden preloader — buffers the intro video during the splash */}
+      <video
+        src="/Intro.mp4"
+        preload="auto"
+        muted
+        playsInline
+        aria-hidden="true"
+        tabIndex={-1}
+        className="pointer-events-none fixed h-px w-px opacity-0"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-dragonfly-navy-950/80 via-dragonfly-navy-950/40 to-dragonfly-navy-950/90" />
       <ParticleCanvas 

@@ -6,18 +6,40 @@ export interface OCRResult {
 }
 
 /**
- * Runs Tesseract.js OCR on the provided image blob.
- * Uses a wrapper that conditionally loads tesseract.js in development
- * and returns a mock in production to avoid bundling issues.
+ * Runs Tesseract.js OCR fully offline.
+ *
+ * All assets are self-hosted under /public/tesseract (worker, wasm core,
+ * eng language data) so no CDN access is required — works offline and
+ * complies with the app's Content-Security-Policy.
+ *
+ * The worker is created lazily on first use and reused afterwards.
  */
+
+let workerPromise: Promise<import("tesseract.js").Worker> | null = null;
+
+function getWorker(): Promise<import("tesseract.js").Worker> {
+  if (!workerPromise) {
+    workerPromise = (async () => {
+      const { createWorker } = await import("tesseract.js");
+      return createWorker("eng", 1, {
+        workerPath: "/tesseract/worker.min.js",
+        corePath: "/tesseract",
+        langPath: "/tesseract",
+        errorHandler: (err: unknown) => console.warn("tesseract worker error", err),
+      });
+    })().catch((err) => {
+      // Allow retry on next call if worker creation failed
+      workerPromise = null;
+      throw err;
+    });
+  }
+  return workerPromise;
+}
+
 export async function runTesseract(imageBlob: Blob): Promise<OCRResult> {
   try {
-    const tesseractWrapper = await import("./tesseract-wrapper");
-    const Tesseract = await tesseractWrapper.loadTesseract();
-    const { data } = await Tesseract.recognize(imageBlob, "eng", {
-      logger: () => {},
-    });
-
+    const worker = await getWorker();
+    const { data } = await worker.recognize(imageBlob);
     return {
       text: data.text || "",
       confidence: data.confidence || 0,
@@ -29,9 +51,4 @@ export async function runTesseract(imageBlob: Blob): Promise<OCRResult> {
       confidence: 0,
     };
   }
-}
-
-export interface OCRResult {
-  text: string;
-  confidence: number;
 }

@@ -3,7 +3,98 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 
-/** Fetches public toilets + parks from OpenStreetMap Overpass API */
+/* ────────────────────────────────────────────────────────────────────────────
+ * Overpass (OSM) helpers
+ * overpass-api.de rejects POST from some networks with 406 (verified live),
+ * while GET works. A fallback chain keeps OSM data flowing when an endpoint
+ * is rate-limited, blocked, or slow.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+const OVERPASS_ENDPOINTS: Array<{ url: string; method: "GET" | "POST" }> = [
+  { url: "https://overpass-api.de/api/interpreter", method: "GET" },
+  { url: "https://maps.mail.ru/osm/tools/overpass/api/interpreter", method: "POST" },
+  { url: "https://overpass.kumi.systems/api/interpreter", method: "GET" },
+];
+
+interface OverpassElement {
+  id: number;
+  lat: number;
+  lon: number;
+  tags?: Record<string, string>;
+}
+
+async function fetchOverpass(query: string): Promise<OverpassElement[]> {
+  let lastError: unknown = null;
+
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25_000);
+    try {
+      const res = await fetch(
+        endpoint.method === "GET"
+          ? `${endpoint.url}?data=${encodeURIComponent(query)}`
+          : endpoint.url,
+        {
+          method: endpoint.method,
+          headers: {
+            "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)",
+            ...(endpoint.method === "POST"
+              ? { "Content-Type": "application/x-www-form-urlencoded" }
+              : {}),
+          },
+          body:
+            endpoint.method === "POST"
+              ? `data=${encodeURIComponent(query)}`
+              : undefined,
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        lastError = new Error(`Overpass ${res.status} from ${endpoint.url}`);
+        console.warn("Overpass endpoint non-OK:", endpoint.url, res.status);
+        continue;
+      }
+
+      const data = await res.json();
+      return (data.elements ?? []) as OverpassElement[];
+    } catch (err) {
+      clearTimeout(timeoutId);
+      lastError = err;
+      console.warn("Overpass endpoint error:", endpoint.url, String(err).slice(0, 200));
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Overpass unreachable");
+}
+
+/** Builds an Overpass fallback query for a UI category (null when no good OSM equivalent). */
+function overpassFallbackQuery(
+  category: string,
+  radius: number,
+  lat: number,
+  lng: number
+): string | null {
+  const selectors: Record<string, string[]> = {
+    park: ['node["leisure"="park"]'],
+    pharmacy: ['node["amenity"="pharmacy"]'],
+    attraction: ['node["tourism"~"attraction|museum|viewpoint"]'],
+    entertainment: ['node["amenity"~"theatre|cinema|nightclub"]'],
+    toilets: ['node["amenity"="toilets"]'],
+  };
+  const sels = selectors[category];
+  if (!sels) return null;
+  return `[out:json][timeout:25];(${sels
+    .map((s) => `${s}(around:${radius},${lat},${lng});`)
+    .join("")});out body 20;`;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * fetchOverpassNearby — toilets + parks + pharmacy straight from OSM.
+ * Used for restrooms (no good Google type) and as a fallback path.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 export const fetchOverpassNearby = action({
   args: {
     deviceId: v.string(),
@@ -23,27 +114,7 @@ export const fetchOverpassNearby = action({
     `;
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10_000);
-
-      const res = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST",
-        body: `data=${encodeURIComponent(query)}`,
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!res.ok) throw new Error(`Overpass error: ${res.status}`);
-      const data = await res.json();
-
-      const elements: Array<{
-        id: number;
-        lat: number;
-        lon: number;
-        tags?: Record<string, string>;
-      }> = data.elements ?? [];
+      const elements = await fetchOverpass(query);
 
       await ctx.runMutation(api.mutations.upsertPOIs, {
         deviceId,
@@ -61,11 +132,23 @@ export const fetchOverpassNearby = action({
 
       return { count: elements.length };
     } catch (err) {
-      console.warn("Overpass fetch failed, returning 0", err);
+      console.warn("Overpass fetch failed:", String(err).slice(0, 200));
       return { count: 0 };
     }
   },
 });
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * fetchNearby — Google Places first (valid type mapping!), Overpass fallback.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+const GOOGLE_TYPES: Record<string, string[]> = {
+  restaurant: ["restaurant", "cafe"],
+  attraction: ["tourist_attraction"],
+  park: ["park"],
+  pharmacy: ["pharmacy"],
+  entertainment: ["movie_theater", "night_club", "performing_arts_theater"],
+};
 
 interface GooglePlace {
   id: string;
@@ -75,6 +158,61 @@ interface GooglePlace {
   currentOpeningHours?: { openNow?: boolean };
   formattedAddress?: string;
   internationalPhoneNumber?: string;
+}
+
+/** Sparse categories need a wider net to find anything. */
+function effectiveRadius(category: string, radius: number): number {
+  return category === "park" || category === "attraction"
+    ? Math.max(radius, 2500)
+    : radius;
+}
+
+async function fetchGooglePlaces(
+  key: string,
+  category: string,
+  lat: number,
+  lng: number,
+  radius: number
+): Promise<GooglePlace[]> {
+  const types = GOOGLE_TYPES[category];
+  if (!types) return [];
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12_000);
+  try {
+    const res = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask":
+          "places.id,places.displayName,places.location,places.rating,places.currentOpeningHours,places.formattedAddress,places.internationalPhoneNumber",
+      },
+      body: JSON.stringify({
+        includedTypes: types,
+        maxResultCount: 20,
+        locationRestriction: {
+          circle: {
+            center: { latitude: lat, longitude: lng },
+            radius,
+          },
+        },
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`Google Places ${res.status}: ${body.slice(0, 160)}`);
+    }
+
+    const data = await res.json();
+    return (data.places ?? []) as GooglePlace[];
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
 }
 
 export const fetchNearby = action({
@@ -93,71 +231,77 @@ export const fetchNearby = action({
     });
     if (recent) return { cached: true };
 
+    const radiusToUse = effectiveRadius(category, radius);
     const key = process.env.GOOGLE_PLACES_API_KEY;
-    if (!key) {
-      console.warn("GOOGLE_PLACES_API_KEY not set — using offline/mock places");
-      return { cached: false, mock: true };
-    }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10_000);
-
-    try {
-      const res = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": key,
-          "X-Goog-FieldMask":
-            "places.id,places.displayName,places.location,places.rating,places.currentOpeningHours,places.formattedAddress,places.internationalPhoneNumber",
-        },
-        body: JSON.stringify({
-          includedTypes: [category],
-          maxResultCount: 20,
-          locationRestriction: {
-            circle: {
-              center: { latitude: lat, longitude: lng },
-              radius: radius,
-            },
-          },
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!res.ok) {
-        throw new Error(`Google Places API error: ${res.status} ${res.statusText}`);
+    // 1) Google Places (correct type mapping)
+    if (key && GOOGLE_TYPES[category]) {
+      try {
+        const places = await fetchGooglePlaces(key, category, lat, lng, radiusToUse);
+        if (places.length > 0) {
+          await ctx.runMutation(api.mutations.upsertPOIs, {
+            deviceId,
+            pois: places.map((p) => ({
+              placeId: p.id,
+              source: "google" as const,
+              name: p.displayName?.text ?? "Unknown",
+              category,
+              lat: p.location?.latitude ?? 0,
+              lng: p.location?.longitude ?? 0,
+              address: p.formattedAddress,
+              rating: p.rating,
+              phone: p.internationalPhoneNumber,
+              openNow: p.currentOpeningHours?.openNow,
+              verifiedCount: 0,
+              fetchedAt: Date.now(),
+            })),
+          });
+          return { cached: false, source: "google" as const, count: places.length };
+        }
+        console.warn("Google returned 0 results, trying Overpass fallback:", category);
+      } catch (err) {
+        console.warn("Google Places failed, trying Overpass fallback:", String(err).slice(0, 220));
       }
-
-      const data = await res.json();
-
-      await ctx.runMutation(api.mutations.upsertPOIs, {
-        deviceId,
-        pois: (data.places ?? []).map((p: GooglePlace) => ({
-          placeId: p.id,
-          source: "google" as const,
-          name: p.displayName?.text ?? "Unknown",
-          category,
-          lat: p.location?.latitude ?? 0,
-          lng: p.location?.longitude ?? 0,
-          address: p.formattedAddress,
-          rating: p.rating,
-          phone: p.internationalPhoneNumber,
-          openNow: p.currentOpeningHours?.openNow,
-          verifiedCount: 0,
-          fetchedAt: Date.now(),
-        })),
-      });
-
-      return { cached: false };
-    } catch (err) {
-      clearTimeout(timeoutId);
-      console.warn("fetchNearby failed — returning graceful fallback:", err);
-      return { cached: false, mock: true };
+    } else if (!key) {
+      console.warn("GOOGLE_PLACES_API_KEY not set — trying Overpass only");
     }
+
+    // 2) Overpass fallback
+    const fallbackQuery = overpassFallbackQuery(category, radiusToUse, lat, lng);
+    if (fallbackQuery) {
+      try {
+        const elements = await fetchOverpass(fallbackQuery);
+        await ctx.runMutation(api.mutations.upsertPOIs, {
+          deviceId,
+          pois: elements.map((el) => ({
+            placeId: `osm:${el.id}`,
+            source: "osm" as const,
+            name:
+              el.tags?.name ??
+              el.tags?.tourism ??
+              el.tags?.amenity ??
+              el.tags?.leisure ??
+              "Place",
+            category,
+            lat: el.lat,
+            lng: el.lon,
+            verifiedCount: 0,
+            fetchedAt: Date.now(),
+          })),
+        });
+        return { cached: false, source: "osm" as const, count: elements.length };
+      } catch (err) {
+        console.warn("Overpass fallback failed:", String(err).slice(0, 200));
+      }
+    }
+
+    return { cached: false, mock: true };
   },
 });
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * fetchEntertainment — Brave → Google → Overpass chain.
+ * ──────────────────────────────────────────────────────────────────────────── */
 
 interface BraveResult {
   id: string;
@@ -166,17 +310,6 @@ interface BraveResult {
   address?: { street_address: string };
 }
 
-interface OverpassElement {
-  id: number;
-  lat: number;
-  lon: number;
-  tags?: Record<string, string>;
-}
-
-/**
- * Fetches entertainment events nearby.
- * Uses Brave Search API if key is available, else falls back to Overpass.
- */
 export const fetchEntertainment = action({
   args: {
     deviceId: v.string(),
@@ -185,8 +318,8 @@ export const fetchEntertainment = action({
     radius: v.number(),
   },
   handler: async (ctx, { deviceId, lat, lng, radius }) => {
+    // 1) Brave Search (free tier) — optional
     const braveKey = process.env.BRAVE_SEARCH_API_KEY;
-
     if (braveKey) {
       try {
         const controller = new AbortController();
@@ -199,82 +332,97 @@ export const fetchEntertainment = action({
             signal: controller.signal,
           }
         );
-
         clearTimeout(timeoutId);
 
         if (res.ok) {
           const data = await res.json();
           const results: BraveResult[] = data.results ?? [];
+          if (results.length > 0) {
+            await ctx.runMutation(api.mutations.upsertPOIs, {
+              deviceId,
+              pois: results.map((r) => ({
+                placeId: `brave:${r.id}`,
+                source: "brave" as const,
+                name: r.name,
+                category: "entertainment",
+                lat: r.coordinates?.lat ?? lat,
+                lng: r.coordinates?.lon ?? lng,
+                address: r.address?.street_address,
+                verifiedCount: 0,
+                fetchedAt: Date.now(),
+              })),
+            });
+            return { count: results.length, source: "brave" as const };
+          }
+        } else {
+          console.warn("Brave search non-OK:", res.status);
+        }
+      } catch (err) {
+        console.warn("Brave search failed:", String(err).slice(0, 200));
+      }
+    }
 
+    // 2) Google Places fallback
+    const key = process.env.GOOGLE_PLACES_API_KEY;
+    if (key) {
+      try {
+        const places = await fetchGooglePlaces(key, "entertainment", lat, lng, radius);
+        if (places.length > 0) {
           await ctx.runMutation(api.mutations.upsertPOIs, {
             deviceId,
-            pois: results.map((r) => ({
-              placeId: `brave:${r.id}`,
-              source: "brave" as const,
-              name: r.name,
+            pois: places.map((p) => ({
+              placeId: p.id,
+              source: "google" as const,
+              name: p.displayName?.text ?? "Unknown",
               category: "entertainment",
-              lat: r.coordinates?.lat ?? lat,
-              lng: r.coordinates?.lon ?? lng,
-              address: r.address?.street_address,
+              lat: p.location?.latitude ?? 0,
+              lng: p.location?.longitude ?? 0,
+              address: p.formattedAddress,
+              rating: p.rating,
+              phone: p.internationalPhoneNumber,
+              openNow: p.currentOpeningHours?.openNow,
               verifiedCount: 0,
               fetchedAt: Date.now(),
             })),
           });
-          return { count: results.length };
+          return { count: places.length, source: "google" as const };
         }
       } catch (err) {
-        console.warn("Brave search failed, falling back to Overpass", err);
+        console.warn("Google entertainment fallback failed:", String(err).slice(0, 200));
       }
     }
 
-    // Fallback: Overpass theaters + cinemas
-    const q = `
-      [out:json][timeout:25];
-      (
-        node["amenity"="theatre"](around:${radius},${lat},${lng});
-        node["amenity"="cinema"](around:${radius},${lat},${lng});
-        node["amenity"="nightclub"](around:${radius},${lat},${lng});
-      );
-      out body 20;
-    `;
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10_000);
-
-      const res = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST",
-        body: `data=${encodeURIComponent(q)}`,
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!res.ok) throw new Error(`Overpass fallback error: ${res.status}`);
-      const data = await res.json();
-      const elements: OverpassElement[] = data.elements ?? [];
-
-      await ctx.runMutation(api.mutations.upsertPOIs, {
-        deviceId,
-        pois: elements.map((el) => ({
-          placeId: `osm:${el.id}`,
-          source: "osm" as const,
-          name: el.tags?.name ?? el.tags?.amenity ?? "Entertainment",
-          category: "entertainment",
-          lat: el.lat,
-          lng: el.lon,
-          verifiedCount: 0,
-          fetchedAt: Date.now(),
-        })),
-      });
-      return { count: elements.length };
-    } catch (err) {
-      console.warn("Overpass fallback failed", err);
-      return { count: 0 };
+    // 3) Overpass fallback (theatres, cinemas, nightclubs)
+    const q = overpassFallbackQuery("entertainment", radius, lat, lng);
+    if (q) {
+      try {
+        const elements = await fetchOverpass(q);
+        await ctx.runMutation(api.mutations.upsertPOIs, {
+          deviceId,
+          pois: elements.map((el) => ({
+            placeId: `osm:${el.id}`,
+            source: "osm" as const,
+            name: el.tags?.name ?? el.tags?.amenity ?? "Entertainment",
+            category: "entertainment",
+            lat: el.lat,
+            lng: el.lon,
+            verifiedCount: 0,
+            fetchedAt: Date.now(),
+          })),
+        });
+        return { count: elements.length, source: "osm" as const };
+      } catch (err) {
+        console.warn("Overpass entertainment fallback failed:", String(err).slice(0, 200));
+      }
     }
+
+    return { count: 0 };
   },
 });
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * geminiOCR — optional AI enrichment. Never throws: returns structured result.
+ * ──────────────────────────────────────────────────────────────────────────── */
 
 export const geminiOCR = action({
   args: {
@@ -284,12 +432,11 @@ export const geminiOCR = action({
   handler: async (_ctx, { imageBase64, mimeType }) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.warn("GEMINI_API_KEY not set — returning mock parse text");
-      return { text: "Receipt\nTotal: $0.00" };
+      console.warn("GEMINI_API_KEY not set — AI analysis disabled");
+      return { ok: false as const, text: "", reason: "AI analysis not configured" };
     }
 
-    const model = process.env.GEMINI_MODEL ?? "gemini-1.5-flash";
-
+    const model = process.env.GEMINI_MODEL ?? "gemini-flash-latest";
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
@@ -303,9 +450,7 @@ export const geminiOCR = action({
             contents: [
               {
                 parts: [
-                  {
-                    inlineData: { mimeType, data: imageBase64 },
-                  },
+                  { inlineData: { mimeType, data: imageBase64 } },
                   {
                     text: "Extract all text from this ticket or receipt. Return only the raw text, no formatting.",
                   },
@@ -316,23 +461,32 @@ export const geminiOCR = action({
           signal: controller.signal,
         }
       );
-
       clearTimeout(timeoutId);
 
       if (!res.ok) {
-        throw new Error(`Gemini API error: ${res.status} ${res.statusText}`);
+        const body = await res.text().catch(() => "");
+        console.error(`Gemini API error: ${res.status} — ${body.slice(0, 300)}`);
+        return {
+          ok: false as const,
+          text: "",
+          reason: `AI analysis failed (${res.status})`,
+        };
       }
 
       const data = await res.json();
       const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-
-      return { text };
+      return { ok: true as const, text };
     } catch (err) {
       clearTimeout(timeoutId);
-      throw err;
+      console.error("Gemini request failed:", String(err).slice(0, 200));
+      return { ok: false as const, text: "", reason: "AI analysis unavailable" };
     }
   },
 });
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * sendDueReminders — unchanged: web-push for due reminders.
+ * ──────────────────────────────────────────────────────────────────────────── */
 
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -376,7 +530,6 @@ export const sendDueReminders = internalAction({
 
     if (due.length === 0) return;
 
-    // Batch fetch prefs for all deviceIds
     const deviceIds = [...new Set(due.map((r) => r.deviceId))];
     const prefsMap = new Map<string, UserPrefs>();
 

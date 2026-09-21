@@ -10,10 +10,12 @@ export const poiQuery = query({
     return ctx.db
       .query("pois")
       .withIndex("by_deviceIds_category", (q) =>
-        q.eq("deviceIds", [deviceId] as any).eq("category", category)
+        category === "all"
+          ? q.eq("deviceIds", [deviceId] as any)
+          : q.eq("deviceIds", [deviceId] as any).eq("category", category)
       )
       .filter((q) => q.gt(q.field("fetchedAt"), cutoff))
-      .collect();
+      .take(150);
   },
 });
 

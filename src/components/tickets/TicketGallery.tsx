@@ -5,13 +5,15 @@ import { TicketCard } from "./TicketCard";
 interface TicketGalleryProps {
   tickets: Ticket[];
   currency: string;
-  onDelete: (id: string) => void;
+  onDelete: (ticket: Ticket) => void;
+  onOpen?: (ticket: Ticket) => void;
 }
 
 export function TicketGallery({
   tickets,
   currency,
   onDelete,
+  onOpen,
 }: TicketGalleryProps) {
   if (tickets.length === 0) {
     return (
@@ -34,7 +36,8 @@ export function TicketGallery({
           key={t.id}
           ticket={t}
           currency={currency}
-          onDelete={() => onDelete(t.id)}
+          onDelete={() => onDelete(t)}
+          onOpen={onOpen ? () => onOpen(t) : undefined}
         />
       ))}
     </div>
