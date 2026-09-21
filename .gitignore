@@ -28,9 +28,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env.local
-.env*.local
+# local env files / secrets — never commit tokens
+.env*
+!.env.example
+!.env.local.example
 
 # convex
 convex/_generated/
