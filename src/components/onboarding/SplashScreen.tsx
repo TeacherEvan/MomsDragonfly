@@ -19,7 +19,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       return;
     }
     setTakeOff(true);
-    setTimeout(() => onComplete(), 600);
+    // Faster transition for immediate video launch — 200ms
+    setTimeout(() => onComplete(), 200);
   };
 
   return (

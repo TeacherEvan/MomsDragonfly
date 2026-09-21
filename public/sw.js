@@ -76,6 +76,9 @@ self.addEventListener('fetch', (event) => {
             cache.put(request, responseToCache);
           });
           return response;
+        }).catch((err) => {
+          console.warn('SW tile fetch failed:', request.url, err);
+          return caches.match(request).then((cached) => cached || new Response('', { status: 404, statusText: 'Network Error' }));
         });
       })
     );

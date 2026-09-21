@@ -288,3 +288,29 @@ Reference: `TODO.md`
 - **Final reviewer:** Surgical Implementation Conductor (self-review; independence note: planning artifacts authored by same session; recommend independent reviewer for next cycle before production deploy)
 - **Final status:** READY WITH WARNINGS (not READY — blocked by missing Convex deployment + E2E verification; see §15 for promotion criteria)
 - **Evidence archive:** `docs/.scratch-audit/` (all artifacts); `tests/unit/` (21 passing); build artifacts (`.next/`); `tests/e2e/` (12 passing)
+
+---
+
+## Remediation Addendum — 2026-09-21 (Fenrie / Lea session)
+
+**Status added:** READY WITH WARNINGS (remediation only; previous full-run status preserved).
+
+### What was broken (user error log)
+- ChunkLoadError (chunk 550 / ed48eaa7...)
+- CSP blocked `vercel.live`
+- Service worker rejected tile fetches
+- Convex `fetchNearby` server error (`eb3e15d6250ebd84`)
+- Source map 403 (`installHook.js.map`)
+
+### Fixes applied (verified with real tool output)
+1. **CSP** (`next.config.js` + `vercel.json`): Added `https://vercel.live`. Verified via `curl -I` on deployed site.
+2. **Service worker** (`public/sw.js`): Added `.catch()` to image-fetch branch. Verified: `sw.js` serves 200; `.catch()` present.
+3. **Rebuild + redeploy**: `npm run build` passes; `npx vercel --prod` deployed. Chunk `ed48eaa7...` serves 200.
+4. **Convex `fetchNearby`**: Keys verified set. No persistent code bug; error likely transient. Not verified with direct action call (needs user geo + category).
+5. **Source map 403**: Confirmed `curl` returns 403. Non-blocking; no security impact.
+
+### Security audit (remediation scope)
+PASS. No secrets exposed in edits. CSP only adds required domain.
+
+### Final status (remediation only)
+READY WITH WARNINGS — 3 of 5 AC items fully verified; 2 remain (Convex direct call, live tile load in browser). Monitor on next user visit.

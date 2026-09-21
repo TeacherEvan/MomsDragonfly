@@ -4,11 +4,11 @@
 
 **Goal:** Build a mobile-first PWA travel companion — proximity-based verified POIs (10m→20km+), budgeting, reminders, ticket scanning/OCR — completely free, offline-first, no sign-in.
 
-**Architecture:** Next.js 14 App Router (Vercel) + TypeScript + Tailwind + Convex (realtime DB + actions + scheduled). Data: Google Places (New, batched/cached) + Overpass (OSM toilets) + Brave Search (entertainment). OCR: Tesseract.js (offline) with Gemini Vision fallback. PWA via next-pwa.
+**Architecture:** Next.js 15 App Router (Vercel) + TypeScript + Tailwind + Convex (realtime DB + actions + scheduled). Data: Google Places (New, batched/cached) + Overpass (OSM toilets) + Brave Search (entertainment). OCR: Tesseract.js (offline) with Gemini Vision fallback. PWA via next-pwa.
 
-**Tech Stack:** Next.js 14, TypeScript, Tailwind CSS, Convex, Leaflet, react-window, Tesseract.js, Framer Motion, next-pwa, Vitest, Playwright, Vercel.
+**Tech Stack:** Next.js 15, TypeScript, Tailwind CSS, Convex, Leaflet, react-window, Tesseract.js, Framer Motion, next-pwa, Vitest, Playwright, Vercel.
 
-**Spec:** Brainstormed design (8 sections: architecture, components, data pipeline, PWA, errors, testing, design system, deployment)
+**Spec:** Brainstormed design (8 sections: architecture, components, data pipeline, PWA, errors, testing, design system, deployment). Updated 2026-09-20: [`docs/superpowers/specs/2026-09-20-dragonfly-theming-design.md`](docs/superpowers/specs/2026-09-20-dragonfly-theming-design.md) — premium onboarding + unified dark design system.
 
 ---
 
@@ -16,7 +16,7 @@
 
 - Mobile-first PWA on Vercel; completely free (Google Places cost mitigated by 24h Convex cache + batch + user-initiated refresh only)
 - No auth — deviceId UUID in localStorage + Convex sync; IndexedDB primary, Convex temp (24h TTL for tickets)
-- WCAG AA + elderly mode toggle (larger targets, high-contrast, bottom nav)
+- WCAG AA + accessibility: large text mode (larger targets, high-contrast options) — note: CSS variable `html.elderly` remains in globals.css (harmless legacy reference)
 - TypeScript strict + auto-generated Convex types end-to-end
 - No forum scraping; crowdsource in-app verification only
 - All features present (budgeting + reminders + tickets + intro video + cookie consent + install)
@@ -125,6 +125,25 @@ All 5 sub-plans (A-E) fully implemented. Key differences from plan:
 - Created tesseract-wrapper.js and tesseract-mock.js for production mocking
 
 Plan saved to: `/home/leandi-duplessis/github/workspaces/Mom'sDragonfly/docs/plans/YYYY-MM-DD-moms-dragonfly.md`
+
+---
+
+## 2026-09-21 Update — Premium Onboarding + Design System
+
+**Trigger commit:** `7f588a7` (`feat: premium onboarding + unified dark design system`)
+
+**What changed:**
+- New splash screen (`SplashScreen.tsx`) with animated dragonfly SVG, intro.jpg background, ripple effect
+- `IntroVideoModal.tsx` redesigned: play button, skip, keyboard controls (Escape/Space)
+- `OnboardingSlides.tsx`: 3-slide cinematic flow (Framer Motion)
+- `tailwind.config.ts`: `dragonfly` palette added (teal, cyan, emerald, gold, navy)
+- `src/lib/theme/dragonfly.ts`: CSS variables for unified dark theme
+- `BottomNav.tsx`: flying dragonfly indicator (spring animation)
+- `BudgetRing.tsx`: shimmer gradients + glow pulse at 80%+
+- `Skeleton.tsx`: skeleton loaders (budget ring, POI cards, expenses, map, filter chips)
+- `ParticleCanvas.tsx`: animated backgrounds (dragonfly silhouettes + ambient particles)
+
+**Status of updates:** See [`docs/task-status.md`](task-status.md) — full sub-plan breakdown with completed vs pending tasks.
 
 **Execution choice:**
 - Subagent-Driven (recommended for 5 sub-plans): dispatch fresh subagent per sub-plan, review between plans

@@ -8,9 +8,9 @@ A mobile-first PWA travel companion — proximity-based verified POIs (10m→20k
 |:---:|:---:|:---:|
 | ![Explore](public/screenshots/explore.png) | ![Budget](public/screenshots/budget.png) | ![Tickets](public/screenshots/tickets.png) |
 
-| Reminders | Settings | Elderly Mode |
-|:---:|:---:|:---:|
-| ![Reminders](public/screenshots/reminders.png) | ![Settings](public/screenshots/settings.png) | ![Elderly](public/screenshots/elderly-mode.png) |
+|| Reminders | Settings | Large Text |
+||:---:|:---:|:---:|
+|| ![Reminders](public/screenshots/reminders.png) | ![Settings](public/screenshots/settings.png) | ![Large Text](public/screenshots/settings-large-text.png) |
 
 > **Add your own screenshots:** Place PNG files in `public/screenshots/` with the names above, or update the paths in this README.
 
@@ -28,6 +28,41 @@ A mobile-first PWA travel companion — proximity-based verified POIs (10m→20k
 - **PWA:** next-pwa
 - **Testing:** Vitest (unit), Playwright (E2E), Lighthouse CI
 - **Deployment:** Vercel
+
+---
+
+## What's New (2026-09-21) — Premium Onboarding + Design System
+
+This release introduces the full dragonfly-themed experience: cinematic onboarding, unified dark palette, and micro-interactions throughout.
+
+### Premium Onboarding Flow
+
+Every launch shows the intro (no suppression — by design, analytics only):
+
+1. **Splash Screen** (`SplashScreen.tsx`): Full-screen `intro.jpg` background with animated dragonfly SVG silhouette. Tap anywhere → dragonfly takes off (scale + fade, 400ms) → ripple effect.
+2. **Intro Video** (`IntroVideoModal.tsx`): Full-screen overlay with `<video>` element (`intro.mp4`, `poster="intro.jpg"`). Centered gold play button; skip (top-right, gold-400); keyboard: Escape skips, Space toggles play/pause.
+3. **Video End / Skip**: Dragonfly exits animation (flies to top-right, 300ms skip / 500ms return-to-nav) then dismisses.
+4. **Onboarding Slides** (`OnboardingSlides.tsx`): 3 cinematic slides with Framer Motion transitions after video completes.
+
+### Unified Dark Design System (`dragonfly` Palette)
+
+New Tailwind palette in `tailwind.config.ts` and `src/lib/theme/dragonfly.ts`:
+
+- **Navy (`#061416`, `#0a1f26`)** — base background
+- **Teal (`#319795`)** — primary interactive color
+- **Cyan (`#06b6d4`)** — accent
+- **Emerald (`#10b981`)** — secondary
+- **Gold (`#D4AF37`)** — rewards, active states, budget glow
+
+CSS variables (`:root`) set in `src/app/globals.css`; applied app-wide. Key visual updates:
+
+- **Header**: `bg-dragonfly-navy-950/95` with iridescent text gradient
+- **BottomNav**: Flying dragonfly indicator with spring animation between tabs
+- **BudgetRing**: Gold/amber shimmer gradients + glow pulse when spent ≥ 80%
+- **Skeleton Loaders**: `Skeleton.tsx` applied to BudgetRing, POI cards, expenses, map, filter chips
+- **ParticleCanvas**: Animated dragonfly silhouettes + ambient particles (`ParticleCanvas.tsx`, 267 lines)
+
+> **Status**: Design system implemented (`7f588a7`). Component-level palette audit pending (see [`docs/task-status.md`](docs/task-status.md) KI-016).
 
 ---
 
@@ -154,7 +189,7 @@ A mobile-first PWA travel companion — proximity-based verified POIs (10m→20k
 
 **How to use:**
 1. Open the **Settings** tab (gear icon)
-2. Toggle **Large Text Mode** for accessibility (WCAG AA + elderly-friendly)
+2. Toggle **Large Text Mode** for accessibility (WCAG AA, larger targets)
 3. Adjust search radius for Explore tab
 4. Pick your currency
 5. Enable push notifications for reminders
@@ -327,7 +362,7 @@ Tesseract.js has known issues in production Next.js builds. The app uses a wrapp
 - Install prompts, update banners
 - Offline page (`/offline.html`)
 - Accessibility headers, WCAG AA compliance
-- Elderly mode (larger targets, high contrast, bottom nav)
+- Large Text Mode (larger targets, high-contrast options); note CSS legacy `html.elderly` remains
 
 ---
 
@@ -441,7 +476,7 @@ pnpm dev
 # 2. Open http://localhost:3000 on mobile/desktop
 # 3. Take screenshots of each tab
 # 4. Save as PNG to public/screenshots/
-#    explore.png, budget.png, tickets.png, reminders.png, settings.png, elderly-mode.png
+#    explore.png, budget.png, tickets.png, reminders.png, settings.png, settings-large-text.png
 
 # 5. Commit and push
 git add public/screenshots/
