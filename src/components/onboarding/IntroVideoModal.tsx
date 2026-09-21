@@ -82,6 +82,7 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
       <video
         data-testid="intro-video"
         ref={videoRef}
+        src="/Intro.mp4"
         poster="/intro.jpg"
         preload="metadata"
         className="max-w-full max-h-full object-contain"
