@@ -54,7 +54,7 @@ export function ExpenseList({ expenses, currency, onDelete }: ExpenseListProps) 
           <button
             type="button"
             onClick={() => onDelete(e.id)}
-            className="text-dragonfly-navy-400 hover:text-rose-400 p-2 text-sm font-bold min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors duration-fast"
+            className="text-dragonfly-navy-400 hover:text-dragonfly-rose-400 p-2 text-sm font-bold min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors duration-fast"
             aria-label={`Delete expense ${formatAmount(e.amount, currency)}`}
           >
             ✕

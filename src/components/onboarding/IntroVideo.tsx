@@ -14,23 +14,23 @@ return (
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xl">🎬</span>
-          <h3 className="font-bold text-neutral-50 text-sm md:text-base">
+          <h3 className="font-bold text-dragonfly-navy-50 text-sm md:text-base">
             Welcome to Mom&apos;s Dragonfly
           </h3>
         </div>
         <button
           type="button"
           onClick={onDismiss}
-          className="text-neutral-400 hover:text-neutral-50 text-sm font-semibold p-1 transition-colors duration-fast"
+          className="text-dragonfly-navy-400 hover:text-dragonfly-navy-50 text-sm font-semibold p-1 transition-colors duration-fast"
           aria-label="Close intro video"
         >
           ✕
         </button>
       </div>
 
-      <div className="relative aspect-video w-full rounded-xl bg-surface-950 flex flex-col items-center justify-center text-white overflow-hidden shadow-inner border border-neutral-800">
+      <div className="relative aspect-video w-full rounded-xl bg-surface-950 flex flex-col items-center justify-center text-white overflow-hidden shadow-inner border border-dragonfly-navy-800">
         {isPlaying ? (
-          <div className="w-full h-full flex items-center justify-center text-sm text-neutral-400">
+          <div className="w-full h-full flex items-center justify-center text-sm text-dragonfly-navy-400">
             Intro video unavailable
           </div>
         ) : (
@@ -38,19 +38,19 @@ return (
             <button
               type="button"
               onClick={() => setIsPlaying(true)}
-              className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary-500 hover:bg-primary-400 text-neutral-950 flex items-center justify-center text-xl shadow-glow transition-all duration-fast hover:scale-105 mx-auto mb-2"
+              className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary-500 hover:bg-primary-400 text-dragonfly-navy-950 flex items-center justify-center text-xl shadow-glow transition-all duration-fast hover:scale-105 mx-auto mb-2"
               aria-label="Play introduction video"
             >
               ▶
             </button>
-            <p className="text-caption text-neutral-400">
+            <p className="text-caption text-dragonfly-navy-400">
               Quick 1-minute tour: Explore, Budget, Reminders & Ticket OCR
             </p>
           </div>
         )}
       </div>
 
-      <div className="mt-3 flex justify-between items-center text-caption text-neutral-400">
+      <div className="mt-3 flex justify-between items-center text-caption text-dragonfly-navy-400">
         <span>No sign-in needed &bull; Offline ready</span>
         <button
           type="button"

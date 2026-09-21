@@ -42,7 +42,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
   const slide = SLIDES[current];
 
   return (
-    <div className="p-6 bg-surface-900/80 backdrop-blur-sm rounded-2xl border border-neutral-800 shadow-soft flex flex-col items-center text-center relative overflow-hidden">
+    <div className="p-6 bg-surface-900/80 backdrop-blur-sm rounded-2xl border border-dragonfly-navy-800 shadow-soft flex flex-col items-center text-center relative overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
@@ -65,7 +65,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2, ease: "easeOut" }}
-            className="text-h3 font-bold text-neutral-50 mb-2"
+            className="text-h3 font-bold text-dragonfly-navy-50 mb-2"
           >
             {slide.title}
           </motion.h3>
@@ -74,7 +74,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.3, ease: "easeOut" }}
-            className="text-body text-neutral-400 max-w-xs mb-6 leading-relaxed"
+            className="text-body text-dragonfly-navy-400 max-w-xs mb-6 leading-relaxed"
           >
             {slide.description}
           </motion.p>
@@ -94,7 +94,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
                 transition={{ duration: 0.3, ease: "easeOut" }}
                 className={cn(
                   "h-1.5 rounded-full transition-all",
-                  idx === current ? "w-6 bg-primary-500" : "w-1.5 bg-neutral-700"
+                  idx === current ? "w-6 bg-primary-500" : "w-1.5 bg-dragonfly-navy-700"
                 )}
               />
             ))}
@@ -106,7 +106,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
             transition={{ duration: 0.3, delay: 0.5 }}
             onClick={next}
             className={cn(
-              "w-full bg-primary-500 hover:bg-primary-400 text-neutral-950 font-semibold py-2.5 rounded-xl text-sm transition-all duration-fast active:scale-[0.98]",
+              "w-full bg-primary-500 hover:bg-primary-400 text-dragonfly-navy-950 font-semibold py-2.5 rounded-xl text-sm transition-all duration-fast active:scale-[0.98]",
               "min-h-[var(--touch-target)]"
             )}
             whileTap={{ scale: 0.98 }}

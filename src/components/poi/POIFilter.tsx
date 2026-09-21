@@ -29,8 +29,8 @@ export function POIFilter({ category, onChange }: POIFilterProps) {
             "shrink-0 px-3.5 py-1.5 rounded-full text-caption font-semibold border transition-all duration-fast",
             "min-h-[var(--touch-target)] flex items-center justify-center",
             category === value
-              ? "bg-primary-500 text-neutral-950 border-primary-500 shadow-glow"
-              : "bg-surface-900/80 backdrop-blur-sm text-neutral-300 border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800 active:scale-[0.98]"
+              ? "bg-primary-500 text-dragonfly-navy-950 border-primary-500 shadow-glow"
+              : "bg-surface-900/80 backdrop-blur-sm text-dragonfly-navy-300 border-dragonfly-navy-700 hover:border-dragonfly-navy-600 hover:bg-dragonfly-navy-800 active:scale-[0.98]"
           )}
         >
           {label}

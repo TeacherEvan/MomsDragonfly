@@ -57,16 +57,16 @@ return (
           )}
         </div>
       ) : (
-        <div className="bg-amber-500/15 border border-amber-500/30 p-3 rounded-xl text-caption text-amber-400">
+        <div className="bg-dragonfly-gold-500/15 border border-dragonfly-gold-500/30 p-3 rounded-xl text-caption text-dragonfly-gold-400">
           <p className="font-semibold">Could not extract clean values.</p>
-          <p className="text-[11px] text-amber-500 mt-0.5">
+          <p className="text-[11px] text-dragonfly-gold-500 mt-0.5">
             You can analyze with AI for advanced handwritten & complex layout recognition.
           </p>
           <button
             type="button"
             onClick={onRetryGemini}
             disabled={isRetrying}
-            className="mt-2.5 w-full bg-amber-500 hover:bg-amber-400 text-neutral-950 rounded-lg py-2 font-bold text-caption shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-colors duration-fast"
+            className="mt-2.5 w-full bg-dragonfly-gold-500 hover:bg-dragonfly-gold-400 text-dragonfly-navy-950 rounded-lg py-2 font-bold text-caption shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-colors duration-fast"
           >
             {isRetrying ? "Analyzing with Gemini AI..." : "✨ Analyze with Gemini Vision"}
           </button>

@@ -45,10 +45,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={cn(
               "pointer-events-auto px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 animate-slide-up",
               "min-h-[var(--touch-target)] max-w-xl",
-              toast.type === "success" && "bg-emerald-500 text-neutral-950",
-              toast.type === "error" && "bg-rose-500 text-neutral-50",
-              toast.type === "warning" && "bg-amber-500 text-neutral-950",
-              toast.type === "info" && "bg-accent-500 text-neutral-950"
+              toast.type === "success" && "bg-dragonfly-emerald-500 text-dragonfly-navy-950",
+              toast.type === "error" && "bg-dragonfly-rose-500 text-dragonfly-navy-50",
+              toast.type === "warning" && "bg-dragonfly-gold-500 text-dragonfly-navy-950",
+              toast.type === "info" && "bg-accent-500 text-dragonfly-navy-950"
             )}
             role="alert"
             aria-live="polite"

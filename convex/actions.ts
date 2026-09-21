@@ -153,7 +153,8 @@ export const fetchNearby = action({
       return { cached: false };
     } catch (err) {
       clearTimeout(timeoutId);
-      throw err;
+      console.warn("fetchNearby failed — returning graceful fallback:", err);
+      return { cached: false, mock: true };
     }
   },
 });
