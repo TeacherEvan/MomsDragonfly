@@ -7,6 +7,7 @@ import { CookieConsent } from "@/components/shell/CookieConsent";
 import { InstallPrompt } from "@/components/shell/InstallPrompt";
 import { UpdateBanner } from "@/components/shell/UpdateBanner";
 import { cn } from "@/lib/utils/cn";
+import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
 
 export default function TabsLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -22,15 +23,15 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
       <UpdateBanner />
       <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-dragonfly-navy-950/95 backdrop-blur-sm border-b border-dragonfly-navy-800">
         <div className="flex items-center gap-2">
-          <motion.span
+          <motion.div
             initial={{ scale: 0.8, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="text-2xl"
             aria-hidden="true"
           >
-            🦋
-          </motion.span>
+            <DragonflySilhouette size="lg" animated={true} decorative aria-hidden="true" />
+          </motion.div>
           <motion.span
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
