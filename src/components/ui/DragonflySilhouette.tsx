@@ -15,6 +15,7 @@ interface DragonflySilhouetteProps {
   className?: string;
   animated?: boolean;
   decorative?: boolean;
+  "data-testid"?: string;
 }
 
 export function DragonflySilhouette({
@@ -22,6 +23,7 @@ export function DragonflySilhouette({
   className,
   animated = true,
   decorative = false,
+  "data-testid": testId,
 }: DragonflySilhouetteProps) {
   const id = useId();
   const { width, height } = sizes[size];
@@ -38,6 +40,7 @@ export function DragonflySilhouette({
       )}
       role={decorative ? undefined : "img"}
       aria-label={decorative ? undefined : "Dragonfly"}
+      data-testid={testId}
     >
       <svg
         width={width}
