@@ -14,9 +14,10 @@ const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
 interface ExpenseFormProps {
   onAdd: (expense: Omit<Expense, "id">) => void;
   currency: string;
+  disabled?: boolean;
 }
 
-export function ExpenseForm({ onAdd, currency }: ExpenseFormProps) {
+export function ExpenseForm({ onAdd, currency, disabled = false }: ExpenseFormProps) {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<ExpenseCategory>("food");
   const [note, setNote] = useState("");
@@ -24,6 +25,7 @@ export function ExpenseForm({ onAdd, currency }: ExpenseFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (disabled) return;
     const parsed = parseFloat(amount);
     if (!parsed || parsed <= 0) return;
     onAdd({
@@ -53,7 +55,11 @@ export function ExpenseForm({ onAdd, currency }: ExpenseFormProps) {
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
             required
-            className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 placeholder-dragonfly-navy-400"
+            disabled={disabled}
+            className={cn(
+              "w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 placeholder-dragonfly-navy-400",
+              disabled && "opacity-50 cursor-not-allowed"
+            )}
             aria-label="Expense amount"
           />
         </div>
@@ -64,7 +70,11 @@ export function ExpenseForm({ onAdd, currency }: ExpenseFormProps) {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-            className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50"
+            disabled={disabled}
+            className={cn(
+              "w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50",
+              disabled && "opacity-50 cursor-not-allowed"
+            )}
             aria-label="Expense category"
           >
             {CATEGORIES.map(({ value, label }) => (
@@ -76,7 +86,7 @@ export function ExpenseForm({ onAdd, currency }: ExpenseFormProps) {
         </div>
       </div>
 
-      <div>
+<div>
         <label className="block text-caption font-semibold text-dragonfly-navy-300 mb-1">
           Description (Optional)
         </label>
@@ -85,7 +95,11 @@ export function ExpenseForm({ onAdd, currency }: ExpenseFormProps) {
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="e.g. Pad Thai lunch, metro ticket"
-          className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 placeholder-dragonfly-navy-400"
+          disabled={disabled}
+          className={cn(
+            "w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 placeholder-dragonfly-navy-400",
+            disabled && "opacity-50 cursor-not-allowed"
+          )}
           aria-label="Expense description"
         />
       </div>
@@ -98,16 +112,22 @@ export function ExpenseForm({ onAdd, currency }: ExpenseFormProps) {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50"
+          disabled={disabled}
+          className={cn(
+            "w-full px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50",
+            disabled && "opacity-50 cursor-not-allowed"
+          )}
           aria-label="Expense date"
         />
       </div>
 
       <button
         type="submit"
+        disabled={disabled}
         className={cn(
           "w-full bg-dragonfly-teal-500 hover:bg-dragonfly-teal-400 text-dragonfly-navy-950 rounded-xl py-2.5 font-bold text-sm shadow-[0_0_20px_rgba(49,151,149,0.3)] transition-all duration-fast active:scale-[0.98]",
-          "min-h-[var(--touch-target)]"
+          "min-h-[var(--touch-target)]",
+          disabled && "opacity-50 cursor-not-allowed"
         )}
       >
         + Save Expense

@@ -10,6 +10,7 @@ import type { Expense } from "@/types";
 import { sumExpenses, remainingBudget } from "@/lib/utils/budget";
 import { formatAmount } from "@/lib/utils/currency";
 import type { Id } from "convex/_generated/dataModel";
+import { BudgetRingSkeleton } from "@/components/ui/Skeleton";
 
 export function BudgetDashboard() {
   const deviceId = getDeviceId();
@@ -25,6 +26,7 @@ export function BudgetDashboard() {
 
   const budget = budgetQuery;
   const totalBudget = budget?.totalBudget ?? 500;
+  const isLoading = budgetQuery === undefined || expensesQuery === undefined;
 
   // Map Convex documents to frontend Expense type
   const expenses = useMemo(() => {
@@ -85,6 +87,7 @@ export function BudgetDashboard() {
             type="button"
             onClick={() => setIsEditingBudget(!isEditingBudget)}
             className="text-caption text-dragonfly-teal-400 font-semibold hover:underline"
+            disabled={isLoading}
           >
             {isEditingBudget ? "Cancel" : "Edit Target"}
           </button>
@@ -100,17 +103,23 @@ export function BudgetDashboard() {
               className="flex-1 px-3 py-2 border border-dragonfly-navy-700 rounded-xl text-sm min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 placeholder-dragonfly-navy-400 focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent"
               placeholder="Total budget amount"
               required
+              disabled={isLoading}
             />
             <button
               type="submit"
               className="bg-dragonfly-teal-500 text-dragonfly-navy-950 px-4 py-2 rounded-xl text-xs font-bold min-h-[var(--touch-target)] hover:bg-dragonfly-teal-400 transition-colors duration-fast"
+              disabled={isLoading}
             >
               Save
             </button>
           </form>
         ) : (
           <div className="my-2">
-            <BudgetRing spent={spent} total={totalBudget} currency={currency} />
+            {isLoading ? (
+              <BudgetRingSkeleton />
+            ) : (
+              <BudgetRing spent={spent} total={totalBudget} currency={currency} />
+            )}
           </div>
         )}
 
@@ -119,27 +128,35 @@ export function BudgetDashboard() {
             <span className="text-[11px] text-dragonfly-navy-400 block font-medium">
               Total Budget
             </span>
-            <span className="text-sm font-bold text-dragonfly-navy-50">
-              {formatAmount(totalBudget, currency)}
-            </span>
+            {isLoading ? (
+              <div className="h-5 w-24 mx-auto bg-dragonfly-navy-800 rounded animate-pulse" />
+            ) : (
+              <span className="text-sm font-bold text-dragonfly-navy-50">
+                {formatAmount(totalBudget, currency)}
+              </span>
+            )}
           </div>
           <div>
             <span className="text-[11px] text-dragonfly-navy-400 block font-medium">
               Remaining
             </span>
-            <span
-              className={`text-sm font-bold ${
-                remaining < 0 ? "text-rose-400" : "text-dragonfly-teal-400"
-              }`}
-            >
-              {formatAmount(remaining, currency)}
-            </span>
+            {isLoading ? (
+              <div className="h-5 w-24 mx-auto bg-dragonfly-navy-800 rounded animate-pulse" />
+            ) : (
+              <span
+                className={`text-sm font-bold ${
+                  remaining < 0 ? "text-rose-400" : "text-dragonfly-teal-400"
+                }`}
+              >
+                {formatAmount(remaining, currency)}
+              </span>
+            )}
           </div>
         </div>
       </div>
 
       {/* Expense Form */}
-      <ExpenseForm onAdd={handleAddExpense} currency={currency} />
+      <ExpenseForm onAdd={handleAddExpense} currency={currency} disabled={isLoading} />
 
       {/* Expense List */}
       <div>
@@ -148,14 +165,30 @@ export function BudgetDashboard() {
             Recent Expenses
           </h3>
           <span className="text-caption text-dragonfly-navy-400 font-medium">
-            {expenses.length} total
+            {isLoading ? "—" : expenses.length} total
           </span>
         </div>
-        <ExpenseList
-          expenses={expenses}
-          currency={currency}
-          onDelete={handleDeleteExpense}
-        />
+        {isLoading ? (
+          <div className="space-y-3" role="status" aria-label="Loading expenses">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-3 bg-dragonfly-navy-800/50 rounded-xl border border-dragonfly-navy-700 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-dragonfly-navy-700" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/4 bg-dragonfly-navy-700 rounded" />
+                    <div className="h-3 w-1/2 bg-dragonfly-navy-700 rounded" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <ExpenseList
+            expenses={expenses}
+            currency={currency}
+            onDelete={handleDeleteExpense}
+          />
+        )}
       </div>
     </div>
   );

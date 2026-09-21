@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/shell/BottomNav";
 
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn(() => "/explore"),
+  useRouter: vi.fn(() => ({ push: vi.fn() })),
 }));
 
 describe("BottomNav", () => {
@@ -15,23 +16,23 @@ describe("BottomNav", () => {
     expect(nav).toHaveClass("border-dragonfly-navy-800");
   });
 
-  it("renders all four tab links", () => {
+  it("renders all four tab buttons", () => {
     render(<BottomNav />);
-    expect(screen.getByRole("link", { name: /explore/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /budget/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /reminders/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /tickets/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /budget/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /reminders/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /tickets/i })).toBeInTheDocument();
   });
 
-  it("applies dragonfly-teal color to active tab", () => {
+  it("applies dragonfly-gold color to active tab", () => {
     render(<BottomNav />);
-    const activeLink = screen.getByRole("link", { name: /explore/i });
-    expect(activeLink).toHaveClass("text-dragonfly-teal-400");
+    const activeButton = screen.getByRole("button", { name: /explore/i });
+    expect(activeButton).toHaveClass("text-dragonfly-gold-500");
   });
 
   it("applies dragonfly-navy color to inactive tabs", () => {
     render(<BottomNav />);
-    const budgetLink = screen.getByRole("link", { name: /budget/i });
-    expect(budgetLink).toHaveClass("text-dragonfly-navy-400");
+    const budgetButton = screen.getByRole("button", { name: /budget/i });
+    expect(budgetButton).toHaveClass("text-dragonfly-navy-400");
   });
 });

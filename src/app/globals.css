@@ -95,6 +95,11 @@ html.elderly {
   100% { background-position: 0% 0%; }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 .animate-float {
   animation: dragonfly-float 4s ease-in-out infinite;
 }
