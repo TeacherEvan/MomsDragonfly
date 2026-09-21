@@ -12,12 +12,12 @@ const DATE_PATTERNS = [
 ];
 
 const AMOUNT_PATTERNS = [
-  // $12.50 or USD 12.50 or € 45.00
-  /(?:USD|EUR|GBP|THB|AUD|SGD|MYR|JPY|[\$€£¥฿])\s?(\d{1,6}(?:[.,]\d{1,2})?)/i,
-  // 12.50 USD (trailing)
-  /(\d{1,6}(?:[.,]\d{1,2}))\s?(?:USD|EUR|GBP|THB|AUD|SGD)/i,
-  // Total: 12.50
-  /(?:total|amount|due|grand total)[:\s]+(\d{1,6}(?:[.,]\d{2})?)/i,
+  // Keyword-led totals first — "TOTAL R 187.50", "Grand Total: $12.50", "Amount due EUR 9,99"
+  /\b(?:grand\s+total|total|amount(?:\s+due)?|balance(?:\s+due)?|due)\b\s*[:\-]?\s*(?:R|ZAR|USD|EUR|GBP|THB|AUD|SGD|MYR|JPY|\$|€|£|¥|฿)?\s*(\d{1,6}(?:[.,]\d{1,2})?)/i,
+  // Currency-symbol / prefix amounts — "$12.50", "R 187.50", "฿450", "USD 12.50"
+  /(?:USD|EUR|GBP|THB|AUD|SGD|MYR|JPY|ZAR|[$€£¥฿]|\bR)\s?(\d{1,6}(?:[.,]\d{1,2})?)/i,
+  // Trailing currency — "12.50 USD"
+  /(\d{1,6}(?:[.,]\d{1,2}))\s?(?:USD|EUR|GBP|THB|AUD|SGD|ZAR)/i,
 ];
 
 const VENUE_PATTERN = /^([A-Z][A-Za-z &'\-]{2,50})$/m;
@@ -46,7 +46,7 @@ export function parseTicket(text: string): ParsedTicket {
     }
   }
 
-  // Extract amount
+  // Extract amount (total-style patterns take precedence)
   for (const pattern of AMOUNT_PATTERNS) {
     const m = text.match(pattern);
     if (m) {
@@ -59,7 +59,7 @@ export function parseTicket(text: string): ParsedTicket {
     }
   }
 
-  // Extract venue
+  // Extract venue (first line that looks like a business name)
   const lines = text.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
