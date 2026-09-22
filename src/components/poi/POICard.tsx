@@ -7,6 +7,7 @@ import { Icon, type IconName } from "@/components/ui/Icon";
 interface POICardProps {
   poi: NormalizedPOI;
   onVerify: () => void;
+  onSelect?: (poi: NormalizedPOI) => void;
   onShowOnMap?: (poi: NormalizedPOI) => void;
   onRequestRide?: (poi: NormalizedPOI) => void;
 }
@@ -29,12 +30,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   pharmacy: "Pharmacy",
 };
 
-export function POICard({ poi, onVerify, onShowOnMap, onRequestRide }: POICardProps) {
+export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }: POICardProps) {
   return (
     <div className="flex items-center justify-between gap-3 p-4 bg-surface-900/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-800 shadow-soft card-hover">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-dragonfly-navy-50 truncate text-body">
+          <h3 className="font-semibold text-dragonfly-navy-50 line-clamp-2 text-body">
             {poi.name}
           </h3>
           {poi.openNow !== undefined && (
@@ -51,7 +52,7 @@ export function POICard({ poi, onVerify, onShowOnMap, onRequestRide }: POICardPr
           )}
         </div>
         {poi.address && (
-          <p className="text-caption text-dragonfly-navy-400 truncate mt-1">{poi.address}</p>
+          <p className="text-caption text-dragonfly-navy-400 line-clamp-2 mt-1">{poi.address}</p>
         )}
         <div className="flex items-center gap-3 mt-2 text-caption">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-dragonfly-teal-500/15 text-dragonfly-teal-300 font-medium">

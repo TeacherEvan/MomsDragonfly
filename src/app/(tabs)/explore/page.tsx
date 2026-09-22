@@ -16,6 +16,7 @@ import { haversine } from "@/lib/utils/geo";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import { Icon } from "@/components/ui/Icon";
 import { RideSheet } from "@/components/ride/RideSheet";
+import { PlaceDetailsSheet } from "@/components/poi/PlaceDetailsSheet";
 
 type OnboardingStep = "splash" | "video" | "slides" | "done";
 
@@ -26,6 +27,7 @@ export default function ExplorePage() {
   const { lat, lng, error: geoError } = useGeolocation();
   const [category, setCategory] = useState("all");
   const [rideTarget, setRideTarget] = useState<NormalizedPOI | null>(null);
+  const [selectedPoi, setSelectedPoi] = useState<NormalizedPOI | null>(null);
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("splash");
   const [mounted, setMounted] = useState(false);
   const [fetchPhases, setFetchPhases] = useState<Record<string, FetchPhase>>({});

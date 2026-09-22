@@ -29,7 +29,7 @@ interface POIListProps {
   onRetry?: () => void;
 }
 
-const ITEM_HEIGHT = 140;
+const ITEM_HEIGHT = 152;
 
 interface POIRowProps {
   index: number;
