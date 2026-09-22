@@ -78,6 +78,9 @@ export function DragonflySilhouette({
         <path d="M27.2 23.2 Q16.5 21.4 8.2 23.2" />
         <path d="M19.4 21.6 18.8 25" />
       </g>
+      {/* warm wing-tip accents */}
+      <circle cx="3.5" cy="9.6" r="1.05" fill={dragonflyPalette.orange[400]} opacity="0.85" />
+      <circle cx="7.5" cy="23.3" r="0.85" fill={dragonflyPalette.orange[300]} opacity="0.75" />
       {/* compound eye + gold glint */}
       <ellipse
         cx="28.9"
@@ -131,7 +134,7 @@ export function DragonflySilhouette({
           </linearGradient>
           <linearGradient id={`eyeGrad-${id}`} x1="0" y1="0" x2="0.6" y2="1">
             <stop offset="0%" stopColor={dragonflyPalette.gold[300]} />
-            <stop offset="100%" stopColor={dragonflyPalette.gold[500]} />
+            <stop offset="100%" stopColor={dragonflyPalette.orange[500]} />
           </linearGradient>
           <linearGradient id={`glintGrad-${id}`} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor={dragonflyPalette.gold[100]} />
@@ -148,9 +151,9 @@ export function DragonflySilhouette({
             <stop offset="100%" stopColor={dragonflyPalette.cyan[300]} stopOpacity="0.16" />
           </linearGradient>
           <linearGradient id={`wingEdge-${id}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={dragonflyPalette.cyan[300]} stopOpacity="0.75" />
-            <stop offset="50%" stopColor={dragonflyPalette.teal[400]} stopOpacity="0.45" />
-            <stop offset="100%" stopColor={dragonflyPalette.emerald[400]} stopOpacity="0.55" />
+            <stop offset="0%" stopColor={dragonflyPalette.orange[400]} stopOpacity="0.8" />
+            <stop offset="55%" stopColor={dragonflyPalette.teal[400]} stopOpacity="0.5" />
+            <stop offset="100%" stopColor={dragonflyPalette.cyan[300]} stopOpacity="0.65" />
           </linearGradient>
           <filter id={`glow-${id}`} x="-25%" y="-25%" width="150%" height="150%">
             <feGaussianBlur stdDeviation="1.5" result="softGlow" />

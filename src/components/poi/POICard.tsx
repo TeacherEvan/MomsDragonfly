@@ -8,6 +8,7 @@ interface POICardProps {
   poi: NormalizedPOI;
   onVerify: () => void;
   onShowOnMap?: (poi: NormalizedPOI) => void;
+  onRequestRide?: (poi: NormalizedPOI) => void;
 }
 
 const CATEGORY_ICONS: Record<string, IconName> = {
@@ -28,7 +29,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   pharmacy: "Pharmacy",
 };
 
-export function POICard({ poi, onVerify, onShowOnMap }: POICardProps) {
+export function POICard({ poi, onVerify, onShowOnMap, onRequestRide }: POICardProps) {
   return (
     <div className="flex items-center justify-between gap-3 p-4 bg-surface-900/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-800 shadow-soft card-hover">
       <div className="flex-1 min-w-0">
@@ -71,6 +72,20 @@ export function POICard({ poi, onVerify, onShowOnMap }: POICardProps) {
         </div>
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
+        {onRequestRide && (
+          <button
+            type="button"
+            onClick={() => onRequestRide(poi)}
+            className={cn(
+              "shrink-0 px-3 py-1.5 rounded-lg text-caption font-semibold border transition-all duration-fast",
+              "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",
+              "border-dragonfly-orange-500/40 text-dragonfly-orange-400 hover:bg-dragonfly-orange-500/10 active:scale-[0.98]"
+            )}
+            aria-label={`Request a ride to ${poi.name}`}
+          >
+            <Icon name="car" size={18} />
+          </button>
+        )}
         {onShowOnMap && (
           <button
             type="button"

@@ -14,13 +14,14 @@
     --color-primary-hover: #2c7a7b;
     --color-accent: #06b6d4;
     --color-gold: #D4AF37;
+    --color-orange: #f97316;
     --color-text: #f0f4f8;
     --color-text-muted: #829ab1;
     --color-border: #112d3a;
-    --iridescent-1: linear-gradient(135deg, #06b6d4 0%, #319795 50%, #10b981 100%);
-    --iridescent-2: linear-gradient(45deg, #22d3ee 0%, #06b6d4 30%, #319795 70%, #10b981 100%);
+    --iridescent-1: linear-gradient(135deg, #06b6d4 0%, #319795 40%, #10b981 60%, #fb923c 100%);
+    --iridescent-2: linear-gradient(45deg, #22d3ee 0%, #06b6d4 25%, #319795 55%, #fb923c 100%);
     --iridescent-shift: linear-gradient(90deg, transparent 40%, rgba(255,255,255,0.12) 50%, transparent 60%);
-    --gold-shimmer: linear-gradient(90deg, #D4AF37 0%, #fbbf24 50%, #D4AF37 100%);
+    --gold-shimmer: linear-gradient(90deg, #D4AF37 0%, #fb923c 50%, #D4AF37 100%);
   }
 
   html {
@@ -33,7 +34,10 @@
 
   body {
     @apply min-h-screen bg-dragonfly-navy-950 text-dragonfly-navy-50;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23319795' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    background-image:
+      radial-gradient(1100px 520px at 88% -8%, rgba(249, 115, 22, 0.07), transparent 62%),
+      radial-gradient(900px 480px at -12% 108%, rgba(6, 182, 212, 0.06), transparent 60%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23319795' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
   * {

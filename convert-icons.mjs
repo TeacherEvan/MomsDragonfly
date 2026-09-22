@@ -22,6 +22,16 @@ for (const size of sizes) {
   }
 }
 
+// Non-maskable 512 companion (referenced by the manifest)
+const bigSvg = path.join(inputDir, 'icon-512x512.svg');
+const bigPng = path.join(outputDir, 'icon-512x512.png');
+try {
+  await sharp(bigSvg).resize(512, 512).png().toFile(bigPng);
+  console.log('Converted 512x512 (non-maskable)');
+} catch (err) {
+  console.error('Failed 512x512:', err.message);
+}
+
 // Favicon
 const faviconSvg = path.join(process.cwd(), 'public', 'favicon.svg');
 const faviconPng = path.join(process.cwd(), 'public', 'favicon.png');

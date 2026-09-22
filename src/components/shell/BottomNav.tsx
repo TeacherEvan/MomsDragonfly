@@ -1,12 +1,13 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
 import { Icon, type IconName } from "@/components/ui/Icon";
 
 const tabs: ReadonlyArray<{ href: string; label: string; icon: IconName }> = [
   { href: "/explore", label: "Explore", icon: "compass" },
+  { href: "/journal", label: "Journal", icon: "route" },
   { href: "/budget", label: "Budget", icon: "wallet" },
   { href: "/reminders", label: "Reminders", icon: "bell" },
   { href: "/tickets", label: "Tickets", icon: "ticket" },
@@ -16,11 +17,9 @@ export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const activeIndex = tabs.findIndex((t) => pathname.startsWith(t.href));
-  const x = useMotionValue(activeIndex >= 0 ? activeIndex * 25 : 0);
-  const springX = useSpring(x, { stiffness: 300, damping: 30 });
+  const indicatorLeft = `${(activeIndex >= 0 ? activeIndex : 0) * 20 + 10}%`;
 
   const handleTabClick = (index: number) => {
-    x.set(index * 25);
     router.push(tabs[index].href);
   };
 
@@ -32,8 +31,9 @@ export function BottomNav() {
       <div className="relative h-16">
         {/* Flying dragonfly indicator */}
         <motion.div
-          style={{ x: springX }}
-          className="absolute top-1 left-[25%] -translate-x-1/2 pointer-events-none transition-all duration-500 ease-out"
+          animate={{ left: indicatorLeft }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="absolute top-1 -translate-x-1/2 pointer-events-none"
         >
           <DragonflySilhouette size="sm" animated={true} decorative />
         </motion.div>
@@ -49,7 +49,7 @@ export function BottomNav() {
                     "flex flex-col items-center justify-center py-2 text-caption transition-colors duration-fast",
                     "min-h-[var(--touch-target)] w-full",
                     isActive
-                      ? "text-dragonfly-gold-500 font-semibold"
+                      ? "text-dragonfly-orange-400 font-semibold"
                       : "text-dragonfly-navy-400 hover:text-dragonfly-navy-200"
                   )}
                   aria-current={isActive ? "page" : undefined}

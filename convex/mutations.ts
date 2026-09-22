@@ -116,6 +116,22 @@ export const saveLocation = mutation({
   },
 });
 
+/** Cache write for location highlights (weather + news). Server-side only. */
+export const setHighlightsCache = internalMutation({
+  args: { locKey: v.string(), payload: v.string() },
+  handler: async (ctx, { locKey, payload }) => {
+    const existing = await ctx.db
+      .query("highlightsCache")
+      .withIndex("by_locKey", (q) => q.eq("locKey", locKey))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, { payload, fetchedAt: Date.now() });
+    } else {
+      await ctx.db.insert("highlightsCache", { locKey, payload, fetchedAt: Date.now() });
+    }
+  },
+});
+
 export const purgeExpiredCache = internalMutation({
   args: {},
   handler: async (ctx) => {

@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/shell/BottomNav";
 import { CookieConsent } from "@/components/shell/CookieConsent";
 import { InstallPrompt } from "@/components/shell/InstallPrompt";
 import { UpdateBanner } from "@/components/shell/UpdateBanner";
+import { TripRecorder } from "@/components/journal/TripRecorder";
 import { cn } from "@/lib/utils/cn";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
 
@@ -21,6 +22,7 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
       </a>
       <InstallPrompt />
       <UpdateBanner />
+      <TripRecorder />
       <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-dragonfly-navy-950/95 backdrop-blur-sm border-b border-dragonfly-navy-800">
         <div className="flex items-center gap-2">
           <motion.div
@@ -36,7 +38,7 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-            className="font-bold text-lg text-dragonfly-navy-50 tracking-tight bg-gradient-to-r from-dragonfly-cyan-300 via-dragonfly-teal-400 to-dragonfly-emerald-400 bg-clip-text text-transparent animate-iridescent-shift"
+            className="font-bold text-lg text-dragonfly-navy-50 tracking-tight bg-gradient-to-r from-dragonfly-cyan-300 via-dragonfly-teal-400 to-dragonfly-orange-400 bg-clip-text text-transparent animate-iridescent-shift"
           >
             Mom&apos;s Dragonfly
           </motion.span>
@@ -45,7 +47,7 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
           <motion.div
             onClick={() => router.push("/settings")}
             className={cn(
-              "p-2 rounded-xl text-dragonfly-navy-400 hover:text-dragonfly-gold-400 hover:bg-dragonfly-navy-800 transition-all duration-fast cursor-pointer",
+              "p-2 rounded-xl text-dragonfly-navy-400 hover:text-dragonfly-orange-400 hover:bg-dragonfly-navy-800 transition-all duration-fast cursor-pointer",
               "min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center"
             )}
             aria-label="Settings"

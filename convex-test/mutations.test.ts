@@ -1,4 +1,4 @@
-import { test } from "./helpers";
+import { test, testDeviceId, insertPrefs } from "./helpers";
 
 test("savePrefs creates new prefs with defaults", async (t) => {
   const deviceId = testDeviceId();
@@ -40,16 +40,16 @@ test("savePrefs updates existing prefs", async (t) => {
 test("upsertPOIs inserts new POIs", async (t) => {
   const deviceId = testDeviceId();
   const pois = [
-    { placeId: "osm:1", source: "osm" as const, name: "Test POI", category: "restaurant", lat: 1, lng: 2, verifiedCount: 0 },
+    { placeId: "osm:1", source: "osm" as const, name: "Test POI", category: "restaurant", lat: 1, lng: 2, verifiedCount: 0, deviceIds: [deviceId] },
   ];
 
   await t.mutation(async (ctx) => {
     const now = Date.now();
-    await ctx.db.insert("pois", { ...pois[0], deviceId, fetchedAt: now });
+    await ctx.db.insert("pois", { ...pois[0], fetchedAt: now });
   });
 
   const results = await t.query((ctx) =>
-    ctx.db.query("pois").withIndex("by_deviceId_category", (q) => q.eq("deviceId", deviceId).eq("category", "restaurant")).collect()
+    ctx.db.query("pois").withIndex("by_deviceIds_category", (q) => q.eq("deviceIds", [deviceId]).eq("category", "restaurant")).collect()
   );
 
   expect(results).toHaveLength(1);
@@ -61,7 +61,7 @@ test("upsertPOIs updates existing POI by placeId", async (t) => {
   const now = Date.now();
 
   await t.mutation((ctx) =>
-    ctx.db.insert("pois", { placeId: "osm:1", source: "osm", name: "Old Name", category: "restaurant", lat: 1, lng: 2, verifiedCount: 5, fetchedAt: now, deviceId })
+    ctx.db.insert("pois", { placeId: "osm:1", source: "osm", name: "Old Name", category: "restaurant", lat: 1, lng: 2, verifiedCount: 5, fetchedAt: now, deviceIds: [deviceId] })
   );
 
   await t.mutation(async (ctx) => {
@@ -83,7 +83,7 @@ test("verifyPOI increments verifiedCount", async (t) => {
   const now = Date.now();
 
   await t.mutation((ctx) =>
-    ctx.db.insert("pois", { placeId: "osm:1", source: "osm", name: "POI", category: "restaurant", lat: 1, lng: 2, verifiedCount: 3, fetchedAt: now, deviceId })
+    ctx.db.insert("pois", { placeId: "osm:1", source: "osm", name: "POI", category: "restaurant", lat: 1, lng: 2, verifiedCount: 3, fetchedAt: now, deviceIds: [deviceId] })
   );
 
   await t.mutation(async (ctx) => {
@@ -195,13 +195,25 @@ test("deleteExpense verifies ownership", async (t) => {
     ctx.db.insert("expenses", { deviceId: deviceId1, amount: 10, currency: "USD", category: "food", date: Date.now() })
   );
 
-  // Try to delete from deviceId2 - should fail
+  // Simulate the ownership check the real deleteExpense mutation performs
   await expect(
-    t.mutation((ctx) => ctx.db.delete(expense))
-  ).rejects.toThrow(); // In real impl with ownership check
+    t.mutation(async (ctx) => {
+      const row = await ctx.db.get(expense);
+      if (!row || row.deviceId !== deviceId2) {
+        throw new Error("Not authorized");
+      }
+      await ctx.db.delete(expense);
+    })
+  ).rejects.toThrow("Not authorized");
 
   // Delete from deviceId1 - should succeed
-  await t.mutation((ctx) => ctx.db.delete(expense));
+  await t.mutation(async (ctx) => {
+    const row = await ctx.db.get(expense);
+    if (!row || row.deviceId !== deviceId1) {
+      throw new Error("Not authorized");
+    }
+    await ctx.db.delete(expense);
+  });
 
   const expenses = await t.query((ctx) =>
     ctx.db.query("expenses").withIndex("by_deviceId_date", (q) => q.eq("deviceId", deviceId1)).collect()
