@@ -17,8 +17,8 @@ pnpm dev               # Next.js on :3000 (Turbopack)
 |---------|--------|-------|
 | `pnpm build` | ✅ passes | Next.js 15 production build |
 | `pnpm typecheck` | ✅ passes | `tsc --noEmit` (root + convex/) |
-| `pnpm lint` | ✅ passes | ESLint + Next.js config (1 warning: tesseract-wrapper default export) |
-| `pnpm test` | ✅ passes | 48 vitest unit tests (jsdom) |
+| `pnpm lint` | ✅ passes | ESLint + Next.js config |
+| `pnpm test` | ✅ passes | 52 vitest unit tests in 10 files (jsdom) |
 | `pnpm test:e2e` | ✅ passes | 15 Playwright tests (needs `pnpm build` first) |
 | `pnpm test:lhci` | ⚠️ untested | Lighthouse CI (requires production URL) |
 
@@ -33,7 +33,7 @@ convex/                # Convex backend: schema, queries, mutations, actions, cr
 convex-test/           # Convex test helpers + schema copy
 tests/unit/            # Vitest unit tests
 tests/e2e/             # Playwright E2E tests
-public/                # Icons, manifest, sw.js, offline.html
+public/                # Icons, manifest, sw.js, offline.html, tesseract/ (self-hosted OCR)
 ```
 
 ## Key Conventions
@@ -42,9 +42,10 @@ public/                # Icons, manifest, sw.js, offline.html
 - **Convex client**: Created in `src/app/providers.tsx` via `ConvexProvider`
 - **Path aliases**: `@/*` → `src/*`, `convex/_generated/*` → `convex/_generated/*`
 - **Strict TS**: `strict: true` in both tsconfig.json files
-- **PWA**: Manual SW at `public/sw.js` (next-pwa installed but unused; no next-pwa config)
+- **PWA**: Manual SW at `public/sw.js` (next-pwa installed but unused; no next-pwa config). SW skips cross-origin requests entirely — external assets (map tiles) go straight to the network; app shell + intro media are cached.
 - **CSP**: Configured in `next.config.js` + `vercel.json` — includes `*.tile.openstreetmap.org`
-- **Tesseract OCR**: Mocked in prod via webpack alias (`next.config.js:49`), real in dev via `tesseract-wrapper.js`
+- **Tesseract OCR**: Real OCR in production — fully self-hosted under `public/tesseract/` (worker, core `.wasm.js` + raw `.wasm` variants, `eng.traineddata.gz`). `next.config.js` serves the dir with immutable caching. No mock or bundler alias.
+- **Map**: react-leaflet; pins are self-hosted inline-SVG `L.divIcon` (no external marker images); failed tiles retry ×3 with backoff, then show a calm placeholder.
 - **Design system**: `dragonfly` palette in `tailwind.config.ts` + `src/lib/theme/dragonfly.ts`; CSS vars in `globals.css`
 
 ## Convex Backend
@@ -63,9 +64,8 @@ public/                # Icons, manifest, sw.js, offline.html
 - **Convex version mismatch**: Parent `package-lock.json` at `/home/leandi-duplessis/` interferes — delete it if Next.js resolves wrong version.
 - **Hydration mismatch**: Intro video uses `mounted` state pattern to avoid SSR/client mismatch on `localStorage` read.
 - **Missing API keys**: `GOOGLE_PLACES_API_KEY` and `GEMINI_API_KEY` not set in dev Convex deployment — actions return mock data.
-- **next-pwa installed but unused**: Manual SW at `public/sw.js` handles caching; next-pwa config absent.
-- **Tesseract bundling**: Production build aliases `tesseract.js` → `tesseract-mock.js`; dev uses real module via dynamic import.
-- **Elderly mode removed**: Schema still has `elderlyMode` field (harmless); all UI/code references deleted.
+- **Tesseract assets**: The worker loads everything from `public/tesseract/` — missing files (e.g. `tesseract-core-relaxedsimd*.wasm` siblings) surface as console 404s. Keep the dir synced with the FULL `node_modules/tesseract.js-core/` contents and curl-verify after deploy.
+- **Elderly mode removed**: Fully deleted (no schema field, no UI) — ignore stale references.
 - **Vite config warning**: `vitest.config.ts` uses ESM syntax in CommonJS — set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress.
 - **Push notifications**: Require VAPID keys in Convex env; not configured in dev.
 
@@ -79,15 +79,19 @@ public/                # Icons, manifest, sw.js, offline.html
 
 ```bash
 # Convex production
-pnpm convex deploy
+npx convex deploy --yes     # non-interactive OK with --yes
 
-# Vercel: push to GitHub, import in Vercel, add env vars from .env.local
+# Vercel production
+npx vercel --prod --yes     # non-interactive OK with --yes
 ```
+
+Pushing to GitHub also works when the Vercel git integration is connected.
 
 ## Post-Deploy Checklist
 
 - [ ] Verify `NEXT_PUBLIC_CONVEX_URL` points to production deployment
 - [ ] Verify `NEXT_PUBLIC_CONVEX_SITE_URL` is correct
+- [ ] `curl -I` a few `/tesseract/` assets (expect 200)
 - [ ] Test PWA install on mobile (Android Chrome, iOS Safari)
 - [ ] Test offline mode (Airplane mode → refresh)
 - [ ] Verify push notifications work (Reminders tab)
