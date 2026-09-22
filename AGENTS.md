@@ -71,6 +71,7 @@ public/                # Icons, manifest, sw.js, offline.html, tesseract/ (self-
 - **Missing API keys**: `GOOGLE_PLACES_API_KEY` and `GEMINI_API_KEY` not set in dev Convex deployment — actions return mock data.
 - **Tesseract assets**: The worker loads everything from `public/tesseract/` — missing files (e.g. `tesseract-core-relaxedsimd*.wasm` siblings) surface as console 404s. Keep the dir synced with the FULL `node_modules/tesseract.js-core/` contents and curl-verify after deploy.
 - **Elderly mode removed**: Fully deleted (no schema field, no UI) — ignore stale references.
+- **PWA installs must go through Chrome on Android**: Samsung Internet and OEM browsers mint WebAPKs with a stale targetSdkVersion → Play Protect blocks the installed app ("built for an older version of Android"). `src/lib/utils/install.ts` classifies the environment; `InstallPrompt` routes non-Chrome Android users to Chrome via an `intent://` link and never offers the native install prompt on those browsers. Verify with `tests/unit/install.test.ts`.
 - **Vite config warning**: `vitest.config.ts` uses ESM syntax in CommonJS — set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress.
 - **Push notifications**: Require VAPID keys in Convex env; not configured in dev.
 
