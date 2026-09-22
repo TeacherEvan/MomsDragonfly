@@ -5,14 +5,12 @@ import type { NormalizedPOI } from "@/types";
 import { POIMarker } from "./POIMarker";
 import L from "leaflet";
 
-if (typeof window !== "undefined") {
-  delete (L.Icon.Default.prototype as { _getIconUrl?: () => string })._getIconUrl;
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  });
-}
+/**
+ * Self-hosted vector pin — no external image dependency (the previous default
+ * Leaflet marker loaded PNGs from unpkg.com, which broke on flaky networks and
+ * showed up as "Marker" broken-image placeholders on the map).
+ */
+const PIN_SVG = `<svg width="28" height="40" viewBox="0 0 28 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 1C7 1 1.5 6.5 1.5 13.5c0 9.5 12.5 24.5 12.5 24.5S26.5 23 26.5 13.5C26.5 6.5 21 1 14 1z" fill="#319795" stroke="#e6fffa" stroke-width="1.5"/><circle cx="14" cy="13.5" r="4.5" fill="#061416"/><circle cx="14" cy="13.5" r="2" fill="#4fd1c5"/></svg>`;
 
 function RecenterMap({ center }: { center: [number, number] }) {
   const map = useMap();
@@ -65,6 +63,18 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
   const defaultCenter: [number, number] = center ?? [13.7563, 100.5018];
   const mapRef = useRef<L.Map | null>(null);
 
+  const pinIcon = useMemo(
+    () =>
+      L.divIcon({
+        className: "",
+        html: PIN_SVG,
+        iconSize: [28, 40],
+        iconAnchor: [14, 40],
+        popupAnchor: [0, -44],
+      }),
+    []
+  );
+
   useImperativeHandle(ref, () => ({
     panToPOI: (poi: NormalizedPOI) => {
       const map = mapRef.current;
@@ -109,16 +119,17 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
     };
   }, []);
 
-  const markers = useMemo(() => pois.map((poi) => (
-    <Marker
-      key={poi.placeId}
-      position={[poi.lat, poi.lng]}
-    >
-      <Popup>
-        <POIMarker poi={poi} onVerify={() => onVerify(poi.placeId)} />
-      </Popup>
-    </Marker>
-  )), [pois, onVerify]);
+  const markers = useMemo(
+    () =>
+      pois.map((poi) => (
+        <Marker key={poi.placeId} position={[poi.lat, poi.lng]} icon={pinIcon}>
+          <Popup>
+            <POIMarker poi={poi} onVerify={() => onVerify(poi.placeId)} />
+          </Popup>
+        </Marker>
+      )),
+    [pois, onVerify, pinIcon]
+  );
 
   return (
     <MapContainer
