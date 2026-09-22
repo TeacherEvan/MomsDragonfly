@@ -7,7 +7,21 @@ import { getDeviceId } from "@/lib/utils/deviceId";
 import { cn } from "@/lib/utils/cn";
 import { useNetworkToast } from "@/components/shell/Toast";
 
-const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY", "INR", "THB", "SGD", "MYR"];
+const CURRENCIES: ReadonlyArray<{ code: string; label: string }> = [
+  { code: "USD", label: "USD — US Dollar" },
+  { code: "ZAR", label: "ZAR — South African Rand" },
+  { code: "EUR", label: "EUR — Euro" },
+  { code: "GBP", label: "GBP — British Pound" },
+  { code: "JPY", label: "JPY — Japanese Yen" },
+  { code: "AUD", label: "AUD — Australian Dollar" },
+  { code: "CAD", label: "CAD — Canadian Dollar" },
+  { code: "CHF", label: "CHF — Swiss Franc" },
+  { code: "CNY", label: "CNY — Chinese Yuan" },
+  { code: "INR", label: "INR — Indian Rupee" },
+  { code: "THB", label: "THB — Thai Baht" },
+  { code: "SGD", label: "SGD — Singapore Dollar" },
+  { code: "MYR", label: "MYR — Malaysian Ringgit" },
+];
 const RADIUS_OPTIONS = [
   { value: 10, label: "10 m" },
   { value: 100, label: "100 m" },
@@ -98,9 +112,9 @@ export default function SettingsClient() {
             onChange={(e) => setCurrency(e.target.value)}
             className="w-full px-3 py-2 border border-dragonfly-navy-700 rounded-lg text-sm min-h-[var(--touch-target)] bg-dragonfly-navy-950 text-dragonfly-navy-50 focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 focus:border-transparent"
           >
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {CURRENCIES.map(({ code, label }) => (
+              <option key={code} value={code}>
+                {label}
               </option>
             ))}
           </select>
