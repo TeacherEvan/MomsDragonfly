@@ -3,6 +3,7 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { validateDeviceId } from "./auth";
+import { fallbackDishes, parseDishResponse, type DishItem } from "./dishHelpers";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Overpass (OSM) helpers
@@ -636,6 +637,169 @@ export const getHighlights = action({
 
     if (weather || news.length > 0) {
       await ctx.runMutation(internal.mutations.setHighlightsCache, {
+        locKey,
+        payload: JSON.stringify(payload),
+      });
+    }
+
+    return payload;
+  },
+});
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * getLocalDishes — popular local dishes for the area, cached ~7 days per
+ * city-level (~11 km) cell. Nominatim reverse (keyless) + Gemini (optional,
+ * curated fallback for known cities) + Wikipedia thumbnails (keyless).
+ * Never throws: degrades to an empty list when nothing can be built.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+const DISHES_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+interface DishesPayload {
+  areaName: string | null;
+  dishes: DishItem[];
+  fetchedAt: number;
+}
+
+/** Keyless Wikipedia thumbnail for a dish; direct summary → search fallback. */
+async function wikipediaThumbnail(name: string): Promise<string | null> {
+  try {
+    const direct = (await fetchJson(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+        name.replace(/ /g, "_")
+      )}`,
+      {},
+      8_000
+    )) as { thumbnail?: { source?: string } };
+    if (direct?.thumbnail?.source) return direct.thumbnail.source;
+  } catch {
+    // fall through to search
+  }
+  try {
+    const search = (await fetchJson(
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+        name
+      )}&format=json&srlimit=1`,
+      {},
+      8_000
+    )) as { query?: { search?: Array<{ title?: string }> } };
+    const found = search?.query?.search?.[0]?.title;
+    if (!found) return null;
+    const summary = (await fetchJson(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+        found.replace(/ /g, "_")
+      )}`,
+      {},
+      8_000
+    )) as { thumbnail?: { source?: string } };
+    return summary?.thumbnail?.source ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Ask Gemini for the dish list. Returns null when unavailable/unusable. */
+async function generateDishesWithGemini(
+  areaName: string | null,
+  country: string | null
+): Promise<DishItem[] | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || !areaName) return null;
+  const model = process.env.GEMINI_MODEL ?? "gemini-flash-latest";
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25_000);
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text:
+                    `List 6 popular local dishes to try in ${areaName}` +
+                    `${country ? `, ${country}` : ""}. Reply with ONLY a JSON array ` +
+                    `(no prose, no markdown fences) of objects shaped ` +
+                    `{"name": "...", "description": "..."} where description is ONE warm, simple ` +
+                    `sentence (max 20 words) about what the dish is and what it is made of — ` +
+                    `perfect for a curious traveller.`,
+                },
+              ],
+            },
+          ],
+        }),
+        signal: controller.signal,
+      }
+    );
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.warn(`Dishes: Gemini error ${res.status} — ${body.slice(0, 300)}`);
+      return null;
+    }
+    const data = await res.json();
+    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    return parseDishResponse(text);
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.warn("Dishes: Gemini request failed:", String(err).slice(0, 160));
+    return null;
+  }
+}
+
+export const getLocalDishes = action({
+  args: { deviceId: v.string(), lat: v.number(), lng: v.number() },
+  handler: async (ctx, { deviceId, lat, lng }): Promise<DishesPayload> => {
+    validateDeviceId(deviceId);
+    const locKey = `${lat.toFixed(1)},${lng.toFixed(1)}`;
+
+    const cached = await ctx.runQuery(internal.queries.getDishesCache, { locKey });
+    if (cached && Date.now() - cached.fetchedAt < DISHES_TTL_MS) {
+      try {
+        return JSON.parse(cached.payload) as DishesPayload;
+      } catch {
+        // fall through and refetch
+      }
+    }
+
+    let areaName: string | null = null;
+    let country: string | null = null;
+
+    // 1) Area name (Nominatim reverse geocode, polite UA, city-level zoom)
+    try {
+      const n = (await fetchJson(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&accept-language=en`,
+        { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" },
+        10_000
+      )) as { name?: string; address?: Record<string, string> };
+      const a = n?.address ?? {};
+      areaName = a.city ?? a.town ?? a.village ?? a.county ?? a.state ?? n?.name ?? null;
+      country = a.country ?? null;
+    } catch (err) {
+      console.warn("Dishes: geocode failed:", String(err).slice(0, 160));
+    }
+
+    // 2) Dish list — Gemini first, curated fallback second (AI optional)
+    const generated = await generateDishesWithGemini(areaName, country);
+    const dishes: DishItem[] = generated ?? fallbackDishes(areaName, country);
+
+    // 3) Pictures — Wikipedia summary thumbnails (keyless), in parallel
+    const enriched = await Promise.all(
+      dishes.map(async (dish) => ({
+        ...dish,
+        imageUrl: await wikipediaThumbnail(dish.name),
+      }))
+    );
+
+    const payload: DishesPayload = { areaName, dishes: enriched, fetchedAt: Date.now() };
+
+    if (enriched.length > 0) {
+      await ctx.runMutation(internal.mutations.setDishesCache, {
         locKey,
         payload: JSON.stringify(payload),
       });

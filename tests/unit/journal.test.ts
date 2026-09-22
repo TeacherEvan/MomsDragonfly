@@ -5,6 +5,7 @@ import {
   groupByDay,
   dayKey,
   formatDayLabel,
+  mergeJournalDays,
   MIN_GAP_MS,
   MAX_GAP_MS,
 } from "@/lib/journal/stats";
@@ -79,5 +80,53 @@ describe("groupByDay / formatDayLabel", () => {
     const now = new Date(2026, 8, 22, 12, 0).getTime();
     expect(formatDayLabel(dayKey(now), now)).toBe("Today");
     expect(formatDayLabel(dayKey(now - 24 * 60 * 60 * 1000), now)).toBe("Yesterday");
+  });
+});
+
+describe("mergeJournalDays", () => {
+  it("merges notes and points into newest-first day groups", () => {
+    const day1 = new Date(2026, 8, 21, 9, 0).getTime();
+    const day2 = new Date(2026, 8, 22, 9, 0).getTime();
+    const notes = [
+      { createdAt: day1 + 1000, text: "older" },
+      { createdAt: day2 + 2000, text: "newer" },
+    ];
+    const points = [
+      { timestamp: day1 + 500, lat: 1, lng: 1 },
+      { timestamp: day2 + 500, lat: 2, lng: 2 },
+    ];
+    const groups = mergeJournalDays(notes, points);
+    expect(groups.map((g) => g.key)).toEqual([dayKey(day2), dayKey(day1)]);
+    expect(groups[0].notes).toHaveLength(1);
+    expect(groups[0].notes[0].text).toBe("newer");
+    expect(groups[0].points).toHaveLength(1);
+    expect(groups[1].notes[0].text).toBe("older");
+  });
+
+  it("keeps note-only and pin-only days", () => {
+    const t1 = new Date(2026, 8, 20, 8, 0).getTime();
+    const t2 = new Date(2026, 8, 19, 8, 0).getTime();
+    const groups = mergeJournalDays([{ createdAt: t1, text: "note only" }], [{ timestamp: t2 }]);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].points).toHaveLength(0);
+    expect(groups[0].notes).toHaveLength(1);
+    expect(groups[1].notes).toHaveLength(0);
+    expect(groups[1].points).toHaveLength(1);
+  });
+
+  it("sorts notes newest-first within a day", () => {
+    const base = new Date(2026, 8, 22, 8, 0).getTime();
+    const groups = mergeJournalDays(
+      [
+        { createdAt: base + 1000, text: "b" },
+        { createdAt: base + 2000, text: "a" },
+      ],
+      []
+    );
+    expect(groups[0].notes[0].text).toBe("a");
+  });
+
+  it("handles empty inputs", () => {
+    expect(mergeJournalDays([], [])).toEqual([]);
   });
 });

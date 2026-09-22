@@ -1,5 +1,5 @@
 import { test, testDeviceId, insertPrefs } from "./helpers";
-import { api } from "../convex/_generated/api";
+import { api, internal } from "../convex/_generated/api";
 
 test("savePrefs creates new prefs with defaults (real function)", async (t) => {
   const deviceId = testDeviceId();
@@ -209,4 +209,61 @@ test("deleteExpense verifies ownership", async (t) => {
     ctx.db.query("expenses").withIndex("by_deviceId_date", (q) => q.eq("deviceId", deviceId1)).collect()
   );
   expect(expenses).toHaveLength(0);
+});
+
+test("journal notes: CRUD, trim, limits, per-device isolation (real functions)", async (t) => {
+  const deviceA = testDeviceId();
+  const deviceB = testDeviceId();
+
+  await t.mutation(api.mutations.addJournalNote, {
+    deviceId: deviceA,
+    text: "  Hello Pretoria  ",
+    lat: -25.746,
+    lng: 28.237,
+  });
+
+  const notesA = await t.query(api.queries.journalNotesQuery, { deviceId: deviceA });
+  expect(notesA).toHaveLength(1);
+  expect(notesA[0].text).toBe("Hello Pretoria");
+  expect(notesA[0].lat).toBe(-25.746);
+
+  const notesB = await t.query(api.queries.journalNotesQuery, { deviceId: deviceB });
+  expect(notesB).toHaveLength(0);
+
+  await expect(
+    t.mutation(api.mutations.addJournalNote, { deviceId: deviceA, text: "   " })
+  ).rejects.toThrow();
+
+  await expect(
+    t.mutation(api.mutations.addJournalNote, { deviceId: deviceA, text: "x".repeat(501) })
+  ).rejects.toThrow();
+
+  await expect(
+    t.mutation(api.mutations.deleteJournalNote, { id: notesA[0]._id, deviceId: deviceB })
+  ).rejects.toThrow();
+
+  await t.mutation(api.mutations.deleteJournalNote, {
+    id: notesA[0]._id,
+    deviceId: deviceA,
+  });
+  const after = await t.query(api.queries.journalNotesQuery, { deviceId: deviceA });
+  expect(after).toHaveLength(0);
+});
+
+test("dishes cache upserts by locKey (internal functions)", async (t) => {
+  const locKey = "-25.7,28.2";
+  await t.mutation(internal.mutations.setDishesCache, {
+    locKey,
+    payload: JSON.stringify({ areaName: "Pretoria", dishes: [], fetchedAt: 1 }),
+  });
+  const first = await t.query(internal.queries.getDishesCache, { locKey });
+  expect(first?.payload).toContain("Pretoria");
+
+  await t.mutation(internal.mutations.setDishesCache, {
+    locKey,
+    payload: JSON.stringify({ areaName: "Pretoria", dishes: [], fetchedAt: 2 }),
+  });
+  const all = await t.query((ctx) => ctx.db.query("dishesCache").collect());
+  expect(all).toHaveLength(1); // upsert, not a duplicate
+  expect(all[0].payload).toContain('"fetchedAt":2');
 });
