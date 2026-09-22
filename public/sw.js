@@ -1,5 +1,5 @@
 // Service worker for Mom's Dragonfly PWA
-const CACHE_NAME = 'moms-dragonfly-v2';
+const CACHE_NAME = 'moms-dragonfly-v3';
 const MEDIA_CACHE = 'moms-dragonfly-media-v1';
 const OFFLINE_URL = '/offline.html';
 
@@ -48,6 +48,11 @@ self.addEventListener('fetch', (event) => {
 
   // Skip chrome-extension and other non-http(s) requests
   if (!url.protocol.startsWith('http')) return;
+
+  // Never intercept cross-origin requests (map tiles, external images):
+  // let the network handle them directly — the SW adds failure modes
+  // (lifecycle races, respondWith errors) but no caching value here.
+  if (url.origin !== self.location.origin) return;
 
   // Intro media (splash video): cache-first so it plays instantly and
   // reliably — even on flaky connections or offline after first view.

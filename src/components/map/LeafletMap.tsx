@@ -1,5 +1,12 @@
 "use client";
-import React, { useEffect, useRef, useImperativeHandle, forwardRef, useMemo } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+  useMemo,
+} from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import type { NormalizedPOI } from "@/types";
 import { POIMarker } from "./POIMarker";
@@ -11,6 +18,15 @@ import L from "leaflet";
  * showed up as "Marker" broken-image placeholders on the map).
  */
 const PIN_SVG = `<svg width="28" height="40" viewBox="0 0 28 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 1C7 1 1.5 6.5 1.5 13.5c0 9.5 12.5 24.5 12.5 24.5S26.5 23 26.5 13.5C26.5 6.5 21 1 14 1z" fill="#319795" stroke="#e6fffa" stroke-width="1.5"/><circle cx="14" cy="13.5" r="4.5" fill="#061416"/><circle cx="14" cy="13.5" r="2" fill="#4fd1c5"/></svg>`;
+
+const MAX_TILE_RETRIES = 3;
+
+/** Calm dark placeholder shown only when a tile keeps failing (instead of a broken-image icon). */
+const TILE_PLACEHOLDER =
+  "data:image/svg+xml;charset=utf-8," +
+  encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256'><rect width='256' height='256' fill='#0a1f26'/><rect x='0.5' y='0.5' width='255' height='255' fill='none' stroke='#112d3a'/></svg>"
+  );
 
 function RecenterMap({ center }: { center: [number, number] }) {
   const map = useMap();
@@ -74,6 +90,32 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
       }),
     []
   );
+
+  /**
+   * Tile resilience: retry failed tiles up to MAX_TILE_RETRIES with backoff
+   * (Leaflet never retries on its own, leaving broken images), then fall back
+   * to a calm dark placeholder tile.
+   */
+  const handleTileError = useCallback((e: L.TileErrorEvent) => {
+    const tile = e.tile as (HTMLImageElement & { dataset: DOMStringMap }) | undefined;
+    if (!tile) return;
+
+    const retries = Number(tile.dataset.retry ?? "0");
+    if (retries >= MAX_TILE_RETRIES) {
+      if (!tile.dataset.placeholder) {
+        tile.dataset.placeholder = "1";
+        tile.src = TILE_PLACEHOLDER;
+      }
+      return;
+    }
+    tile.dataset.retry = String(retries + 1);
+    const originalSrc = tile.dataset.originalSrc ?? tile.src;
+    tile.dataset.originalSrc = originalSrc;
+    window.setTimeout(() => {
+      const sep = originalSrc.includes("?") ? "&" : "?";
+      tile.src = `${originalSrc}${sep}r=${Date.now()}`;
+    }, 1200 * (retries + 1));
+  }, []);
 
   useImperativeHandle(ref, () => ({
     panToPOI: (poi: NormalizedPOI) => {
@@ -144,6 +186,7 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        eventHandlers={{ tileerror: handleTileError }}
       />
       <AccessibleZoomControl />
       {center && <RecenterMap center={center} />}
