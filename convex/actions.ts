@@ -738,7 +738,8 @@ async function generateDishesWithGemini(
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      console.warn(`Dishes: Gemini error ${res.status}`);
+      const body = await res.text().catch(() => "");
+      console.warn(`Dishes: Gemini error ${res.status} — ${body.slice(0, 300)}`);
       return null;
     }
     const data = await res.json();

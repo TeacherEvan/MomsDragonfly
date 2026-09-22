@@ -119,7 +119,7 @@ export function fallbackDishes(areaName: string | null, country: string | null):
         imageUrl: null,
       },
       {
-        name: "Tom Yum Goong",
+        name: "Tom Yum",
         description:
           "A hot-and-sour shrimp soup fragrant with lemongrass, galangal and kaffir lime leaves.",
         imageUrl: null,
