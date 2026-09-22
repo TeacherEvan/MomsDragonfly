@@ -52,6 +52,10 @@ export default function LocalClient() {
   }, []);
 
   const hasPosition = Boolean(lat && lng && !geoError);
+  // The hook exposes no pending flag, so pending = no position yet AND no error.
+  // Keeps the failure panel (with its Retry button) hidden until geolocation
+  // actually errors, instead of showing it while watchPosition is still resolving.
+  const isLocating = !hasPosition && !geoError;
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-4 p-4">
@@ -104,6 +108,20 @@ export default function LocalClient() {
             )}
           </div>
         </>
+      ) : isLocating ? (
+        <div
+          className="flex flex-col items-center justify-center rounded-xl border border-dragonfly-navy-800 bg-dragonfly-navy-900/70 px-6 py-8 text-center"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="mb-3 animate-pulse text-dragonfly-navy-500" aria-hidden="true">
+            <Icon name="map-pin" size={40} />
+          </span>
+          <p className="mb-2 font-semibold text-dragonfly-navy-200">Finding you…</p>
+          <p className="max-w-xs text-sm text-dragonfly-navy-500">
+            We use your location to show local news, weather and dishes nearby.
+          </p>
+        </div>
       ) : (
         <div
           className="flex flex-col items-center justify-center rounded-xl border border-dragonfly-navy-700 bg-dragonfly-navy-900/80 px-6 py-8 text-center"
