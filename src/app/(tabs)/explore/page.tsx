@@ -269,6 +269,7 @@ export default function ExplorePage() {
             onRetry={handleRetry}
             onSelect={setSelectedPoi}
           />
+          <PlaceDetailsSheet poi={selectedPoi} onClose={() => setSelectedPoi(null)} onRequestRide={handleRequestRide} onShowOnMap={handleShowOnMap} />
 
           <RideSheet
             poi={rideTarget}
