@@ -7,6 +7,7 @@ const OFFLINE_URL = '/offline.html';
 const PRECACHE_URLS = [
   '/',
   '/explore',
+  '/local',
   '/budget',
   '/reminders',
   '/tickets',

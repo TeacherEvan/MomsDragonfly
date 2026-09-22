@@ -15,8 +15,6 @@ import type { LeafletMapRef } from "@/components/map/LeafletMap";
 import { haversine } from "@/lib/utils/geo";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import { Icon } from "@/components/ui/Icon";
-import { HighlightsCard } from "@/components/explore/HighlightsCard";
-import { LocalDishesCard } from "@/components/explore/LocalDishesCard";
 import { RideSheet } from "@/components/ride/RideSheet";
 
 type OnboardingStep = "splash" | "video" | "slides" | "done";
@@ -246,10 +244,6 @@ export default function ExplorePage() {
               </button>
             </div>
           )}
-
-          {lat && lng && !geoError && <HighlightsCard lat={lat} lng={lng} />}
-
-          {lat && lng && !geoError && <LocalDishesCard lat={lat} lng={lng} />}
 
           <div>
             <div className="flex items-center justify-between mb-1">

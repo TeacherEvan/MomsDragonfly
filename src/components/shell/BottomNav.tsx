@@ -7,6 +7,7 @@ import { Icon, type IconName } from "@/components/ui/Icon";
 
 const tabs: ReadonlyArray<{ href: string; label: string; icon: IconName }> = [
   { href: "/explore", label: "Explore", icon: "compass" },
+  { href: "/local", label: "Local", icon: "sparkle" },
   { href: "/journal", label: "Journal", icon: "route" },
   { href: "/budget", label: "Budget", icon: "wallet" },
   { href: "/reminders", label: "Reminders", icon: "bell" },
@@ -17,7 +18,9 @@ export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const activeIndex = tabs.findIndex((t) => pathname.startsWith(t.href));
-  const indicatorLeft = `${(activeIndex >= 0 ? activeIndex : 0) * 20 + 10}%`;
+  // N-tab indicator math: each tab owns 100/N percent; centre on the active one.
+  const step = 100 / tabs.length;
+  const indicatorLeft = `${(activeIndex >= 0 ? activeIndex : 0) * step + step / 2}%`;
 
   const handleTabClick = (index: number) => {
     router.push(tabs[index].href);
@@ -47,7 +50,7 @@ export function BottomNav() {
                   onClick={() => handleTabClick(index)}
                   className={cn(
                     "flex flex-col items-center justify-center py-2 text-caption transition-colors duration-fast",
-                    "min-h-[var(--touch-target)] w-full",
+                    "min-h-[48px] w-full",
                     isActive
                       ? "text-dragonfly-orange-400 font-semibold"
                       : "text-dragonfly-navy-400 hover:text-dragonfly-navy-200"
@@ -61,7 +64,9 @@ export function BottomNav() {
                   <span className="mb-0.5 relative z-10">
                     <Icon name={icon} size={22} strokeWidth={isActive ? 2.1 : 1.75} />
                   </span>
-                  <span className="relative z-10">{label}</span>
+                  <span className="relative z-10 whitespace-nowrap text-[11px] leading-tight sm:text-caption">
+                    {label}
+                  </span>
                 </motion.div>
               </li>
             );
