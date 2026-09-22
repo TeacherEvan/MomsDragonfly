@@ -1,5 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
-import schema from "./schema";
+import schema from "../convex/schema";
 import { test as vitestTest } from "vitest";
 
 // Vitest/Vite resolves this glob at transform time. Passing the module map
@@ -13,6 +13,10 @@ export type Test = TestConvex<typeof schema>;
  * Test wrapper that gives each test a fresh convex-test instance:
  *
  *   test("name", async (t) => { await t.mutation(...) })
+ *
+ * Tests import the REAL schema from ../convex/schema — never fork a copy.
+ * A stale copy silently hides schema drift (removed/renamed fields), which
+ * is exactly how a broken `savePrefs` insert slipped past this harness once.
  */
 export function test(name: string, fn: (t: Test) => Promise<void>): void {
   vitestTest(name, async () => {
@@ -30,7 +34,6 @@ export async function insertPrefs(t: Test, deviceId: string, overrides = {}) {
   return t.mutation((ctx) => {
     return ctx.db.insert("userPrefs", {
       deviceId,
-      elderlyMode: false,
       defaultRadius: 1000,
       currency: "USD",
       notificationsEnabled: false,
@@ -59,7 +62,7 @@ export async function insertPois(t: Test, deviceId: string, pois: Array<{
     return Promise.all(pois.map((p) =>
       ctx.db.insert("pois", {
         ...p,
-        deviceId,
+        deviceIds: [deviceId],
         verifiedCount: p.verifiedCount ?? 0,
         fetchedAt: now,
       })

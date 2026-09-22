@@ -70,7 +70,6 @@ export const upsertPOIs = mutation({
 export const savePrefs = mutation({
   args: {
     deviceId: v.string(),
-    elderlyMode: v.optional(v.boolean()),
     defaultRadius: v.optional(v.number()),
     currency: v.optional(v.string()),
     notificationsEnabled: v.optional(v.boolean()),
@@ -89,7 +88,6 @@ export const savePrefs = mutation({
     } else {
       await ctx.db.insert("userPrefs", {
         deviceId,
-        elderlyMode: updates.elderlyMode ?? false,
         defaultRadius: updates.defaultRadius ?? 1000,
         currency: updates.currency ?? "USD",
         notificationsEnabled: updates.notificationsEnabled ?? false,

@@ -78,7 +78,7 @@ public/                # Icons, manifest, sw.js, offline.html, tesseract/ (self-
 
 - Unit tests: `tests/setup.ts` configures jsdom + Testing Library
 - E2E tests: `playwright.config.ts` uses Pixel 5 mobile emulation, single chromium project
-- Convex tests: `convex-test/` integration harness — run `pnpm test:convex` (separate config `vitest.convex.config.mts`; the main vitest config excludes `convex-test/`). The module map is passed explicitly in `helpers.ts` because `import.meta.glob` is unavailable inside externalized deps.
+- Convex tests: `convex-test/` integration harness — run `pnpm test:convex` (separate config `vitest.convex.config.mts`; the main vitest config excludes `convex-test/`). Tests call the REAL functions (`api.mutations.*`, `api.queries.*`) against the REAL schema (`../convex/schema`) — never fork a schema copy; a stale copy hides field drift. The module map is passed explicitly in `helpers.ts` because `import.meta.glob` is unavailable inside externalized deps.
 
 ## Deployment
 

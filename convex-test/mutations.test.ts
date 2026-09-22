@@ -1,39 +1,29 @@
 import { test, testDeviceId, insertPrefs } from "./helpers";
+import { api } from "../convex/_generated/api";
 
-test("savePrefs creates new prefs with defaults", async (t) => {
+test("savePrefs creates new prefs with defaults (real function)", async (t) => {
   const deviceId = testDeviceId();
-  await insertPrefs(t, deviceId);
+  await t.mutation(api.mutations.savePrefs, { deviceId });
 
-  const prefs = await t.query((ctx) =>
-    ctx.db.query("userPrefs").withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId)).unique()
-  );
+  const prefs = await t.query(api.queries.prefsQuery, { deviceId });
 
   expect(prefs).toBeDefined();
   expect(prefs?.deviceId).toBe(deviceId);
-  expect(prefs?.elderlyMode).toBe(false);
   expect(prefs?.defaultRadius).toBe(1000);
   expect(prefs?.currency).toBe("USD");
   expect(prefs?.notificationsEnabled).toBe(false);
   expect(prefs?.onboardingComplete).toBe(false);
 });
 
-test("savePrefs updates existing prefs", async (t) => {
+test("savePrefs updates existing prefs (real function)", async (t) => {
   const deviceId = testDeviceId();
-  await insertPrefs(t, deviceId, { currency: "EUR", defaultRadius: 500 });
+  await t.mutation(api.mutations.savePrefs, { deviceId, currency: "EUR", defaultRadius: 500 });
+  await t.mutation(api.mutations.savePrefs, { deviceId, currency: "GBP", tripStartDate: 1789862400000 });
 
-  await t.mutation(async (ctx) => {
-    const prefs = await ctx.db.query("userPrefs").withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId)).unique();
-    if (prefs) {
-      return ctx.db.patch(prefs._id, { currency: "GBP", elderlyMode: true });
-    }
-  });
-
-  const prefs = await t.query((ctx) =>
-    ctx.db.query("userPrefs").withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId)).unique()
-  );
+  const prefs = await t.query(api.queries.prefsQuery, { deviceId });
 
   expect(prefs?.currency).toBe("GBP");
-  expect(prefs?.elderlyMode).toBe(true);
+  expect(prefs?.tripStartDate).toBe(1789862400000);
   expect(prefs?.defaultRadius).toBe(500); // unchanged
 });
 
