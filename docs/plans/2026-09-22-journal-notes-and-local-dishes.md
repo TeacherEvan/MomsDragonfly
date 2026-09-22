@@ -141,3 +141,19 @@
 - Local `.env.local` points at the stale dev deployment `different-squid-155` — local browser runs against it behave oddly (stale schema/functions). Verifications therefore run against the deployed site, not localhost.
 - Convex-client error strings (e.g. `happy-otter-123.convex.cloud`) in bundles are library examples, not config.
 - Gemini may be unavailable/unset → fallback dataset guarantees Pretoria/Bangkok demo value; other cities simply hide the card when empty.
+
+---
+
+## Execution Results (2026-09-22)
+
+**Status: COMPLETE — shipped to production and verified in-browser.**
+
+- **Task 1 (backend):** `journalNotes` + `dishesCache` deployed to prod Convex (indexes confirmed in deploy output). Convex tests 14/14 green.
+- **Task 2 (getLocalDishes):** live smoke tests — Pretoria → 6 dishes (6/6 Wikipedia images); Bangkok → 6 dishes (6/6 images). ⚠️ Prod `GEMINI_API_KEY` is invalid ("API key not valid") → the curated fallback serves Pretoria/Bangkok; a fresh key unlocks every city.
+- **Task 3 (lib helpers):** `mergeJournalDays` + `getQuickPosition` — unit tests green (102/102 total across 15 files).
+- **Task 4 (journal UI):** verified live — note saved, pinned via geolocation, persisted across reload, deleted with confirm. ✅
+- **Task 5 (dishes UI + CSP):** "Taste of Pretoria" and "Taste of Bangkok" cards verified live; images load (CSP now includes `upload.wikimedia.org` **and** `thumb.wikimedia.org` — Wikipedia serves thumbs from the latter now).
+- **Task 6 (tests/docs):** typecheck + build green. AGENTS.md convention update pending (approval guard) — code comments + this document cover it meanwhile.
+- **Task 7 (ship):** branch `feat/journal-notes-and-dishes` → `npx convex deploy` → `npx vercel --prod` (deployment `69k9po63d`, aliased) → prod browser verification → merge to main.
+
+**Post-verify fixups discovered:** `thumb.wikimedia.org` CSP gap (caught by smoke test); Gemini error-body logging; Tom Yum naming for a truer Wikipedia image (affects future cache fills).
