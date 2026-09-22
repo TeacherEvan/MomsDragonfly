@@ -61,6 +61,20 @@ export function formatAmount(amount: number, currency: string, locale?: string):
 }
 
 /**
+ * Resolve the currency to display: the first non-empty candidate wins.
+ * Callers pass the Settings value (`userPrefs.currency`) first, then any
+ * legacy fallback (e.g. a budget record's stored currency). Defaults to USD.
+ */
+export function resolveCurrency(...candidates: Array<string | null | undefined>): string {
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate;
+    }
+  }
+  return "USD";
+}
+
+/**
  * Detect the user's likely currency from their browser locale.
  * Falls back to "USD" if detection fails.
  */
