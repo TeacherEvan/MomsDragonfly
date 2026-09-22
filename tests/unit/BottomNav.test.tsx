@@ -16,13 +16,16 @@ describe("BottomNav", () => {
     expect(nav).toHaveClass("border-dragonfly-navy-800");
   });
 
-  it("renders all five tab buttons", () => {
+  it("renders all six tab buttons", () => {
     render(<BottomNav />);
     expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /local/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /journal/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /budget/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /reminders/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /tickets/i })).toBeInTheDocument();
+    const nav = screen.getByRole("navigation");
+    expect(nav.querySelectorAll('[role="button"]')).toHaveLength(6);
   });
 
   it("applies dragonfly-orange color to active tab", () => {
