@@ -32,7 +32,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }: POICardProps) {
   return (
-    <div className="flex items-center justify-between gap-3 p-4 bg-surface-900/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-800 shadow-soft card-hover">
+    <div onClick={() => onSelect?.(poi)} className="... cursor-pointer hover:scale-[0.98] active:scale-[0.99]" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect?.(poi); }} aria-label={`Details for ${poi.name}`}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-dragonfly-navy-50 line-clamp-2 text-body">
@@ -50,6 +50,7 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
               {poi.openNow ? "Open" : "Closed"}
             </span>
           )}
+          <span className="inline-flex items-center gap-1 text-caption text-dragonfly-navy-300">Details <Icon name="chevron-right" size={12} /></span>
         </div>
         {poi.address && (
           <p className="text-caption text-dragonfly-navy-400 line-clamp-2 mt-1">{poi.address}</p>
@@ -70,13 +71,14 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
               {poi.rating.toFixed(1)}
             </span>
           )}
+          <span className="inline-flex items-center gap-1 text-caption text-dragonfly-navy-300">Details <Icon name="chevron-right" size={12} /></span>
         </div>
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
         {onRequestRide && (
           <button
             type="button"
-            onClick={() => onRequestRide(poi)}
+            onClick={(e)=>{e.stopPropagation(); onRequestRide?.(poi);}}
             className={cn(
               "shrink-0 px-3 py-1.5 rounded-lg text-caption font-semibold border transition-all duration-fast",
               "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",
@@ -90,7 +92,7 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
         {onShowOnMap && (
           <button
             type="button"
-            onClick={() => onShowOnMap(poi)}
+            onClick={(e)=>{e.stopPropagation(); onShowOnMap?.(poi);}}
             className={cn(
               "shrink-0 px-3 py-1.5 rounded-lg text-caption font-semibold border transition-all duration-fast",
               "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",

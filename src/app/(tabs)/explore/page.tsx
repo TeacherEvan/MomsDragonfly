@@ -267,6 +267,7 @@ export default function ExplorePage() {
             category={category}
             phase={activePhase}
             onRetry={handleRetry}
+            onSelect={setSelectedPoi}
           />
 
           <RideSheet

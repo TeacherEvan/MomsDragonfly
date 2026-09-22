@@ -27,6 +27,7 @@ interface POIListProps {
   category?: string;
   phase?: FetchPhase;
   onRetry?: () => void;
+  onSelect?: (poi: NormalizedPOI) => void;
 }
 
 const ITEM_HEIGHT = 152;
@@ -38,9 +39,10 @@ interface POIRowProps {
   onVerify: (placeId: string) => void;
   onShowOnMap?: (poi: NormalizedPOI) => void;
   onRequestRide?: (poi: NormalizedPOI) => void;
+  onSelect?: (poi: NormalizedPOI) => void;
 }
 
-function POIRow({ index, style, pois, onVerify, onShowOnMap, onRequestRide }: POIRowProps): React.ReactElement {
+function POIRow({ index, style, pois, onVerify, onShowOnMap, onRequestRide, onSelect }: POIRowProps): React.ReactElement {
   const poi = pois[index];
 
   return (
@@ -48,6 +50,7 @@ function POIRow({ index, style, pois, onVerify, onShowOnMap, onRequestRide }: PO
       <POICard
         poi={poi}
         onVerify={() => onVerify(poi.placeId)}
+        onSelect={onSelect}
         onShowOnMap={onShowOnMap}
         onRequestRide={onRequestRide}
       />
@@ -70,13 +73,14 @@ export function POIList({
   category,
   phase = "idle",
   onRetry,
+  onSelect,
 }: POIListProps) {
   const listId = useId();
   const liveRegionId = `${listId}-live`;
 
   const rowData = useMemo<ListRowProps>(
-    () => ({ pois, onVerify, onShowOnMap, onRequestRide }),
-    [pois, onVerify, onShowOnMap, onRequestRide]
+    () => ({ pois, onVerify, onShowOnMap, onRequestRide, onSelect }),
+[pois, onVerify, onShowOnMap, onRequestRide, onSelect]
   );
 
   if (pois.length === 0) {
