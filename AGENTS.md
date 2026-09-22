@@ -93,6 +93,13 @@ npx vercel --prod --yes     # non-interactive OK with --yes
 
 Pushing to GitHub also works when the Vercel git integration is connected.
 
+## Android App (TWA)
+
+- `android/` — Trusted Web Activity project (bubblewrap). Package `app.vercel.mom_s_dragonfly.twa`, **targetSdk 36** — required so Google Play Protect doesn't block it (browser-minted WebAPKs from Samsung Internet/OEM browsers get blocked; never distribute those).
+- Keystore + passwords are **gitignored** (`android/android.keystore`, `android/keystore-passwords.txt`); backup at `~/Android/keystores/momsdragonfly/`. Never commit them.
+- Rebuild: `cd android && bubblewrap update --skipVersionUpgrade && bubblewrap build` with `BUBBLEWRAP_KEYSTORE_PASSWORD`/`BUBBLEWRAP_KEY_PASSWORD` env vars set from `keystore-passwords.txt`. Full notes in `android/README.md`.
+- `public/.well-known/assetlinks.json` holds the signing fingerprint for fullscreen (URL-bar-less) mode — update it if the signing key ever changes, then redeploy.
+
 ## Post-Deploy Checklist
 
 - [ ] Verify `NEXT_PUBLIC_CONVEX_URL` points to production deployment

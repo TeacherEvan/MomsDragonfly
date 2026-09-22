@@ -1,0 +1,42 @@
+{
+  "packageId": "app.vercel.mom_s_dragonfly.twa",
+  "host": "mom-s-dragonfly.vercel.app",
+  "name": "Mom's Dragonfly",
+  "launcherName": "Dragonfly",
+  "display": "standalone",
+  "themeColor": "#ea580c",
+  "themeColorDark": "#000000",
+  "navigationColor": "#061416",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#00000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#061416",
+  "enableNotifications": false,
+  "startUrl": "/explore",
+  "iconUrl": "https://mom-s-dragonfly.vercel.app/icons/icon-512x512.png",
+  "maskableIconUrl": "https://mom-s-dragonfly.vercel.app/icons/icon-512x512-maskable.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://mom-s-dragonfly.vercel.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://mom-s-dragonfly.vercel.app/",
+  "minSdkVersion": 21,
+  "orientation": "default",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": []
+}

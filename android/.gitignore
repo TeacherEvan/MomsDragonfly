@@ -1,0 +1,20 @@
+# Secrets — never commit
+android.keystore
+keystore-passwords.txt
+*.keystore
+*.jks
+
+# Build outputs
+.gradle/
+app/build/
+build/
+*.apk
+*.aab
+
+# IDE / local config
+.idea/
+*.iml
+local.properties
+.project
+.classpath
+.settings/
