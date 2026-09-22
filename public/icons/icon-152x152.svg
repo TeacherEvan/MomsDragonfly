@@ -1,81 +1,113 @@
-<svg width="152" height="152" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#16a34a;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#15803d;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#166534;stop-opacity:1" />
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a2028"/>
+      <stop offset="55%" stop-color="#08161d"/>
+      <stop offset="100%" stop-color="#061416"/>
     </linearGradient>
-    <linearGradient id="wingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:0.3" />
-      <stop offset="50%" style="stop-color:#16a34a;stop-opacity:0.2" />
-      <stop offset="100%" style="stop-color:#15803d;stop-opacity:0.1" />
+    <radialGradient id="glowGrad" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#319795" stop-opacity="0.28"/>
+      <stop offset="60%" stop-color="#319795" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#319795" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.55"/>
+      <stop offset="45%" stop-color="#38b2ac" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#4fd1c5" stop-opacity="0.5"/>
     </linearGradient>
-    <linearGradient id="eyeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#fef3c7;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#fde047;stop-opacity:1" />
+    <linearGradient id="wgFore" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#38b2ac" stop-opacity="0.36"/>
+      <stop offset="100%" stop-color="#4fd1c5" stop-opacity="0.26"/>
+    </linearGradient>
+    <linearGradient id="wgHind" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4fd1c5" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#67e8f9" stop-opacity="0.28"/>
+    </linearGradient>
+    <linearGradient id="weGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fb923c" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#38b2ac" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#67e8f9" stop-opacity="0.75"/>
+    </linearGradient>
+    <linearGradient id="abGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4fd1c5"/>
+      <stop offset="45%" stop-color="#319795"/>
+      <stop offset="100%" stop-color="#2c7a7b"/>
+    </linearGradient>
+    <linearGradient id="thGrad" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#4fd1c5"/>
+      <stop offset="100%" stop-color="#2c7a7b"/>
+    </linearGradient>
+    <linearGradient id="hdGrad" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#4fd1c5"/>
+      <stop offset="100%" stop-color="#319795"/>
+    </linearGradient>
+    <linearGradient id="eyeGrad" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#fcd34d"/>
+      <stop offset="100%" stop-color="#f97316"/>
     </linearGradient>
   </defs>
-  
-  <!-- Body segments -->
-  <g transform="translate(76, 76)">
-    <!-- Tail segments (abdomen) -->
-    <ellipse cx="0" cy="80" rx="4.15625" ry="5.9375" fill="url(#bodyGradient)" />
-    <ellipse cx="0" cy="55" rx="4.75" ry="5.9375" fill="url(#bodyGradient)" />
-    <ellipse cx="0" cy="30" rx="5.34375" ry="5.9375" fill="url(#bodyGradient)" />
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect x="3" y="3" width="506" height="506" rx="109" fill="none" stroke="url(#rimGrad)" stroke-width="2.5"/>
+  <circle cx="256" cy="230" r="210" fill="url(#glowGrad)"/>
+  <g transform="translate(256 256) scale(0.94) translate(-256 -256)">
+  <g transform="rotate(-6 256 256)">
     
-    <!-- Thorax -->
-    <ellipse cx="0" cy="0" rx="6.53125" ry="7.421875" fill="url(#bodyGradient)" />
-    
-    <!-- Head -->
-    <ellipse cx="0" cy="-30" rx="5.9375" ry="5.9375" fill="url(#bodyGradient)" />
-    
-    <!-- Eyes -->
-    <ellipse cx="-12" cy="-35" rx="2.375" ry="2.375" fill="url(#eyeGradient)" />
-    <ellipse cx="12" cy="-35" rx="2.375" ry="2.375" fill="url(#eyeGradient)" />
-    <ellipse cx="-12" cy="-35" rx="1.1875" ry="1.1875" fill="#166534" />
-    <ellipse cx="12" cy="-35" rx="1.1875" ry="1.1875" fill="#166534" />
-    
-    <!-- Wings - front pair -->
-    <ellipse cx="-55" cy="-15" rx="13.359375" ry="10.390625" fill="url(#wingGradient)" transform="rotate(-25)" stroke="#15803d" stroke-width="0.296875" stroke-opacity="0.3"/>
-    <ellipse cx="55" cy="-15" rx="13.359375" ry="10.390625" fill="url(#wingGradient)" transform="rotate(25)" stroke="#15803d" stroke-width="0.296875" stroke-opacity="0.3"/>
-    
-    <!-- Wing veins -->
-    <g stroke="#15803d" stroke-width="0.1484375" stroke-opacity="0.4" fill="none">
-      <line x1="0" y1="-15" x2="-55" y2="-50" transform="rotate(-25)" />
-      <line x1="0" y1="-15" x2="-55" y2="-5" transform="rotate(-25)" />
-      <line x1="0" y1="-15" x2="-80" y2="-25" transform="rotate(-25)" />
-      <line x1="0" y1="-15" x2="55" y2="-50" transform="rotate(25)" />
-      <line x1="0" y1="-15" x2="55" y2="-5" transform="rotate(25)" />
-      <line x1="0" y1="-15" x2="80" y2="-25" transform="rotate(25)" />
+      <path d="M236 212 C204 178 138 126 46 102 C86 142 156 200 230 244 Z"
+        fill="url(#wgFore)" stroke="url(#weGrad)" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M240 246 C206 264 150 300 88 322 C138 356 202 338 244 276 Z"
+        fill="url(#wgHind)" stroke="url(#weGrad)" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M236 212 C204 178 138 126 46 102"
+        fill="none" stroke="#cffafe" stroke-width="2.2" stroke-linecap="round" opacity="0.55"/>
+      <g fill="none" stroke="#a5f3fc" stroke-width="1.2" opacity="0.5" stroke-linecap="round">
+        <path d="M228 214 Q150 156 56 108"/>
+        <path d="M214 220 Q152 186 84 138"/>
+        <path d="M234 250 Q172 282 100 318"/>
+        <path d="M230 262 Q180 296 122 312"/>
+      </g>
+      <circle cx="50" cy="104" r="7.5" fill="#fb923c" opacity="0.95"/>
+      <circle cx="92" cy="324" r="6" fill="#fdba74" opacity="0.9"/>
+    <g transform="translate(512 0) scale(-1 1)">
+      <path d="M236 212 C204 178 138 126 46 102 C86 142 156 200 230 244 Z"
+        fill="url(#wgFore)" stroke="url(#weGrad)" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M240 246 C206 264 150 300 88 322 C138 356 202 338 244 276 Z"
+        fill="url(#wgHind)" stroke="url(#weGrad)" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M236 212 C204 178 138 126 46 102"
+        fill="none" stroke="#cffafe" stroke-width="2.2" stroke-linecap="round" opacity="0.55"/>
+      <g fill="none" stroke="#a5f3fc" stroke-width="1.2" opacity="0.5" stroke-linecap="round">
+        <path d="M228 214 Q150 156 56 108"/>
+        <path d="M214 220 Q152 186 84 138"/>
+        <path d="M234 250 Q172 282 100 318"/>
+        <path d="M230 262 Q180 296 122 312"/>
+      </g>
+      <circle cx="50" cy="104" r="7.5" fill="#fb923c" opacity="0.95"/>
+      <circle cx="92" cy="324" r="6" fill="#fdba74" opacity="0.9"/></g>
+
+    <!-- abdomen: long, slim, sharply tapered -->
+    <path d="M245 254 C242 302 245 362 249 412 C251 436 254 454 256 466 C258 454 261 436 263 412 C267 362 270 302 267 254 C264 246 248 246 245 254 Z"
+      fill="url(#abGrad)"/>
+    <g fill="none" stroke="#061416" stroke-width="1.8" opacity="0.4" stroke-linecap="round">
+      <path d="M245.2 278 Q256 282 266.8 278"/>
+      <path d="M245 300 Q256 304 267 300"/>
+      <path d="M245.4 322 Q256 326 266.6 322"/>
+      <path d="M246.2 344 Q256 348 265.8 344"/>
+      <path d="M247.4 366 Q256 369.6 264.6 366"/>
+      <path d="M248.8 388 Q256 391.4 263.2 388"/>
+      <path d="M250.4 408 Q256 411 261.6 408"/>
+      <path d="M252.2 426 Q256 428.4 259.8 426"/>
     </g>
-    
-    <!-- Wings - rear pair -->
-    <ellipse cx="-45" cy="25" rx="10.390625" ry="7.421875" fill="url(#wingGradient)" transform="rotate(-35)" stroke="#15803d" stroke-width="0.296875" stroke-opacity="0.3"/>
-    <ellipse cx="45" cy="25" rx="10.390625" ry="7.421875" fill="url(#wingGradient)" transform="rotate(35)" stroke="#15803d" stroke-width="0.296875" stroke-opacity="0.3"/>
-    
-    <g stroke="#15803d" stroke-width="0.1484375" stroke-opacity="0.4" fill="none">
-      <line x1="0" y1="25" x2="-45" y2="0" transform="rotate(-35)" />
-      <line x1="0" y1="25" x2="-45" y2="45" transform="rotate(-35)" />
-      <line x1="0" y1="25" x2="-65" y2="20" transform="rotate(-35)" />
-      <line x1="0" y1="25" x2="45" y2="0" transform="rotate(35)" />
-      <line x1="0" y1="25" x2="45" y2="45" transform="rotate(35)" />
-      <line x1="0" y1="25" x2="65" y2="20" transform="rotate(35)" />
-    </g>
-    
-    <!-- Legs -->
-    <g stroke="#166534" stroke-width="0.59375" fill="none">
-      <line x1="-20" y1="10" x2="-35" y2="25" />
-      <line x1="20" y1="10" x2="35" y2="25" />
-      <line x1="-18" y1="25" x2="-30" y2="40" />
-      <line x1="18" y1="25" x2="30" y2="40" />
-      <line x1="-15" y1="40" x2="-25" y2="55" />
-      <line x1="15" y1="40" x2="25" y2="55" />
-    </g>
-    
-    <!-- Antennae -->
-    <g stroke="#166534" stroke-width="0.4453125" fill="none" stroke-linecap="round">
-      <path d="M-10 -50 Q-20 -65 -15 -75" />
-      <path d="M10 -50 Q20 -65 15 -75" />
-    </g>
+    <circle cx="256" cy="462" r="2.6" fill="#fdba74" opacity="0.75"/>
+
+    <!-- thorax -->
+    <path d="M256 190 C275 190 287 206 286 228 C285 246 274 254 256 254 C238 254 227 246 226 228 C225 206 237 190 256 190 Z"
+      fill="url(#thGrad)"/>
+
+    <!-- head + compound eyes -->
+    <circle cx="256" cy="168" r="24" fill="url(#hdGrad)"/>
+    <circle cx="242" cy="158" r="12.5" fill="url(#eyeGrad)"/>
+    <circle cx="270" cy="158" r="12.5" fill="url(#eyeGrad)"/>
+    <circle cx="238" cy="153.5" r="3.6" fill="#fef3c7"/>
+    <circle cx="266" cy="153.5" r="3.6" fill="#fef3c7"/>
+  </g>
   </g>
 </svg>

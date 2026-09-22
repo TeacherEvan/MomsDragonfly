@@ -23,6 +23,7 @@ interface POIListProps {
   pois: NormalizedPOI[];
   onVerify: (placeId: string) => void;
   onShowOnMap?: (poi: NormalizedPOI) => void;
+  onRequestRide?: (poi: NormalizedPOI) => void;
   category?: string;
   phase?: FetchPhase;
   onRetry?: () => void;
@@ -36,14 +37,20 @@ interface POIRowProps {
   pois: NormalizedPOI[];
   onVerify: (placeId: string) => void;
   onShowOnMap?: (poi: NormalizedPOI) => void;
+  onRequestRide?: (poi: NormalizedPOI) => void;
 }
 
-function POIRow({ index, style, pois, onVerify, onShowOnMap }: POIRowProps): React.ReactElement {
+function POIRow({ index, style, pois, onVerify, onShowOnMap, onRequestRide }: POIRowProps): React.ReactElement {
   const poi = pois[index];
 
   return (
     <div style={style} role="listitem" aria-posinset={index + 1} aria-setsize={pois.length}>
-      <POICard poi={poi} onVerify={() => onVerify(poi.placeId)} onShowOnMap={onShowOnMap} />
+      <POICard
+        poi={poi}
+        onVerify={() => onVerify(poi.placeId)}
+        onShowOnMap={onShowOnMap}
+        onRequestRide={onRequestRide}
+      />
     </div>
   );
 }
@@ -52,12 +59,14 @@ interface ListRowProps {
   pois: NormalizedPOI[];
   onVerify: (placeId: string) => void;
   onShowOnMap?: (poi: NormalizedPOI) => void;
+  onRequestRide?: (poi: NormalizedPOI) => void;
 }
 
 export function POIList({
   pois,
   onVerify,
   onShowOnMap,
+  onRequestRide,
   category,
   phase = "idle",
   onRetry,
@@ -66,8 +75,8 @@ export function POIList({
   const liveRegionId = `${listId}-live`;
 
   const rowData = useMemo<ListRowProps>(
-    () => ({ pois, onVerify, onShowOnMap }),
-    [pois, onVerify, onShowOnMap]
+    () => ({ pois, onVerify, onShowOnMap, onRequestRide }),
+    [pois, onVerify, onShowOnMap, onRequestRide]
   );
 
   if (pois.length === 0) {

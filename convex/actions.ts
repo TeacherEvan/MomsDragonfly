@@ -1,7 +1,8 @@
 "use node";
 import { action } from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
+import { validateDeviceId } from "./auth";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Overpass (OSM) helpers
@@ -485,11 +486,170 @@ export const geminiOCR = action({
 });
 
 /* ────────────────────────────────────────────────────────────────────────────
+ * getHighlights — location weather + news highlights, cached ~30 min per
+ * ~1 km cell. Open-Meteo (no key) + Nominatim reverse + Brave news (optional).
+ * Never throws: degrades to whatever data could be fetched.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+const HIGHLIGHTS_TTL_MS = 30 * 60 * 1000;
+
+interface WeatherPayload {
+  tempC: number;
+  feelsC: number;
+  windKmh: number;
+  code: number;
+  isDay: boolean;
+  maxC: number | null;
+  minC: number | null;
+}
+
+interface HighlightNews {
+  title: string;
+  url: string;
+  source?: string;
+  age?: string;
+}
+
+interface HighlightsPayload {
+  locationName: string | null;
+  weather: WeatherPayload | null;
+  news: HighlightNews[];
+  fetchedAt: number;
+}
+
+async function fetchJson(
+  url: string,
+  headers: Record<string, string>,
+  timeoutMs: number
+): Promise<unknown> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { headers, signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+export const getHighlights = action({
+  args: { deviceId: v.string(), lat: v.number(), lng: v.number() },
+  handler: async (ctx, { deviceId, lat, lng }): Promise<HighlightsPayload> => {
+    validateDeviceId(deviceId);
+    const locKey = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+
+    const cached = await ctx.runQuery(internal.queries.getHighlightsCache, { locKey });
+    if (cached && Date.now() - cached.fetchedAt < HIGHLIGHTS_TTL_MS) {
+      try {
+        return JSON.parse(cached.payload) as HighlightsPayload;
+      } catch {
+        // fall through and refetch
+      }
+    }
+
+    let locationName: string | null = null;
+    let country: string | null = null;
+    let weather: WeatherPayload | null = null;
+    let news: HighlightNews[] = [];
+
+    // 1) Weather + today's range (Open-Meteo, keyless)
+    try {
+      const w = (await fetchJson(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
+          `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day` +
+          `&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`,
+        {},
+        10_000
+      )) as {
+        current?: Record<string, number>;
+        daily?: { temperature_2m_max?: number[]; temperature_2m_min?: number[] };
+      };
+      if (w?.current) {
+        weather = {
+          tempC: w.current.temperature_2m,
+          feelsC: w.current.apparent_temperature,
+          windKmh: w.current.wind_speed_10m,
+          code: w.current.weather_code,
+          isDay: w.current.is_day === 1,
+          maxC: w.daily?.temperature_2m_max?.[0] ?? null,
+          minC: w.daily?.temperature_2m_min?.[0] ?? null,
+        };
+      }
+    } catch (err) {
+      console.warn("Highlights: weather fetch failed:", String(err).slice(0, 160));
+    }
+
+    // 2) Place name (Nominatim reverse geocode, polite UA)
+    try {
+      const n = (await fetchJson(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&accept-language=en`,
+        { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" },
+        10_000
+      )) as {
+        name?: string;
+        address?: Record<string, string>;
+      };
+      const a = n?.address ?? {};
+      locationName = a.city ?? a.town ?? a.suburb ?? a.village ?? a.county ?? n?.name ?? null;
+      country = a.country ?? null;
+    } catch (err) {
+      console.warn("Highlights: geocode failed:", String(err).slice(0, 160));
+    }
+
+    // 3) Area news (Brave; key optional)
+    const braveKey = process.env.BRAVE_SEARCH_API_KEY;
+    if (braveKey && locationName) {
+      try {
+        const q = encodeURIComponent(
+          [locationName, country].filter(Boolean).join(" ")
+        );
+        const b = (await fetchJson(
+          `https://api.search.brave.com/res/v1/news/search?q=${q}&count=6&freshness=pw`,
+          { "Accept-Encoding": "gzip", "X-Subscription-Token": braveKey },
+          10_000
+        )) as { results?: Array<Record<string, unknown>> };
+        news = (b?.results ?? [])
+          .slice(0, 5)
+          .map((r) => {
+            const source = r.source as { name?: string } | undefined;
+            const metaUrl = r.meta_url as { hostname?: string } | undefined;
+            return {
+              title: (r.title as string) ?? "Untitled",
+              url: (r.url as string) ?? "",
+              source: source?.name ?? metaUrl?.hostname ?? undefined,
+              age: (r.age as string) ?? undefined,
+            };
+          })
+          .filter((n) => n.url);
+      } catch (err) {
+        console.warn("Highlights: news fetch failed:", String(err).slice(0, 160));
+      }
+    }
+
+    const payload: HighlightsPayload = {
+      locationName,
+      weather,
+      news,
+      fetchedAt: Date.now(),
+    };
+
+    if (weather || news.length > 0) {
+      await ctx.runMutation(internal.mutations.setHighlightsCache, {
+        locKey,
+        payload: JSON.stringify(payload),
+      });
+    }
+
+    return payload;
+  },
+});
+
+/* ────────────────────────────────────────────────────────────────────────────
  * sendDueReminders — unchanged: web-push for due reminders.
  * ──────────────────────────────────────────────────────────────────────────── */
 
 import { internalAction } from "./_generated/server";
-import { internal } from "./_generated/api";
 import webpush from "web-push";
 
 interface Reminder {

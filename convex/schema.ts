@@ -42,6 +42,13 @@ export default defineSchema({
     timestamp: v.number(),
   }).index("by_deviceId_timestamp", ["deviceId", "timestamp"]),
 
+  // ── Highlights cache (weather + news per ~1km location cell) ─────────────────
+  highlightsCache: defineTable({
+    locKey: v.string(),
+    payload: v.string(), // JSON: { locationName, weather, news, fetchedAt }
+    fetchedAt: v.number(),
+  }).index("by_locKey", ["locKey"]),
+
   // ── Expenses (plan B) ────────────────────────────────────────────────────────
   expenses: defineTable({
     deviceId: v.string(),

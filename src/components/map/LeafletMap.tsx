@@ -7,7 +7,7 @@ import React, {
   forwardRef,
   useMemo,
 } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import type { NormalizedPOI } from "@/types";
 import { POIMarker } from "./POIMarker";
 import L from "leaflet";
@@ -33,6 +33,17 @@ function RecenterMap({ center }: { center: [number, number] }) {
   useEffect(() => {
     map.setView(center, map.getZoom());
   }, [center, map]);
+  return null;
+}
+
+/** Fits the map to a recorded trail (journal view). */
+function FitTrail({ trail }: { trail: Array<[number, number]> }) {
+  const map = useMap();
+  useEffect(() => {
+    if (trail.length < 2) return;
+    const bounds = L.latLngBounds(trail.map(([lat, lng]) => L.latLng(lat, lng)));
+    map.fitBounds(bounds, { padding: [32, 32], maxZoom: 16 });
+  }, [trail, map]);
   return null;
 }
 
@@ -68,6 +79,10 @@ interface LeafletMapProps {
   pois: NormalizedPOI[];
   center?: [number, number];
   onVerify: (placeId: string) => void;
+  /** Optional: request a ride to a POI (opens the ride sheet). */
+  onRequestRide?: (poi: NormalizedPOI) => void;
+  /** Chronological trail of [lat, lng] pairs to draw (journal view). */
+  trail?: Array<[number, number]>;
 }
 
 export interface LeafletMapRef {
@@ -75,7 +90,7 @@ export interface LeafletMapRef {
 }
 
 const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
-  const { pois, center, onVerify } = props;
+  const { pois, center, onVerify, onRequestRide, trail } = props;
   const defaultCenter: [number, number] = center ?? [13.7563, 100.5018];
   const mapRef = useRef<L.Map | null>(null);
 
@@ -87,6 +102,28 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
         iconSize: [28, 40],
         iconAnchor: [14, 40],
         popupAnchor: [0, -44],
+      }),
+    []
+  );
+
+  const trailStartIcon = useMemo(
+    () =>
+      L.divIcon({
+        className: "",
+        html: `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="6.5" fill="#0d9488" stroke="#e6fffa" stroke-width="2.5"/></svg>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      }),
+    []
+  );
+
+  const trailEndIcon = useMemo(
+    () =>
+      L.divIcon({
+        className: "",
+        html: `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" fill="#f97316" stroke="#fff7ed" stroke-width="2.5"/><circle cx="12" cy="12" r="3" fill="#fff7ed"/></svg>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
       }),
     []
   );
@@ -166,11 +203,15 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
       pois.map((poi) => (
         <Marker key={poi.placeId} position={[poi.lat, poi.lng]} icon={pinIcon}>
           <Popup>
-            <POIMarker poi={poi} onVerify={() => onVerify(poi.placeId)} />
+            <POIMarker
+              poi={poi}
+              onVerify={() => onVerify(poi.placeId)}
+              onRequestRide={onRequestRide ? () => onRequestRide(poi) : undefined}
+            />
           </Popup>
         </Marker>
       )),
-    [pois, onVerify, pinIcon]
+    [pois, onVerify, onRequestRide, pinIcon]
   );
 
   return (
@@ -190,6 +231,17 @@ const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
       />
       <AccessibleZoomControl />
       {center && <RecenterMap center={center} />}
+      {trail && trail.length > 1 && (
+        <>
+          <FitTrail trail={trail} />
+          <Polyline
+            positions={trail}
+            pathOptions={{ color: "#fb923c", weight: 4, opacity: 0.8 }}
+          />
+          <Marker position={trail[0]} icon={trailStartIcon} />
+          <Marker position={trail[trail.length - 1]} icon={trailEndIcon} />
+        </>
+      )}
       {markers}
     </MapContainer>
   );

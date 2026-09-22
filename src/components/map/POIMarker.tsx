@@ -6,9 +6,10 @@ import { formatDistance } from "@/lib/utils/geo";
 interface POIMarkerProps {
   poi: NormalizedPOI;
   onVerify: () => void;
+  onRequestRide?: () => void;
 }
 
-export function POIMarker({ poi, onVerify }: POIMarkerProps) {
+export function POIMarker({ poi, onVerify, onRequestRide }: POIMarkerProps) {
   return (
     <div className="p-3 bg-white rounded-lg shadow-sm border border-dragonfly-navy-200 min-w-[200px]">
       <h3 className="font-semibold text-base text-dragonfly-navy-900 leading-tight">
@@ -34,6 +35,15 @@ export function POIMarker({ poi, onVerify }: POIMarkerProps) {
       >
         ✓ Verify POI ({poi.verifiedCount})
       </button>
+      {onRequestRide && (
+        <button
+          type="button"
+          onClick={onRequestRide}
+          className="mt-2 w-full bg-dragonfly-orange-50 hover:bg-dragonfly-orange-100 text-dragonfly-orange-700 font-medium rounded py-1.5 text-xs transition-colors min-h-[var(--touch-target)]"
+        >
+          🚗 Request a ride
+        </button>
+      )}
     </div>
   );
 }

@@ -33,6 +33,11 @@ export const dragonflyPalette = {
     50: "#fffbeb", 100: "#fef3c7", 200: "#fde68a", 300: "#fcd34d",
     400: "#fbbf24", 500: "#f59e0b", 600: "#d97706", 700: "#b45309",
     800: "#92400e", 900: "#78350f", 950: "#451a03"
+  },
+  orange: {
+    50: "#fff7ed", 100: "#ffedd5", 200: "#fed7aa", 300: "#fdba74",
+    400: "#fb923c", 500: "#f97316", 600: "#ea580c", 700: "#c2410c",
+    800: "#9a3412", 900: "#7c2d12", 950: "#431407"
   }
 } as const;
 
@@ -40,11 +45,15 @@ export type DragonflyColor = keyof typeof dragonflyPalette;
 export type DragonflyShade = 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | 950;
 
 export function getIridescentGradient(angle: number = 135): string {
-  return `linear-gradient(${angle}deg, ${dragonflyPalette.cyan[500]} 0%, ${dragonflyPalette.teal[500]} 50%, ${dragonflyPalette.emerald[500]} 100%)`;
+  return `linear-gradient(${angle}deg, ${dragonflyPalette.cyan[400]} 0%, ${dragonflyPalette.teal[500]} 42%, ${dragonflyPalette.orange[400]} 100%)`;
+}
+
+export function getSunsetGradient(angle: number = 135): string {
+  return `linear-gradient(${angle}deg, ${dragonflyPalette.orange[400]} 0%, ${dragonflyPalette.orange[500]} 55%, ${dragonflyPalette.amber[500]} 100%)`;
 }
 
 export function getGoldShimmer(): string {
-  return `linear-gradient(90deg, ${dragonflyPalette.gold[500]} 0%, ${dragonflyPalette.gold[400]} 50%, ${dragonflyPalette.gold[500]} 100%)`;
+  return `linear-gradient(90deg, ${dragonflyPalette.gold[500]} 0%, ${dragonflyPalette.orange[400]} 50%, ${dragonflyPalette.gold[500]} 100%)`;
 }
 
 export const dragonflyTokens = {
@@ -55,6 +64,8 @@ export const dragonflyTokens = {
   primaryHover: dragonflyPalette.teal[600],
   accent: dragonflyPalette.cyan[500],
   gold: dragonflyPalette.gold[500],
+  accentOrange: dragonflyPalette.orange[500],
+  accentOrangeSoft: dragonflyPalette.orange[400],
   text: dragonflyPalette.navy[50],
   textMuted: dragonflyPalette.navy[400],
   border: dragonflyPalette.navy[800]

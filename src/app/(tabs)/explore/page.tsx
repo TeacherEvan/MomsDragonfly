@@ -15,6 +15,8 @@ import type { LeafletMapRef } from "@/components/map/LeafletMap";
 import { haversine } from "@/lib/utils/geo";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import { Icon } from "@/components/ui/Icon";
+import { HighlightsCard } from "@/components/explore/HighlightsCard";
+import { RideSheet } from "@/components/ride/RideSheet";
 
 type OnboardingStep = "splash" | "video" | "slides" | "done";
 
@@ -24,6 +26,7 @@ const CORE_CATEGORIES = ["restaurant", "park", "attraction"] as const;
 export default function ExplorePage() {
   const { lat, lng, error: geoError } = useGeolocation();
   const [category, setCategory] = useState("all");
+  const [rideTarget, setRideTarget] = useState<NormalizedPOI | null>(null);
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("splash");
   const [mounted, setMounted] = useState(false);
   const [fetchPhases, setFetchPhases] = useState<Record<string, FetchPhase>>({});
@@ -132,6 +135,10 @@ export default function ExplorePage() {
     mapRef.current?.panToPOI(poi);
   }, []);
 
+  const handleRequestRide = useCallback((poi: NormalizedPOI) => {
+    setRideTarget(poi);
+  }, []);
+
   interface ComputedPOI extends NormalizedPOI {
     id: string;
     distanceMetres?: number;
@@ -209,6 +216,7 @@ export default function ExplorePage() {
               pois={computedPois}
               center={mapCenter as [number, number]}
               onVerify={handleVerify}
+              onRequestRide={handleRequestRide}
             />
           ) : (
             <div className="w-full h-64 md:h-80 rounded-xl overflow-hidden shadow-strong border border-dragonfly-navy-700 bg-dragonfly-navy-900/80 flex flex-col items-center justify-center text-center px-6">
@@ -238,6 +246,8 @@ export default function ExplorePage() {
             </div>
           )}
 
+          {lat && lng && !geoError && <HighlightsCard lat={lat} lng={lng} />}
+
           <div>
             <div className="flex items-center justify-between mb-1">
               <h2 className="font-bold text-dragonfly-navy-50 text-sm md:text-base">
@@ -254,9 +264,16 @@ export default function ExplorePage() {
             pois={computedPois}
             onVerify={handleVerify}
             onShowOnMap={handleShowOnMap}
+            onRequestRide={handleRequestRide}
             category={category}
             phase={activePhase}
             onRetry={handleRetry}
+          />
+
+          <RideSheet
+            poi={rideTarget}
+            pickup={lat && lng ? { lat, lng } : null}
+            onClose={() => setRideTarget(null)}
           />
         </>
       )}

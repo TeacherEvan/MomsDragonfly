@@ -96,7 +96,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
-            className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-dragonfly-cyan-300 via-dragonfly-teal-400 to-dragonfly-emerald-400 bg-clip-text text-transparent animate-iridescent-shift"
+            className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-dragonfly-cyan-300 via-dragonfly-teal-400 to-dragonfly-orange-400 bg-clip-text text-transparent animate-iridescent-shift"
           >
             Mom&apos;s Dragonfly
           </motion.h1>
@@ -112,7 +112,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.6, ease: "easeOut" }}
-            className="mt-6 flex items-center gap-2 text-dragonfly-gold-400 text-sm font-medium opacity-80"
+            className="mt-6 flex items-center gap-2 text-dragonfly-orange-400 text-sm font-medium opacity-80"
           >
             <motion.span
               animate={{ opacity: [0.4, 1, 0.4] }}

@@ -70,7 +70,6 @@ export const upsertPOIs = mutation({
 export const savePrefs = mutation({
   args: {
     deviceId: v.string(),
-    elderlyMode: v.optional(v.boolean()),
     defaultRadius: v.optional(v.number()),
     currency: v.optional(v.string()),
     notificationsEnabled: v.optional(v.boolean()),
@@ -89,7 +88,6 @@ export const savePrefs = mutation({
     } else {
       await ctx.db.insert("userPrefs", {
         deviceId,
-        elderlyMode: updates.elderlyMode ?? false,
         defaultRadius: updates.defaultRadius ?? 1000,
         currency: updates.currency ?? "USD",
         notificationsEnabled: updates.notificationsEnabled ?? false,
@@ -113,6 +111,22 @@ export const saveLocation = mutation({
       ...args,
       timestamp: Date.now(),
     });
+  },
+});
+
+/** Cache write for location highlights (weather + news). Server-side only. */
+export const setHighlightsCache = internalMutation({
+  args: { locKey: v.string(), payload: v.string() },
+  handler: async (ctx, { locKey, payload }) => {
+    const existing = await ctx.db
+      .query("highlightsCache")
+      .withIndex("by_locKey", (q) => q.eq("locKey", locKey))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, { payload, fetchedAt: Date.now() });
+    } else {
+      await ctx.db.insert("highlightsCache", { locKey, payload, fetchedAt: Date.now() });
+    }
   },
 });
 
