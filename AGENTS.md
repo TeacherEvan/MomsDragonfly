@@ -18,7 +18,7 @@ pnpm dev               # Next.js on :3000 (Turbopack)
 | `pnpm build` | ✅ passes | Next.js 15 production build |
 | `pnpm typecheck` | ✅ passes | `tsc --noEmit` (root + convex/) |
 | `pnpm lint` | ✅ passes | ESLint + Next.js config |
-| `pnpm test` | ✅ passes | 70 vitest unit tests in 13 files (jsdom) |
+| `pnpm test` | ✅ passes | 88 vitest unit tests in 14 files (jsdom) |
 | `pnpm test:convex` | ✅ passes | 12 convex-test integration tests in 2 files (node) |
 | `pnpm test:e2e` | ✅ passes | 15 Playwright tests (needs `pnpm build` first) |
 | `pnpm test:lhci` | ⚠️ untested | Lighthouse CI (requires production URL) |
@@ -52,6 +52,7 @@ public/                # Icons, manifest, sw.js, offline.html, tesseract/ (self-
 - **Ride requests**: `RideSheet` opens Bolt (universal link) and copies the destination to the clipboard; Google Maps directions link as fallback. Bolt publishes no consumer booking/deep-link API — don't promise prefilled rides.
 - **Icons**: regenerate with `node generate-dragonfly-icons.js && node convert-icons.mjs` (sharp). Master art lives in the generator (v3 elegant dragonfly); 16/32 px get a simplified detail variant; maskable 512 keeps art in the safe zone.
 - **Design system**: `dragonfly` palette in `tailwind.config.ts` + `src/lib/theme/dragonfly.ts`; CSS vars in `globals.css`. Orange (`dragonfly.orange.*`, `#f97316` family) is the accent for active nav, ride CTAs, journal trail, and gradients.
+- **Currency**: display currency always derives from `userPrefs.currency` (the Settings value) via `resolveCurrency()` in `src/lib/utils/currency.ts`. A budget record's own `currency` field is legacy fallback only — never read it directly for display (doing so caused Settings changes to be ignored).
 
 ## Convex Backend
 

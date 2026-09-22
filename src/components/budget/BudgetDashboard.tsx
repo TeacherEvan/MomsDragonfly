@@ -8,7 +8,7 @@ import { ExpenseForm } from "./ExpenseForm";
 import { ExpenseList } from "./ExpenseList";
 import type { Expense } from "@/types";
 import { sumExpenses, remainingBudget } from "@/lib/utils/budget";
-import { formatAmount } from "@/lib/utils/currency";
+import { formatAmount, resolveCurrency } from "@/lib/utils/currency";
 import type { Id } from "convex/_generated/dataModel";
 import { BudgetRingSkeleton } from "@/components/ui/Skeleton";
 
@@ -16,17 +16,22 @@ export function BudgetDashboard() {
   const deviceId = getDeviceId();
   const expensesQuery = useQuery(api.queries.expensesQuery, { deviceId });
   const budgetQuery = useQuery(api.queries.budgetQuery, { deviceId });
+  const prefsQuery = useQuery(api.queries.prefsQuery, { deviceId });
   const addExpenseMut = useMutation(api.mutations.addExpense);
   const deleteExpenseMut = useMutation(api.mutations.deleteExpense);
   const upsertBudgetMut = useMutation(api.mutations.upsertBudget);
 
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [newBudgetValue, setNewBudgetValue] = useState("");
-  const [currency, setCurrency] = useState("USD");
 
   const budget = budgetQuery;
   const totalBudget = budget?.totalBudget ?? 500;
-  const isLoading = budgetQuery === undefined || expensesQuery === undefined;
+  const isLoading =
+    budgetQuery === undefined || expensesQuery === undefined || prefsQuery === undefined;
+
+  // Currency comes from Settings (userPrefs.currency). The budget record's own
+  // currency is only a fallback for devices that never saved a preference.
+  const currency = resolveCurrency(prefsQuery?.currency, budget?.currency);
 
   // Map Convex documents to frontend Expense type
   const expenses = useMemo(() => {
@@ -44,7 +49,6 @@ export function BudgetDashboard() {
 
   useEffect(() => {
     if (budget) {
-      setCurrency(budget.currency);
       setNewBudgetValue(String(budget.totalBudget));
     }
   }, [budget]);
