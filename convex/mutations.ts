@@ -146,6 +146,22 @@ export const setDishesCache = internalMutation({
   },
 });
 
+/** Cache write for lazy place enrichment. Server-side only (called by the action). */
+export const setPlaceEnrichCache = internalMutation({
+  args: { key: v.string(), payload: v.string() },
+  handler: async (ctx, { key, payload }) => {
+    const existing = await ctx.db
+      .query("placeEnrichCache")
+      .withIndex("by_key", (q) => q.eq("key", key))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, { payload, fetchedAt: Date.now() });
+    } else {
+      await ctx.db.insert("placeEnrichCache", { key, payload, fetchedAt: Date.now() });
+    }
+  },
+});
+
 export const purgeExpiredCache = internalMutation({
   args: {},
   handler: async (ctx) => {

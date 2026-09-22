@@ -155,3 +155,14 @@ export const getDishesCache = internalQuery({
       .unique();
   },
 });
+
+/** Cache lookup for lazy place enrichment. Server-side only (called by the action). */
+export const getPlaceEnrichCache = internalQuery({
+  args: { key: v.string() },
+  handler: async (ctx, { key }) => {
+    return ctx.db
+      .query("placeEnrichCache")
+      .withIndex("by_key", (q) => q.eq("key", key))
+      .unique();
+  },
+});

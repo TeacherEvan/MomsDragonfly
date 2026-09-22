@@ -4,6 +4,15 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { validateDeviceId } from "./auth";
 import { fallbackDishes, parseDishResponse, type DishItem } from "./dishHelpers";
+import {
+  buildPhotoProxyUrl,
+  deriveConvexSiteUrl,
+  mapGoogleDetails,
+  placeCacheKey,
+  PLACE_ENRICH_TTL_MS,
+  type GooglePlaceDetails,
+} from "./placeHelpers";
+import { wikipediaImages, wikipediaThumbnail } from "./wikiHelpers";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Overpass (OSM) helpers
@@ -661,43 +670,6 @@ interface DishesPayload {
   fetchedAt: number;
 }
 
-/** Keyless Wikipedia thumbnail for a dish; direct summary → search fallback. */
-async function wikipediaThumbnail(name: string): Promise<string | null> {
-  try {
-    const direct = (await fetchJson(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
-        name.replace(/ /g, "_")
-      )}`,
-      {},
-      8_000
-    )) as { thumbnail?: { source?: string } };
-    if (direct?.thumbnail?.source) return direct.thumbnail.source;
-  } catch {
-    // fall through to search
-  }
-  try {
-    const search = (await fetchJson(
-      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-        name
-      )}&format=json&srlimit=1`,
-      {},
-      8_000
-    )) as { query?: { search?: Array<{ title?: string }> } };
-    const found = search?.query?.search?.[0]?.title;
-    if (!found) return null;
-    const summary = (await fetchJson(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
-        found.replace(/ /g, "_")
-      )}`,
-      {},
-      8_000
-    )) as { thumbnail?: { source?: string } };
-    return summary?.thumbnail?.source ?? null;
-  } catch {
-    return null;
-  }
-}
-
 /** Ask Gemini for the dish list. Returns null when unavailable/unusable. */
 async function generateDishesWithGemini(
   areaName: string | null,
@@ -803,6 +775,146 @@ export const getLocalDishes = action({
         locKey,
         payload: JSON.stringify(payload),
       });
+    }
+
+    return payload;
+  },
+});
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * getPlaceDetails — lazy enrichment for one selected place. Google Places
+ * Details (New) when the place came from Google, Wikipedia images otherwise
+ * (OSM/brave rows, and Google rows with no usable photos). Cached 30 days per
+ * place key in placeEnrichCache. Never throws: degrades to whatever is known.
+ * Photo bytes are proxied by /place-photo (convex/http.ts) so the API key
+ * never reaches the client — only `*.convex.site` refs are returned.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+interface PlaceDetailsPayload {
+  photos: string[];
+  phone?: string;
+  hours?: string[];
+  ratingCount?: number;
+  fetchedAt: number;
+}
+
+/** Places Details (New) lookup; null on failure (logged, never thrown). */
+async function fetchGooglePlaceDetails(
+  placeId: string,
+  key: string
+): Promise<unknown | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12_000);
+  try {
+    const res = await fetch(
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+      {
+        headers: {
+          "X-Goog-Api-Key": key,
+          "X-Goog-FieldMask":
+            "photos,nationalPhoneNumber,regularOpeningHours,userRatingCount",
+        },
+        signal: controller.signal,
+      }
+    );
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.warn(`PlaceDetails: Google ${res.status} — ${body.slice(0, 160)}`);
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.warn("PlaceDetails: Google request failed:", String(err).slice(0, 200));
+    return null;
+  }
+}
+
+/** Max photos the sheet will show. */
+const PLACE_PHOTO_LIMIT = 3;
+
+export const getPlaceDetails = action({
+  args: {
+    deviceId: v.string(),
+    placeId: v.string(),
+    source: v.string(),
+    name: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+  },
+  handler: async (
+    ctx,
+    { deviceId, placeId, source, name, lat, lng }
+  ): Promise<PlaceDetailsPayload> => {
+    validateDeviceId(deviceId);
+    const key = placeCacheKey({ source, placeId, name, lat, lng });
+
+    const cached = await ctx.runQuery(internal.queries.getPlaceEnrichCache, { key });
+    if (cached && Date.now() - cached.fetchedAt < PLACE_ENRICH_TTL_MS) {
+      try {
+        return JSON.parse(cached.payload) as PlaceDetailsPayload;
+      } catch {
+        // fall through and refetch
+      }
+    }
+
+    const siteUrl = deriveConvexSiteUrl(process.env);
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    let details: GooglePlaceDetails = { photos: [] };
+    let photos: string[] = [];
+
+    // 1) Google Places Details (New) — only for Google-sourced rows with an id
+    if (String(source).toLowerCase() === "google" && placeId && apiKey && siteUrl) {
+      const json = await fetchGooglePlaceDetails(placeId, apiKey);
+      if (json) {
+        details = mapGoogleDetails(json);
+        photos = details.photos
+          .slice(0, PLACE_PHOTO_LIMIT)
+          .map((ref) => buildPhotoProxyUrl(siteUrl, ref, 800));
+      }
+    } else if (!apiKey) {
+      console.warn("PlaceDetails: GOOGLE_PLACES_API_KEY not set — Wikipedia fallback only");
+    }
+
+    // 2) Wikipedia fallback (0–2 images) — no photos is fine, never an error
+    if (photos.length === 0) {
+      try {
+        photos = await wikipediaImages(name, 2);
+      } catch (err) {
+        console.warn("PlaceDetails: Wikipedia fallback failed:", String(err).slice(0, 160));
+        photos = [];
+      }
+    }
+
+    const payload: PlaceDetailsPayload = {
+      photos,
+      ...(details.phone ? { phone: details.phone } : {}),
+      ...(details.hours && details.hours.length > 0 ? { hours: details.hours } : {}),
+      ...(typeof details.ratingCount === "number"
+        ? { ratingCount: details.ratingCount }
+        : {}),
+      fetchedAt: Date.now(),
+    };
+
+    // Only cache productive results so a transient outage doesn't pin an empty
+    // payload for the whole 30-day TTL (mirrors the dishes cache guard).
+    const worthCaching =
+      payload.photos.length > 0 ||
+      payload.phone !== undefined ||
+      payload.hours !== undefined ||
+      payload.ratingCount !== undefined;
+
+    if (worthCaching) {
+      try {
+        await ctx.runMutation(internal.mutations.setPlaceEnrichCache, {
+          key,
+          payload: JSON.stringify(payload),
+        });
+      } catch (err) {
+        console.warn("PlaceDetails: cache write failed:", String(err).slice(0, 160));
+      }
     }
 
     return payload;

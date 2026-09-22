@@ -5,6 +5,15 @@
  * (see tests/unit/dishes.test.ts).
  */
 
+// Wiki lookup shared with the place-details fallback; re-exported here so the
+// dishes flow keeps a single import surface for its image work.
+export {
+  wikipediaImages,
+  wikipediaThumbnail,
+  summaryThumbnail,
+  searchResultTitles,
+} from "./wikiHelpers";
+
 export interface DishItem {
   name: string;
   description: string;

@@ -65,6 +65,13 @@ export default defineSchema({
     fetchedAt: v.number(),
   }).index("by_locKey", ["locKey"]),
 
+  // ── Place enrichment cache (lazy Place Details: photos/phone/hours) ──────────
+  placeEnrichCache: defineTable({
+    key: v.string(), // g:{placeId} | w:{name-slug}:{lat},{lng}
+    payload: v.string(), // JSON: { photos, phone?, hours?, ratingCount?, fetchedAt }
+    fetchedAt: v.number(),
+  }).index("by_key", ["key"]),
+
   // ── Expenses (plan B) ────────────────────────────────────────────────────────
   expenses: defineTable({
     deviceId: v.string(),
