@@ -130,6 +130,22 @@ export const setHighlightsCache = internalMutation({
   },
 });
 
+/** Cache write for local dishes. Server-side only (called by the action). */
+export const setDishesCache = internalMutation({
+  args: { locKey: v.string(), payload: v.string() },
+  handler: async (ctx, { locKey, payload }) => {
+    const existing = await ctx.db
+      .query("dishesCache")
+      .withIndex("by_locKey", (q) => q.eq("locKey", locKey))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, { payload, fetchedAt: Date.now() });
+    } else {
+      await ctx.db.insert("dishesCache", { locKey, payload, fetchedAt: Date.now() });
+    }
+  },
+});
+
 export const purgeExpiredCache = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -202,6 +218,45 @@ export const deleteExpense = mutation({
     const expense = await ctx.db.get(id);
     if (!expense || expense.deviceId !== deviceId) {
       throw new Error("Expense not found or access denied");
+    }
+    await ctx.db.delete(id);
+  },
+});
+
+/** Journal notes — hand-written memories, device-scoped. */
+const NOTE_MAX_LENGTH = 500;
+
+export const addJournalNote = mutation({
+  args: {
+    deviceId: v.string(),
+    text: v.string(),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
+  },
+  handler: async (ctx, { deviceId, text, lat, lng }) => {
+    validateDeviceId(deviceId);
+    const trimmed = text.trim();
+    if (!trimmed) throw new Error("Note text is required");
+    if (trimmed.length > NOTE_MAX_LENGTH) {
+      throw new Error(`Note must be ${NOTE_MAX_LENGTH} characters or fewer`);
+    }
+    return ctx.db.insert("journalNotes", {
+      deviceId,
+      text: trimmed,
+      lat: lat ?? undefined,
+      lng: lng ?? undefined,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+export const deleteJournalNote = mutation({
+  args: { id: v.id("journalNotes"), deviceId: v.string() },
+  handler: async (ctx, { id, deviceId }) => {
+    validateDeviceId(deviceId);
+    const note = await ctx.db.get(id);
+    if (!note || note.deviceId !== deviceId) {
+      throw new Error("Note not found or access denied");
     }
     await ctx.db.delete(id);
   },

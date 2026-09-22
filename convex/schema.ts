@@ -42,10 +42,26 @@ export default defineSchema({
     timestamp: v.number(),
   }).index("by_deviceId_timestamp", ["deviceId", "timestamp"]),
 
+  // ── Journal notes (hand-written memories, per device) ────────────────────────
+  journalNotes: defineTable({
+    deviceId: v.string(),
+    text: v.string(),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_deviceId_createdAt", ["deviceId", "createdAt"]),
+
   // ── Highlights cache (weather + news per ~1km location cell) ─────────────────
   highlightsCache: defineTable({
     locKey: v.string(),
     payload: v.string(), // JSON: { locationName, weather, news, fetchedAt }
+    fetchedAt: v.number(),
+  }).index("by_locKey", ["locKey"]),
+
+  // ── Dishes cache (popular local dishes per city-level cell) ──────────────────
+  dishesCache: defineTable({
+    locKey: v.string(),
+    payload: v.string(), // JSON: { areaName, dishes, fetchedAt }
     fetchedAt: v.number(),
   }).index("by_locKey", ["locKey"]),
 

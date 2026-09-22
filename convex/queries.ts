@@ -122,12 +122,35 @@ export const ticketsQuery = query({
   },
 });
 
+export const journalNotesQuery = query({
+  args: { deviceId: v.string() },
+  handler: async (ctx, { deviceId }) => {
+    validateDeviceId(deviceId);
+    return ctx.db
+      .query("journalNotes")
+      .withIndex("by_deviceId_createdAt", (q) => q.eq("deviceId", deviceId))
+      .order("desc")
+      .collect();
+  },
+});
+
 /** Cache lookup for location highlights. Server-side only (called by the action). */
 export const getHighlightsCache = internalQuery({
   args: { locKey: v.string() },
   handler: async (ctx, { locKey }) => {
     return ctx.db
       .query("highlightsCache")
+      .withIndex("by_locKey", (q) => q.eq("locKey", locKey))
+      .unique();
+  },
+});
+
+/** Cache lookup for local dishes. Server-side only (called by the action). */
+export const getDishesCache = internalQuery({
+  args: { locKey: v.string() },
+  handler: async (ctx, { locKey }) => {
+    return ctx.db
+      .query("dishesCache")
       .withIndex("by_locKey", (q) => q.eq("locKey", locKey))
       .unique();
   },

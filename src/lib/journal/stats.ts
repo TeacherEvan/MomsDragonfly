@@ -69,3 +69,37 @@ export function formatDayLabel(key: string, now: number = Date.now()): string {
     month: "short",
   });
 }
+
+export interface JournalDayGroup<N, P> {
+  key: string;
+  notes: N[];
+  points: P[];
+}
+
+/**
+ * Merge hand-written notes and recorded pins into one day-grouped timeline.
+ * Days are newest-first; notes and points are newest-first within each day.
+ */
+export function mergeJournalDays<
+  N extends { createdAt: number },
+  P extends { timestamp: number }
+>(notes: N[], points: P[]): Array<JournalDayGroup<N, P>> {
+  const map = new Map<string, JournalDayGroup<N, P>>();
+  const bucket = (key: string): JournalDayGroup<N, P> => {
+    let b = map.get(key);
+    if (!b) {
+      b = { key, notes: [], points: [] };
+      map.set(key, b);
+    }
+    return b;
+  };
+  for (const n of notes) bucket(dayKey(n.createdAt)).notes.push(n);
+  for (const p of points) bucket(dayKey(p.timestamp)).points.push(p);
+  return [...map.values()]
+    .map((b) => ({
+      key: b.key,
+      notes: b.notes.slice().sort((x, y) => y.createdAt - x.createdAt),
+      points: b.points.slice().sort((x, y) => y.timestamp - x.timestamp),
+    }))
+    .sort((a, b) => (a.key < b.key ? 1 : a.key > b.key ? -1 : 0));
+}
