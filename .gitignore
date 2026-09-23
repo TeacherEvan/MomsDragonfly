@@ -33,8 +33,10 @@ yarn-error.log*
 !.env.example
 !.env.local.example
 
-# convex
-convex/_generated/
+# convex — do NOT ignore convex/_generated/: it must be committed.
+# Vercel git builds clone the repo and fail with
+# "Module not found: Can't resolve '../../convex/_generated/api'" without it.
+# Keep it in sync with `npx convex dev` / `npx convex codegen` and commit.
 
 # superpowers / worktrees
 .superpowers/

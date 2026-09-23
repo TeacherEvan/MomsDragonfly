@@ -30,7 +30,7 @@ src/app/(tabs)/        # Pages: explore, local, journal, budget, reminders, tick
 src/components/        # UI components (shell, map, poi, journal, ride, explore, budget, reminders, tickets, onboarding)
 src/hooks/             # useGeolocation, useTripJournal (auto journal recorder), useDisplayPrefs
 src/lib/               # utils (deviceId, geo, currency, budget, notify, ocr, idb, weather, clipboard, displayPrefs, theme) + journal/ + ride/
-convex/                # Convex backend: schema, queries, mutations, actions, crons, auth
+convex/                # Convex backend: schema, queries, mutations, actions, crons, auth, _generated (committed — required by Vercel git builds)
 convex-test/           # Convex test helpers + schema copy
 tests/unit/            # Vitest unit tests
 tests/e2e/             # Playwright E2E tests
@@ -76,6 +76,7 @@ public/                # Icons, manifest, sw.js, offline.html, tesseract/ (self-
 - **PWA installs must go through Chrome on Android**: Samsung Internet and OEM browsers mint WebAPKs with a stale targetSdkVersion → Play Protect blocks the installed app ("built for an older version of Android"). `src/lib/utils/install.ts` classifies the environment; `InstallPrompt` routes non-Chrome Android users to Chrome via an `intent://` link and never offers the native install prompt on those browsers. Verify with `tests/unit/install.test.ts`.
 - **Vite config warning**: `vitest.config.ts` uses ESM syntax in CommonJS — set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress.
 - **Push notifications**: Require VAPID keys in Convex env; not configured in dev.
+- **Vercel git builds need `convex/_generated/` committed**: it is tracked on purpose — do NOT re-add it to `.gitignore`. Git-triggered deploys clone the repo and fail with `Module not found: Can't resolve '../../convex/_generated/api'` when it's missing; the prod alias then silently stays on the previous build (that's how `b70e0af`'s settings/exit-button feature sat undeployed). CLI deploys upload ignored files, which masks the problem. Keep `_generated` in sync via `npx convex dev` / `npx convex codegen` and commit it.
 
 ## Testing Notes
 
@@ -104,6 +105,7 @@ Pushing to GitHub also works when the Vercel git integration is connected.
 
 ## Post-Deploy Checklist
 
+- [ ] Confirm the newest production deployment is **Ready** (`npx vercel ls`) — a failed git build leaves the previous build live
 - [ ] Verify `NEXT_PUBLIC_CONVEX_URL` points to production deployment
 - [ ] Verify `NEXT_PUBLIC_CONVEX_SITE_URL` is correct
 - [ ] `curl -I` a few `/tesseract/` assets (expect 200)
