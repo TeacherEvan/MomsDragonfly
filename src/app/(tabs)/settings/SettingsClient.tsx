@@ -133,6 +133,7 @@ export default function SettingsClient() {
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
+                aria-label="Push notifications"
                 checked={notificationsEnabled}
                 onChange={(e) => setNotificationsEnabled(e.target.checked)}
                 className="sr-only peer"

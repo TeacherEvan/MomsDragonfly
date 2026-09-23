@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-const PAGES = ["/explore", "/budget", "/reminders", "/tickets"];
+const PAGES = ["/explore", "/budget", "/reminders", "/tickets", "/settings"];
 
 for (const url of PAGES) {
   test(`${url} has no critical accessibility violations`, async ({ page }) => {

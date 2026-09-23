@@ -18,18 +18,18 @@ pnpm dev               # Next.js on :3000 (Turbopack)
 | `pnpm build` | ✅ passes | Next.js 15 production build |
 | `pnpm typecheck` | ✅ passes | `tsc --noEmit` (root + convex/) |
 | `pnpm lint` | ✅ passes | ESLint + Next.js config |
-| `pnpm test` | ✅ passes | 88 vitest unit tests in 14 files (jsdom) |
+| `pnpm test` | ✅ passes | 139 vitest unit tests in 18 files (jsdom) |
 | `pnpm test:convex` | ✅ passes | 12 convex-test integration tests in 2 files (node) |
-| `pnpm test:e2e` | ✅ passes | 15 Playwright tests (needs `pnpm build` first) |
+| `pnpm test:e2e` | ✅ passes | 18 Playwright tests (needs `pnpm build` first) |
 | `pnpm test:lhci` | ⚠️ untested | Lighthouse CI (requires production URL) |
 
 ## Project Structure
 
 ```
-src/app/(tabs)/        # Pages: explore, journal, budget, reminders, tickets, settings
+src/app/(tabs)/        # Pages: explore, local, journal, budget, reminders, tickets, settings
 src/components/        # UI components (shell, map, poi, journal, ride, explore, budget, reminders, tickets, onboarding)
-src/hooks/             # useGeolocation, useTripJournal (auto journal recorder)
-src/lib/               # utils (deviceId, geo, currency, budget, notify, ocr, idb, weather, clipboard, theme) + journal/ + ride/
+src/hooks/             # useGeolocation, useTripJournal (auto journal recorder), useDisplayPrefs
+src/lib/               # utils (deviceId, geo, currency, budget, notify, ocr, idb, weather, clipboard, displayPrefs, theme) + journal/ + ride/
 convex/                # Convex backend: schema, queries, mutations, actions, crons, auth
 convex-test/           # Convex test helpers + schema copy
 tests/unit/            # Vitest unit tests
@@ -49,7 +49,8 @@ public/                # Icons, manifest, sw.js, offline.html, tesseract/ (self-
 - **Map**: react-leaflet; pins are self-hosted inline-SVG `L.divIcon` (no external marker images); failed tiles retry ×3 with backoff, then show a calm placeholder. `trail` prop draws a journal polyline (orange) with start/end markers + fit-bounds.
 - **Trip Journal**: auto-records device-scoped pins once `prefs.tripStartDate` has passed (`src/hooks/useTripJournal.ts`; sampling policy in `src/lib/journal/stats.ts` — record when moved ≥150 m, check-in every ≥10 min, 2 min jitter guard). UI = `src/components/journal/JournalClient.tsx` (day-grouped timeline + trail map). Points stay isolated per device via `historyQuery`.
 - **Location highlights**: `actions.getHighlights` (Open-Meteo + Nominatim reverse + Brave news) cached ~30 min per ~1 km cell in `highlightsCache`; UI = `src/components/explore/HighlightsCard.tsx`.
-- **Ride requests**: `RideSheet` opens Bolt (universal link) and copies the destination to the clipboard; Google Maps directions link as fallback. Bolt publishes no consumer booking/deep-link API — don't promise prefilled rides.
+- **Ride requests**: `RideSheet` copies the destination to the clipboard **first**, then launches Bolt via `buildBoltLaunch(ua)` in `src/lib/ride/links.ts` — Android Chromium gets an `intent://` targeting the Bolt app (`ee.mtakso.client`, assetlinks-verified) with a website fallback; iOS/desktop/Firefox get `bolt.eu` (no iOS universal link — Bolt's AASA has no `applinks`). Google Maps directions link as fallback. Bolt publishes no consumer booking/deep-link API — don't promise prefilled rides.
+- **Display prefs**: `mdf-display-prefs` in localStorage (`largeText` / `reduceMotion` / `highContrast`) applied as `html` classes by `useDisplayPrefs` (`src/lib/utils/displayPrefs.ts`); UI = Settings → Display & Layout. The Settings `ExitButton` tries `window.close()`, then falls back to a toast + `/explore` (browsers block programmatic close outside script-opened windows).
 - **Icons**: regenerate with `node generate-dragonfly-icons.js && node convert-icons.mjs` (sharp). Master art lives in the generator (v3 elegant dragonfly); 16/32 px get a simplified detail variant; maskable 512 keeps art in the safe zone.
 - **Design system**: `dragonfly` palette in `tailwind.config.ts` + `src/lib/theme/dragonfly.ts`; CSS vars in `globals.css`. Orange (`dragonfly.orange.*`, `#f97316` family) is the accent for active nav, ride CTAs, journal trail, and gradients.
 - **Currency**: display currency always derives from `userPrefs.currency` (the Settings value) via `resolveCurrency()` in `src/lib/utils/currency.ts`. A budget record's own `currency` field is legacy fallback only — never read it directly for display (doing so caused Settings changes to be ignored).
@@ -71,7 +72,7 @@ public/                # Icons, manifest, sw.js, offline.html, tesseract/ (self-
 - **Hydration mismatch**: Intro video uses `mounted` state pattern to avoid SSR/client mismatch on `localStorage` read.
 - **Missing API keys**: `GOOGLE_PLACES_API_KEY` and `GEMINI_API_KEY` not set in dev Convex deployment — actions return mock data.
 - **Tesseract assets**: The worker loads everything from `public/tesseract/` — missing files (e.g. `tesseract-core-relaxedsimd*.wasm` siblings) surface as console 404s. Keep the dir synced with the FULL `node_modules/tesseract.js-core/` contents and curl-verify after deploy.
-- **Elderly mode removed**: Fully deleted (no schema field, no UI) — ignore stale references.
+- **Elderly mode removed**: Fully deleted (no schema field, no UI) — ignore stale references. The current `largeText` display pref keeps toggling a legacy `html.elderly` class for old CSS (cosmetic alias only).
 - **PWA installs must go through Chrome on Android**: Samsung Internet and OEM browsers mint WebAPKs with a stale targetSdkVersion → Play Protect blocks the installed app ("built for an older version of Android"). `src/lib/utils/install.ts` classifies the environment; `InstallPrompt` routes non-Chrome Android users to Chrome via an `intent://` link and never offers the native install prompt on those browsers. Verify with `tests/unit/install.test.ts`.
 - **Vite config warning**: `vitest.config.ts` uses ESM syntax in CommonJS — set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress.
 - **Push notifications**: Require VAPID keys in Convex env; not configured in dev.

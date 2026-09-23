@@ -54,7 +54,29 @@ import { test, expect } from '@playwright/test';
        await expect(page.getByText(heading)).toBeVisible({ timeout: 15000 });
      }
      console.log(`  ✓ ${heading} found`);
-     
+
+     if (url === '/settings') {
+       // Display & layout prefs + exit button (committed feature b70e0af)
+       await expect(page.getByRole('heading', { name: 'Display & Layout' })).toBeVisible();
+       await expect(page.getByTestId('exit-button')).toBeVisible();
+
+       // Toggle the way a user does: tap the visible switch (the input is sr-only)
+       const largeText = page.getByTestId('display-large-text');
+       const largeTextSwitch = page.locator('label:has([data-testid="display-large-text"]) div');
+
+       await expect(largeText).not.toBeChecked();
+       await largeTextSwitch.click();
+       await expect(largeText).toBeChecked();
+       await expect(page.locator('html')).toHaveClass(/large-text/);
+       await largeTextSwitch.click();
+       await expect(largeText).not.toBeChecked();
+       await expect(page.locator('html')).not.toHaveClass(/large-text/);
+
+       await expect(page.getByRole('checkbox', { name: 'Reduce motion' })).toBeAttached();
+       await expect(page.getByRole('checkbox', { name: 'High contrast' })).toBeAttached();
+       console.log('  ✓ Display & Layout prefs + Exit button work');
+     }
+
      // Check bottom nav
      await expect(page.locator('nav[aria-label="Main navigation"]')).toBeVisible();
      console.log(`  ✓ Bottom navigation found`);
