@@ -180,24 +180,26 @@ CSS variables (`:root`) set in `src/app/globals.css`; applied app-wide. Key visu
 
 | Setting | Options |
 |---------|---------|
-| **Large Text Mode** | On/Off — increases font sizes, touch targets, bottom nav height |
+| **Display & Layout** | Instant per-device toggles: **Large text** (bigger fonts + touch targets), **Reduce motion** (stops float/shimmer animations), **High contrast** (brighter text, plainer background) |
 | **Default Search Radius** | 10m, 100m, 500m, 1km, 5km, 10km, 20km+ |
 | **Currency** | 12 currencies (see Budget) |
 | **Push Notifications** | On/Off — enables background reminders |
 | **Trip Start Date** | Date picker — drives Days Counter |
 | **Reset to Defaults** | One-tap factory reset |
+| **Exit App** | Tries to close the window; if the browser blocks it, shows an exit hint and returns to Explore |
 
 **How to use:**
 1. Open the **Settings** tab (gear icon)
-2. Toggle **Large Text Mode** for accessibility (WCAG AA, larger targets)
+2. Flip the **Display & Layout** toggles for accessibility — they apply instantly (WCAG AA, larger targets)
 3. Adjust search radius for Explore tab
 4. Pick your currency
 5. Enable push notifications for reminders
 6. Set trip start date for the counter
 7. Tap **Save Settings**
+8. Tap **Exit App** at the bottom to leave the app
 
 **Pro tips:**
-- Large Text Mode persists across sessions
+- Display prefs persist on this device (`mdf-display-prefs`) and apply on launch
 - Reset button confirms before wiping — use if things feel off
 - All settings tied to `deviceId` — no account needed
 
@@ -362,7 +364,7 @@ Tesseract.js has known issues in production Next.js builds. The app uses a wrapp
 - Install prompts, update banners
 - Offline page (`/offline.html`)
 - Accessibility headers, WCAG AA compliance
-- Large Text Mode (larger targets, high-contrast options); note CSS legacy `html.elderly` remains
+- Display & Layout prefs (large text, reduce motion, high contrast) stored per device in localStorage; CSS legacy `html.elderly` remains as an alias for `large-text`
 
 ---
 
