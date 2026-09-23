@@ -1,7 +1,7 @@
 /* PlaceDetailsSheet — full with lazy getPlaceDetails + photos/actions */
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useAction } from "convex/react";
 import type { NormalizedPOI } from "@/types";
 import { api } from "@/app/providers";
@@ -17,7 +17,8 @@ interface Props {
 export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: Props) {
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [enriched, setEnriched] = useState<Record<string, any>>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [enriched, setEnriched] = useState<Record<string, string | number | boolean | string[] | undefined>>({});
   const getPlaceDetails = useAction(api.actions.getPlaceDetails);
 
   useEffect(() => {
@@ -25,10 +26,10 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
     if (poi.source !== 'google' || !poi.placeId) { setPhotos([]); setLoading(false); return; }
     setLoading(true);
     getPlaceDetails({ deviceId: getDeviceId(), placeId: poi.placeId, source: poi.source, name: poi.name, lat: poi.lat, lng: poi.lng })
-      .then((res: any) => { setPhotos(res?.photos || []); setEnriched({ phone: res?.phone, hours: res?.hours, ratingCount: res?.ratingCount }); })
+      .then((res) => { setPhotos((res as { photos?: string[] })?.photos || []); setEnriched({ phone: (res as { phone?: string })?.phone, hours: (res as { hours?: string[] })?.hours, ratingCount: (res as { ratingCount?: number })?.ratingCount }); })
       .catch(() => console.warn('place details failed'))
       .finally(() => setLoading(false));
-  }, [poi?.placeId]);
+  }, [poi, getPlaceDetails]);
 
   return (
     <AnimatePresence>
