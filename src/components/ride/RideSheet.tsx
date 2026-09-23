@@ -5,7 +5,7 @@ import type { NormalizedPOI } from "@/types";
 import { Icon } from "@/components/ui/Icon";
 import { copyText } from "@/lib/utils/clipboard";
 import {
-  buildBoltUrl,
+  buildBoltLaunch,
   buildMapsUrl,
   buildDestinationText,
   type RideDestination,
@@ -33,7 +33,20 @@ export function RideSheet({ poi, pickup, onClose }: RideSheetProps) {
     if (!destination) return;
     const ok = await copyText(buildDestinationText(destination));
     setCopied(ok);
-    window.open(buildBoltUrl(), "_blank", "noopener,noreferrer");
+    const launch = buildBoltLaunch(navigator.userAgent);
+    if (launch.mode === "app") {
+      // A transient anchor click keeps the user gesture, so Android Chrome
+      // hands the intent:// off to the Bolt app (browser_fallback_url covers
+      // "app not installed").
+      const link = document.createElement("a");
+      link.href = launch.href;
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } else {
+      window.open(launch.href, "_blank", "noopener,noreferrer");
+    }
     if (ok) window.setTimeout(() => setCopied(false), 5000);
   };
 
@@ -108,7 +121,7 @@ export function RideSheet({ poi, pickup, onClose }: RideSheetProps) {
                 className="flex items-center justify-center gap-2 rounded-xl bg-dragonfly-orange-500 px-4 py-3 font-semibold text-dragonfly-navy-950 transition-colors hover:bg-dragonfly-orange-400 active:scale-[0.99] min-h-[var(--touch-target)]"
               >
                 <Icon name="car" size={19} />
-                Open Bolt — copy destination
+                Open Bolt app — destination copied
               </button>
               <button
                 type="button"
@@ -135,8 +148,8 @@ export function RideSheet({ poi, pickup, onClose }: RideSheetProps) {
             </AnimatePresence>
 
             <p className="mt-3 text-center text-caption text-dragonfly-navy-500">
-              Bolt has no in-app booking links yet, so Dragonfly opens Bolt and hands you the
-              exact destination.
+              Opens Bolt with your destination on the clipboard — paste it into &ldquo;Where
+              to?&rdquo;. (Bolt doesn&apos;t let other apps pre-fill rides.)
             </p>
           </motion.div>
         </>
