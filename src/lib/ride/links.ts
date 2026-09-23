@@ -10,14 +10,9 @@ export interface RidePickup {
   lng: number;
 }
 
-/**
- * Bolt universal link — opens the Bolt app on mobile when installed,
- * otherwise the Bolt website (where the app can be installed).
- * Bolt currently publishes no consumer booking/deep-link API, so the
- * destination is delivered via clipboard + this link.
- */
+/** Android intent URL (verified assetlinks.json: Bolt app ee.mtakso.client claims common.handle_all_urls). iOS limitation: AASA file has no applinks claim (only webcredentials) — no Universal Link; clipboard + web fallback remains. */
 export function buildBoltUrl(): string {
-  return "https://bolt.eu/";
+  return "intent://#Intent;scheme=https;package=ee.mtakso.client;S.browser_fallback_url=https://bolt.eu/;end";
 }
 
 /** Google Maps directions deep link with a fully prefilled destination. */
