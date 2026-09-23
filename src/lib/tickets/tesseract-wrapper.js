@@ -47,4 +47,5 @@ export async function loadTesseract() {
   }
 }
 
-export default { loadTesseract, createMockTesseract };
+const tesseractModule = { loadTesseract, createMockTesseract };
+export default tesseractModule;

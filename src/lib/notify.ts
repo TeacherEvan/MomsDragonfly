@@ -1,5 +1,7 @@
 "use client";
 
+import { getDeviceId } from "./utils/deviceId";
+
 export const PUSH_PUBLIC_KEY =
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
@@ -12,6 +14,8 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 /**
  * Requests push notification permission and subscribes to Web Push.
+ * Sends the deviceId so the server can store the subscription against this
+ * device's prefs (which the `sendDueReminders` cron reads).
  */
 export async function requestPushPermission(): Promise<boolean> {
   if (
@@ -27,7 +31,8 @@ export async function requestPushPermission(): Promise<boolean> {
     if (permission !== "granted") return false;
 
     if (!PUSH_PUBLIC_KEY) {
-      // Local fallback
+      // No VAPID public key configured — local notifications only.
+      console.warn("NEXT_PUBLIC_VAPID_PUBLIC_KEY not set — push subscription skipped");
       return true;
     }
 
@@ -37,15 +42,43 @@ export async function requestPushPermission(): Promise<boolean> {
       applicationServerKey: urlBase64ToUint8Array(PUSH_PUBLIC_KEY) as BufferSource,
     });
 
-    await fetch("/api/push", {
+    const res = await fetch("/api/push", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subscription: subscription.toJSON() }),
+      body: JSON.stringify({
+        deviceId: getDeviceId(),
+        subscription: subscription.toJSON(),
+      }),
     });
 
+    if (!res.ok) {
+      console.warn("Push subscription registration failed:", res.status);
+      return false;
+    }
     return true;
   } catch (err) {
     console.warn("Push subscription failed", err);
     return false;
   }
 }
+
+/**
+ * Removes this device's stored push subscription (notifications turned off).
+ * Best-effort: resolves false on failure so callers can degrade gracefully.
+ */
+export async function removePushSubscription(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+
+  try {
+    const res = await fetch("/api/push", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId: getDeviceId() }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn("Push unsubscribe failed", err);
+    return false;
+  }
+}
+

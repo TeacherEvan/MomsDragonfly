@@ -98,6 +98,24 @@ export const savePrefs = mutation({
   },
 });
 
+/**
+ * Clears the stored Web Push subscription for a device (user turned
+ * notifications off, or the endpoint died and `sendDueReminders` pruned it).
+ */
+export const clearPushSubscription = mutation({
+  args: { deviceId: v.string() },
+  handler: async (ctx, { deviceId }) => {
+    validateDeviceId(deviceId);
+    const existing = await ctx.db
+      .query("userPrefs")
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
+      .unique();
+    if (existing && existing.vapidSubscription !== undefined) {
+      await ctx.db.patch(existing._id, { vapidSubscription: undefined });
+    }
+  },
+});
+
 export const saveLocation = mutation({
   args: {
     deviceId: v.string(),

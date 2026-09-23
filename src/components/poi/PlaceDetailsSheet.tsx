@@ -78,7 +78,18 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
                 .map((p, i) => (
                   <div key={i} className="snap-start shrink-0 w-36 h-24 rounded-xl bg-dragonfly-navy-900 border border-dragonfly-navy-800 flex items-center justify-center">
                     {typeof p === 'string' && p !== 'placeholder' ? (
-                      <img src={p} alt={poi.name} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} className="w-full h-full object-cover rounded-xl" />
+                      // Dynamic remote URLs (Google proxy / Wikimedia) — next/image
+                      // would require a fixed remotePatterns allowlist for
+                      // arbitrary enrichment hosts; these are small thumbnails
+                      // already lazy-loaded, so plain <img> is correct here.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p}
+                        alt={poi.name}
+                        loading="lazy"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }}
+                        className="w-full h-full object-cover rounded-xl"
+                      />
                     ) : (
                       <Icon name="restaurant" size={28} className="text-dragonfly-navy-500" />
                     )}

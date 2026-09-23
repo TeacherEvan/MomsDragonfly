@@ -926,7 +926,7 @@ export const getPlaceDetails = action({
  * ──────────────────────────────────────────────────────────────────────────── */
 
 import { internalAction } from "./_generated/server";
-import webpush from "web-push";
+import webpush, { type PushSubscription } from "web-push";
 
 interface Reminder {
   _id: string;
@@ -978,12 +978,43 @@ export const sendDueReminders = internalAction({
       }
     }
 
+    // Devices whose push endpoint is permanently gone (404/410) — clear the
+    // stored subscription after the loop so we stop hammering a dead endpoint
+    // every 5 minutes.
+    const deadDevices = new Set<string>();
+
     for (const reminder of due) {
       const prefs = prefsMap.get(reminder.deviceId);
       if (!prefs?.vapidSubscription) continue;
+      // Respect the user's Notifications toggle in Settings.
+      if (!prefs.notificationsEnabled) continue;
+
+      let subscription: PushSubscription;
+      try {
+        const parsed = JSON.parse(prefs.vapidSubscription) as {
+          endpoint?: string;
+          keys?: { p256dh?: string; auth?: string };
+        };
+        // Validate the shape web-push requires — a structurally broken
+        // subscription is treated as dead (pruned below) rather than throwing
+        // on every cron tick.
+        if (
+          typeof parsed.endpoint !== "string" ||
+          typeof parsed.keys?.p256dh !== "string" ||
+          typeof parsed.keys?.auth !== "string"
+        ) {
+          throw new Error("Malformed push subscription");
+        }
+        subscription = parsed as PushSubscription;
+      } catch {
+        console.warn(
+          `Corrupt push subscription for device ${reminder.deviceId} — clearing it`
+        );
+        deadDevices.add(reminder.deviceId);
+        continue;
+      }
 
       try {
-        const subscription = JSON.parse(prefs.vapidSubscription);
         await webpush.sendNotification(
           subscription,
           JSON.stringify({
@@ -995,7 +1026,28 @@ export const sendDueReminders = internalAction({
           id: reminder._id as import("./_generated/dataModel").Id<"reminders">,
         });
       } catch (err) {
-        console.error(`Failed to send push for reminder ${reminder._id}:`, err);
+        const statusCode = (err as { statusCode?: number }).statusCode;
+        if (statusCode === 404 || statusCode === 410) {
+          console.warn(
+            `Push endpoint gone (${statusCode}) for device ${reminder.deviceId} — will prune subscription`
+          );
+          deadDevices.add(reminder.deviceId);
+        } else {
+          console.error(
+            `Failed to send push for reminder ${reminder._id}:`,
+            err
+          );
+        }
+      }
+    }
+
+    for (const deviceId of deadDevices) {
+      try {
+        await ctx.runMutation(api.mutations.clearPushSubscription, {
+          deviceId,
+        });
+      } catch (err) {
+        console.error(`Failed to prune dead push subscription for ${deviceId}:`, err);
       }
     }
   },

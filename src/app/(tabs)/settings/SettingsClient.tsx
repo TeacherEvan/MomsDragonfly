@@ -5,9 +5,10 @@ import { api } from "@/app/providers";
 import { getDeviceId } from "@/lib/utils/deviceId";
 
 import { cn } from "@/lib/utils/cn";
-import { useNetworkToast } from "@/components/shell/Toast";
+import { useNetworkToast, useToast } from "@/components/shell/Toast";
 import { ExitButton } from "@/components/shell/ExitButton";
 import { useDisplayPrefs } from "@/hooks/useDisplayPrefs";
+import { requestPushPermission, removePushSubscription } from "@/lib/notify";
 
 const CURRENCIES: ReadonlyArray<{ code: string; label: string }> = [
   { code: "USD", label: "USD — US Dollar" },
@@ -39,6 +40,7 @@ export default function SettingsClient() {
   const prefs = useQuery(api.queries.prefsQuery, { deviceId });
   const savePrefsMut = useMutation(api.mutations.savePrefs);
   const { showSuccess } = useNetworkToast();
+  const { showToast } = useToast();
 
   const [tripStartDate, setTripStartDate] = useState("");
   const [defaultRadius, setDefaultRadius] = useState(1000);
@@ -72,6 +74,22 @@ export default function SettingsClient() {
         updates.tripStartDate = new Date(tripStartDate).getTime();
       }
       await savePrefsMut({ deviceId, ...updates });
+
+      // Keep the stored push subscription in sync with the toggle:
+      // enabled → request permission + register; disabled → unregister.
+      if (notificationsEnabled) {
+        const granted = await requestPushPermission();
+        if (!granted) {
+          showToast({
+            message:
+              "Notifications permission not granted — reminders will only appear in the app",
+            type: "warning",
+          });
+        }
+      } else {
+        await removePushSubscription();
+      }
+
       showSuccess("Settings saved");
     } finally {
       setIsSaving(false);

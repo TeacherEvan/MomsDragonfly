@@ -1,36 +1,83 @@
 import { NextRequest, NextResponse } from "next/server";
-import webpush from "web-push";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "convex/_generated/api";
+import {
+  parsePushSubscribeRequest,
+  parsePushUnsubscribeRequest,
+} from "@/lib/push/request";
 
-interface PushSubscription {
-  endpoint: string;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
+/**
+ * Web Push subscription registration.
+ *
+ * POST   /api/push — persist `subscription` into `userPrefs.vapidSubscription`
+ *                    for this device (consumed by the Convex `sendDueReminders`
+ *                    cron, which does the actual web-push sending with the
+ *                    VAPID keys stored in the Convex deployment env).
+ * DELETE /api/push — clear the stored subscription (user turned notifications
+ *                    off, or the browser dropped the subscription).
+ *
+ * Responses never echo internal error details — failures are logged
+ * server-side and a generic message is returned.
+ */
+
+function convexClient(): ConvexHttpClient | null {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) return null;
+  return new ConvexHttpClient(url);
 }
 
-const vapidSubject = process.env.VAPID_SUBJECT || "mailto:admin@momsdragonfly.app";
-const vapidPublic = process.env.VAPID_PUBLIC_KEY || "mock-public-key";
-const vapidPrivate = process.env.VAPID_PRIVATE_KEY || "mock-private-key";
-
-try {
-  webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
-} catch {
-  // Gracefully continue in local development
+async function readJson(req: NextRequest): Promise<unknown> {
+  try {
+    return await req.json();
+  } catch {
+    return undefined;
+  }
 }
 
 export async function POST(req: NextRequest) {
+  const parsed = parsePushSubscribeRequest(await readJson(req));
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+
+  const client = convexClient();
+  if (!client) {
+    console.error("NEXT_PUBLIC_CONVEX_URL is not set — cannot store push subscription");
+    return NextResponse.json({ error: "Push notifications are not configured" }, { status: 503 });
+  }
+
   try {
-    const { subscription } = (await req.json()) as {
-      deviceId?: string;
-      subscription?: PushSubscription;
-    };
-    if (!subscription?.endpoint) {
-      return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
-    }
+    await client.mutation(api.mutations.savePrefs, {
+      deviceId: parsed.deviceId,
+      vapidSubscription: JSON.stringify(parsed.subscription),
+    });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Failed to store push subscription:", err);
+    return NextResponse.json({ error: "Failed to store subscription" }, { status: 502 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const parsed = parsePushUnsubscribeRequest(await readJson(req));
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+
+  const client = convexClient();
+  if (!client) {
+    console.error("NEXT_PUBLIC_CONVEX_URL is not set — cannot clear push subscription");
+    return NextResponse.json({ error: "Push notifications are not configured" }, { status: 503 });
+  }
+
+  try {
+    await client.mutation(api.mutations.clearPushSubscription, {
+      deviceId: parsed.deviceId,
+    });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("Failed to clear push subscription:", err);
+    return NextResponse.json({ error: "Failed to clear subscription" }, { status: 502 });
+  }
+}
+

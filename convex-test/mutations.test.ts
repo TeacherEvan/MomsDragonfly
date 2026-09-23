@@ -211,6 +211,49 @@ test("deleteExpense verifies ownership", async (t) => {
   expect(expenses).toHaveLength(0);
 });
 
+test("clearPushSubscription clears only the target device (real function)", async (t) => {
+  const deviceA = testDeviceId();
+  const deviceB = testDeviceId();
+  const sub = JSON.stringify({
+    endpoint: "https://push.example/abc",
+    keys: { p256dh: "p", auth: "a" },
+  });
+
+  await t.mutation(api.mutations.savePrefs, {
+    deviceId: deviceA,
+    vapidSubscription: sub,
+  });
+  await t.mutation(api.mutations.savePrefs, {
+    deviceId: deviceB,
+    vapidSubscription: sub,
+  });
+
+  await t.mutation(api.mutations.clearPushSubscription, { deviceId: deviceA });
+
+  const prefsA = await t.query(api.queries.prefsQuery, { deviceId: deviceA });
+  const prefsB = await t.query(api.queries.prefsQuery, { deviceId: deviceB });
+
+  expect(prefsA?.vapidSubscription).toBeUndefined();
+  expect(prefsA?.deviceId).toBe(deviceA); // prefs doc itself survives
+  expect(prefsB?.vapidSubscription).toBe(sub); // other devices untouched
+});
+
+test("clearPushSubscription is a no-op for unknown devices and invalid ids", async (t) => {
+  // Unknown device: should not throw, should not create a prefs doc.
+  await t.mutation(api.mutations.clearPushSubscription, {
+    deviceId: testDeviceId(),
+  });
+  const prefs = await t.query(api.queries.prefsQuery, {
+    deviceId: testDeviceId(),
+  });
+  expect(prefs).toBeNull();
+
+  // Invalid deviceId: rejected like every other guarded mutation.
+  await expect(
+    t.mutation(api.mutations.clearPushSubscription, { deviceId: "ssr" })
+  ).rejects.toThrow();
+});
+
 test("journal notes: CRUD, trim, limits, per-device isolation (real functions)", async (t) => {
   const deviceA = testDeviceId();
   const deviceB = testDeviceId();
