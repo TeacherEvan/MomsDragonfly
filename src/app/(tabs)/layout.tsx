@@ -9,9 +9,11 @@ import { UpdateBanner } from "@/components/shell/UpdateBanner";
 import { TripRecorder } from "@/components/journal/TripRecorder";
 import { cn } from "@/lib/utils/cn";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
+import { useDisplayPrefs } from "@/hooks/useDisplayPrefs";
 
 export default function TabsLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  useDisplayPrefs();
   return (
     <div className="flex flex-col min-h-screen bg-dragonfly-navy-950">
       <a

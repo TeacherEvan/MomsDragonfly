@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ToastProvider, useNetworkToast } from "@/components/shell/Toast";
 import { api as generatedApi } from "../../convex/_generated/api";
+import { applyDisplayPrefs, getDisplayPrefs } from "@/lib/utils/displayPrefs";
 
 export const api = generatedApi;
 
@@ -43,6 +44,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [convexClient] = useState(() => getConvexClient());
 
   useEffect(() => {
+    applyDisplayPrefs(getDisplayPrefs());
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch((err) => {
         console.warn("Service worker registration failed:", err);

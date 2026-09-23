@@ -6,6 +6,8 @@ import { getDeviceId } from "@/lib/utils/deviceId";
 
 import { cn } from "@/lib/utils/cn";
 import { useNetworkToast } from "@/components/shell/Toast";
+import { ExitButton } from "@/components/shell/ExitButton";
+import { useDisplayPrefs } from "@/hooks/useDisplayPrefs";
 
 const CURRENCIES: ReadonlyArray<{ code: string; label: string }> = [
   { code: "USD", label: "USD — US Dollar" },
@@ -43,6 +45,7 @@ export default function SettingsClient() {
   const [currency, setCurrency] = useState("USD");
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { prefs: displayPrefs, update: updateDisplay, reset: resetDisplay } = useDisplayPrefs();
 
   useEffect(() => {
     if (prefs) {
@@ -139,6 +142,42 @@ export default function SettingsClient() {
           </div>
         </div>
 
+        {/* Display & Layout */}
+        <div className="bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-700 p-4">
+          <h3 className="font-semibold text-dragonfly-navy-50 mb-1">Display &amp; Layout</h3>
+          <p className="text-caption text-dragonfly-navy-400 mb-3">Applies instantly on this device</p>
+          <div className="space-y-3">
+            {(
+              [
+                { key: "largeText", title: "Large text", hint: "Bigger fonts + touch targets", testId: "display-large-text" },
+                { key: "reduceMotion", title: "Reduce motion", hint: "Stops floating + shimmer animations", testId: "display-reduce-motion" },
+                { key: "highContrast", title: "High contrast", hint: "Brighter text, plainer background", testId: "display-high-contrast" },
+              ] as const
+            ).map(({ key, title, hint, testId }) => (
+              <div key={key} className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-medium text-dragonfly-navy-50 text-sm">{title}</p>
+                  <p className="text-caption text-dragonfly-navy-400">{hint}</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    data-testid={testId}
+                    aria-label={title}
+                    checked={displayPrefs[key]}
+                    onChange={(e) => {
+                      updateDisplay({ [key]: e.target.checked });
+                      showSuccess(`${title} ${e.target.checked ? "on" : "off"}`);
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-dragonfly-navy-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-dragonfly-teal-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-dragonfly-teal-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-dragonfly-teal-500"></div>
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Trip Start Date */}
         <div className="bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-700 p-4">
           <h3 className="font-semibold text-dragonfly-navy-50 mb-3">Trip Start Date</h3>
@@ -178,6 +217,7 @@ export default function SettingsClient() {
                 onboardingComplete: false,
                 tripStartDate: undefined,
               });
+              resetDisplay();
               showSuccess("Settings reset to defaults");
             }
           }}
@@ -186,6 +226,10 @@ export default function SettingsClient() {
           Reset to Defaults
         </button>
       </form>
+
+      <div className="px-4">
+        <ExitButton />
+      </div>
     </div>
   );
 }
