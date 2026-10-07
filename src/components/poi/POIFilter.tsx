@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
-import { cn } from "@/lib/utils/cn";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { cn } from "@/lib/utils/cn";
 
 const CATEGORIES: ReadonlyArray<{ value: string; label: string; icon: IconName }> = [
   { value: "all", label: "All", icon: "sparkle" },

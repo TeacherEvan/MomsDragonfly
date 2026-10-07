@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
-  getDisplayPrefs,
-  setDisplayPrefs,
   applyDisplayPrefs,
   DISPLAY_PREFS_KEY,
+  getDisplayPrefs,
+  setDisplayPrefs,
 } from "@/lib/utils/displayPrefs";
 
 beforeEach(() => {

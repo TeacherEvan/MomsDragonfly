@@ -1,15 +1,15 @@
 "use client";
-import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { NormalizedPOI } from "@/types";
+import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { copyText } from "@/lib/utils/clipboard";
 import {
   buildBoltLaunch,
-  buildMapsUrl,
   buildDestinationText,
+  buildMapsUrl,
   type RideDestination,
 } from "@/lib/ride/links";
+import { copyText } from "@/lib/utils/clipboard";
+import type { NormalizedPOI } from "@/types";
 
 interface RideSheetProps {
   poi: NormalizedPOI | null;

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 
-export default function Error({
+export default function ErrorBoundary({
   error,
   reset,
 }: {
@@ -26,6 +26,7 @@ export default function Error({
         <p className="text-caption text-dragonfly-navy-500 mb-4">Reference: {error.digest}</p>
       )}
       <button
+        type="button"
         onClick={() => reset()}
         className="px-4 py-2 bg-dragonfly-teal-500 hover:bg-dragonfly-teal-400 text-dragonfly-navy-950 font-semibold rounded-lg transition-colors duration-fast min-h-[var(--touch-target)]"
       >

@@ -1,5 +1,5 @@
-import { test, testDeviceId, insertPrefs } from "./helpers";
 import { api, internal } from "../convex/_generated/api";
+import { insertPrefs, test, testDeviceId } from "./helpers";
 
 test("savePrefs creates new prefs with defaults (real function)", async (t) => {
   const deviceId = testDeviceId();
@@ -120,9 +120,9 @@ test("upsertBudget creates and updates budget", async (t) => {
   );
   expect(budget?.totalBudget).toBe(1000);
 
-  await t.mutation((ctx) => {
+  await t.mutation(async (ctx) => {
     if (budget) {
-      ctx.db.patch(budget._id, { totalBudget: 1500 });
+      await ctx.db.patch(budget._id, { totalBudget: 1500 });
     }
   });
 
@@ -146,9 +146,9 @@ test("addReminder and toggleReminder", async (t) => {
   expect(reminders).toHaveLength(1);
   expect(reminders[0].done).toBe(false);
 
-  await t.mutation((ctx) => {
+  await t.mutation(async (ctx) => {
     const r = reminders[0];
-    ctx.db.patch(r._id, { done: true });
+    await ctx.db.patch(r._id, { done: true });
   });
 
   reminders = await t.query((ctx) =>

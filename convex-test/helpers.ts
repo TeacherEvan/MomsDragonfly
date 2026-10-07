@@ -1,6 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
-import schema from "../convex/schema";
 import { test as vitestTest } from "vitest";
+import schema from "../convex/schema";
 
 // Vitest/Vite resolves this glob at transform time. Passing the module map
 // explicitly avoids convex-test's fallback (`import.meta.glob` is not

@@ -1,14 +1,13 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import { type FormEvent, useEffect, useState } from "react";
 import { api } from "@/app/providers";
-import { getDeviceId } from "@/lib/utils/deviceId";
-
-import { cn } from "@/lib/utils/cn";
-import { useNetworkToast, useToast } from "@/components/shell/Toast";
 import { ExitButton } from "@/components/shell/ExitButton";
+import { useNetworkToast, useToast } from "@/components/shell/Toast";
 import { useDisplayPrefs } from "@/hooks/useDisplayPrefs";
-import { requestPushPermission, removePushSubscription } from "@/lib/notify";
+import { removePushSubscription, requestPushPermission } from "@/lib/notify";
+import { cn } from "@/lib/utils/cn";
+import { getDeviceId } from "@/lib/utils/deviceId";
 
 const CURRENCIES: ReadonlyArray<{ code: string; label: string }> = [
   { code: "USD", label: "USD — US Dollar" },
@@ -61,7 +60,7 @@ export default function SettingsClient() {
     }
   }, [prefs]);
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {

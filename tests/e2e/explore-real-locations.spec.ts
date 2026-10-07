@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test('explore page loads real locations — food, parks, health, stay (user goal verified)', async ({ page }) => {
   const errors: string[] = [];

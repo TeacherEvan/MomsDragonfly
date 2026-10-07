@@ -1,28 +1,28 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import * as dishHelpers from "../../convex/dishHelpers";
 import {
-  PHOTO_REF_RE,
-  PHOTO_WIDTH_DEFAULT,
-  PHOTO_WIDTH_MAX,
-  PHOTO_WIDTH_MIN,
-  PLACE_ENRICH_TTL_MS,
   buildPhotoProxyUrl,
   clampPhotoWidth,
   deriveConvexSiteUrl,
   googlePhotoMediaUrl,
   isValidPhotoRef,
   mapGoogleDetails,
+  PHOTO_REF_RE,
+  PHOTO_WIDTH_DEFAULT,
+  PHOTO_WIDTH_MAX,
+  PHOTO_WIDTH_MIN,
+  PLACE_ENRICH_TTL_MS,
   placeCacheKey,
   slugifyPlaceName,
 } from "../../convex/placeHelpers";
 import {
   searchResultTitles,
   summaryThumbnail,
-  wikiSearchUrl,
-  wikiSummaryUrl,
   wikipediaImages,
   wikipediaThumbnail,
+  wikiSearchUrl,
+  wikiSummaryUrl,
 } from "../../convex/wikiHelpers";
-import * as dishHelpers from "../../convex/dishHelpers";
 
 afterEach(() => {
   vi.unstubAllGlobals();

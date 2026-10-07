@@ -8,10 +8,10 @@
 // Wiki lookup shared with the place-details fallback; re-exported here so the
 // dishes flow keeps a single import surface for its image work.
 export {
+  searchResultTitles,
+  summaryThumbnail,
   wikipediaImages,
   wikipediaThumbnail,
-  summaryThumbnail,
-  searchResultTitles,
 } from "./wikiHelpers";
 
 export interface DishItem {

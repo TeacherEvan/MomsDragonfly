@@ -1,7 +1,6 @@
-import { mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internalMutation, mutation } from "./_generated/server";
 import { validateDeviceId } from "./auth";
-import type { Id } from "./_generated/dataModel";
 
 interface PoiInput {
   placeId: string;

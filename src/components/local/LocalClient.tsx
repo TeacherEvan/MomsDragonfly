@@ -1,10 +1,10 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { useGeolocation } from "@/hooks/useGeolocation";
-import { cn } from "@/lib/utils/cn";
-import { Icon } from "@/components/ui/Icon";
 import { HighlightsCard } from "@/components/explore/HighlightsCard";
 import { LocalDishesCard } from "@/components/explore/LocalDishesCard";
+import { Icon } from "@/components/ui/Icon";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { cn } from "@/lib/utils/cn";
 
 type LocalSegment = "news" | "taste";
 

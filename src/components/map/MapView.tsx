@@ -1,6 +1,6 @@
 "use client";
-import React, { forwardRef } from "react";
 import dynamic from "next/dynamic";
+import React, { forwardRef } from "react";
 import type { NormalizedPOI } from "@/types";
 import type { LeafletMapRef } from "./LeafletMap";
 

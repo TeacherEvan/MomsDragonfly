@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
+import { useEffect, useRef } from "react";
 import { api } from "@/app/providers";
-import { getDeviceId } from "@/lib/utils/deviceId";
 import { shouldRecordPoint } from "@/lib/journal/stats";
+import { getDeviceId } from "@/lib/utils/deviceId";
 
 /**
  * Automatic trip journal recorder — active once the trip start date has

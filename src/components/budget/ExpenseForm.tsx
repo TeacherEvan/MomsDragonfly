@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import type { ExpenseCategory, Expense } from "@/types";
 import { cn } from "@/lib/utils/cn";
+import type { Expense, ExpenseCategory } from "@/types";
 
 const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
   { value: "food", label: "🍽️ Food & Drinks" },

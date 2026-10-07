@@ -1,16 +1,16 @@
 "use client";
+import L from "leaflet";
 import React, {
+  forwardRef,
   useCallback,
   useEffect,
-  useRef,
   useImperativeHandle,
-  forwardRef,
   useMemo,
+  useRef,
 } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
 import type { NormalizedPOI } from "@/types";
 import { POIMarker } from "./POIMarker";
-import L from "leaflet";
 
 /**
  * Self-hosted vector pin — no external image dependency (the previous default

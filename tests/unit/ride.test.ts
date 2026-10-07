@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   buildBoltLaunch,
-  buildMapsUrl,
   buildDestinationText,
+  buildMapsUrl,
 } from "@/lib/ride/links";
 
 const ANDROID_CHROME_UA =

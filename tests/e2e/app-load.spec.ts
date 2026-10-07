@@ -1,6 +1,6 @@
 // NOTE: The user's core goal (real locations loading) is verified by explore-real-locations.spec.ts
 // See VERIFICATION_REPORT.md for details: Vercel production connects to wrong Convex DB (dev instead of prod).
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test('app loads with splash screen and video intro', async ({ page }) => {
   const errors: string[] = [];

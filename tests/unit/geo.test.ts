@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { haversine, formatDistance, getQuickPosition } from "@/lib/utils/geo";
+import { describe, expect, it } from "vitest";
+import { formatDistance, getQuickPosition, haversine } from "@/lib/utils/geo";
 
 describe("haversine", () => {
   it("returns 0 for identical coordinates", () => {

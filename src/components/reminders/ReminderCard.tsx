@@ -1,6 +1,6 @@
 import React from "react";
-import type { Reminder } from "@/types";
 import { cn } from "@/lib/utils/cn";
+import type { Reminder } from "@/types";
 
 interface ReminderCardProps {
   reminder: Reminder;

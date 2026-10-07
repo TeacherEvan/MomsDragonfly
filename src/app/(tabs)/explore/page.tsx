@@ -1,22 +1,22 @@
 "use client";
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/app/providers";
-import { useGeolocation } from "@/hooks/useGeolocation";
-import { MapView } from "@/components/map/MapView";
-import { POIList } from "@/components/poi/POIList";
-import type { FetchPhase } from "@/components/poi/POIList";
-import { POIFilter } from "@/components/poi/POIFilter";
-import { IntroVideoModal } from "@/components/onboarding/IntroVideoModal";
-import { SplashScreen } from "@/components/onboarding/SplashScreen";
-import { OnboardingSlides } from "@/components/onboarding/OnboardingSlides";
-import type { NormalizedPOI } from "@/types";
 import type { LeafletMapRef } from "@/components/map/LeafletMap";
-import { haversine } from "@/lib/utils/geo";
-import { getDeviceId } from "@/lib/utils/deviceId";
-import { Icon } from "@/components/ui/Icon";
-import { RideSheet } from "@/components/ride/RideSheet";
+import { MapView } from "@/components/map/MapView";
+import { IntroVideoModal } from "@/components/onboarding/IntroVideoModal";
+import { OnboardingSlides } from "@/components/onboarding/OnboardingSlides";
+import { SplashScreen } from "@/components/onboarding/SplashScreen";
 import { PlaceDetailsSheet } from "@/components/poi/PlaceDetailsSheet";
+import { POIFilter } from "@/components/poi/POIFilter";
+import type { FetchPhase } from "@/components/poi/POIList";
+import { POIList } from "@/components/poi/POIList";
+import { RideSheet } from "@/components/ride/RideSheet";
+import { Icon } from "@/components/ui/Icon";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { getDeviceId } from "@/lib/utils/deviceId";
+import { haversine } from "@/lib/utils/geo";
+import type { NormalizedPOI } from "@/types";
 
 type OnboardingStep = "splash" | "video" | "slides" | "done";
 
@@ -229,6 +229,7 @@ export default function ExplorePage() {
                 Enable location access to see nearby places on the map, or use the list below.
               </p>
               <button
+                type="button"
                 onClick={() => {
                   if (typeof window !== "undefined" && navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(

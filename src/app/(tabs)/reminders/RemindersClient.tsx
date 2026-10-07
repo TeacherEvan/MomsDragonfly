@@ -1,11 +1,11 @@
 "use client";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/app/providers";
-import { getDeviceId } from "@/lib/utils/deviceId";
+import { DaysCounter } from "@/components/onboarding/DaysCounter";
 import { ReminderForm } from "@/components/reminders/ReminderForm";
 import { ReminderList } from "@/components/reminders/ReminderList";
-import { DaysCounter } from "@/components/onboarding/DaysCounter";
 import { requestPushPermission } from "@/lib/notify";
+import { getDeviceId } from "@/lib/utils/deviceId";
 import type { Reminder } from "@/types";
 
 export default function RemindersClient() {

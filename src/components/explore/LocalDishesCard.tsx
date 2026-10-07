@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useAction } from "convex/react";
+import { useEffect, useState } from "react";
 import { api } from "@/app/providers";
-import { getDeviceId } from "@/lib/utils/deviceId";
 import { Icon } from "@/components/ui/Icon";
+import { getDeviceId } from "@/lib/utils/deviceId";
 
 interface LocalDishesCardProps {
   lat: number;

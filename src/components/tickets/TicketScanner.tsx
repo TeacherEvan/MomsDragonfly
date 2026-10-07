@@ -1,8 +1,8 @@
 "use client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils/cn";
 import { Icon } from "@/components/ui/Icon";
 import { normalizeImage } from "@/lib/images/normalize";
+import { cn } from "@/lib/utils/cn";
 
 interface TicketScannerProps {
   onCapture: (blob: Blob) => void;

@@ -1,9 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  sumExpenses,
-  spentPercent,
-  remainingBudget,
   groupByCategory,
+  remainingBudget,
+  spentPercent,
+  sumExpenses,
 } from "@/lib/utils/budget";
 import type { Expense } from "@/types";
 

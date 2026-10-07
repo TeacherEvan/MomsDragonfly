@@ -1,5 +1,5 @@
-import { test, testDeviceId } from "./helpers";
 import { api } from "../convex/_generated/api";
+import { test, testDeviceId } from "./helpers";
 
 test("journal points are isolated per device (real functions)", async (t) => {
   const deviceA = testDeviceId();

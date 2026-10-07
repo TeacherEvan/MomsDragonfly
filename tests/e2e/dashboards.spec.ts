@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
- 
+import { expect, test } from '@playwright/test';
+
  test('all dashboard pages load without errors', async ({ page }) => {
    const errors: string[] = [];
    page.on('console', msg => {
@@ -35,8 +35,8 @@ import { test, expect } from '@playwright/test';
      // Wait for and dismiss Next.js version staleness error dialog if present
      try {
        await page.evaluate(() => {
-         document.querySelectorAll('dialog').forEach(d => d.remove());
-         document.querySelectorAll('[class*="error-overlay"], [class*="ErrorOverlay"], [id*="error-overlay"]').forEach(o => o.remove());
+         document.querySelectorAll('dialog').forEach((d) => { d.remove(); });
+         document.querySelectorAll('[class*="error-overlay"], [class*="ErrorOverlay"], [id*="error-overlay"]').forEach((o) => { o.remove(); });
        });
        await page.waitForTimeout(500);
      } catch {

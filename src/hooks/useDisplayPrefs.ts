@@ -3,9 +3,9 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import {
   applyDisplayPrefs,
   DEFAULT_DISPLAY_PREFS,
+  type DisplayPrefs,
   getDisplayPrefs,
   setDisplayPrefs,
-  type DisplayPrefs,
 } from "@/lib/utils/displayPrefs";
 
 function subscribe(callback: () => void): () => void {

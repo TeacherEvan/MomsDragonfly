@@ -1,4 +1,4 @@
-import { set, get, del, keys } from "idb-keyval";
+import { del, get, keys, set } from "idb-keyval";
 
 /* ── Blobs (the actual photos) ─────────────────────────────────────────── */
 

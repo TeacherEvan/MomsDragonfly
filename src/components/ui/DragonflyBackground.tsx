@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { cn } from "@/lib/utils/cn";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
+import { cn } from "@/lib/utils/cn";
 
 interface DragonflyBackgroundProps {
   mode?: "ambient" | "immersive";

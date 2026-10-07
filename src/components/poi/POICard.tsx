@@ -1,8 +1,8 @@
 import React from "react";
-import type { NormalizedPOI } from "@/types";
-import { formatDistance } from "@/lib/utils/geo";
-import { cn } from "@/lib/utils/cn";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { cn } from "@/lib/utils/cn";
+import { formatDistance } from "@/lib/utils/geo";
+import type { NormalizedPOI } from "@/types";
 
 interface POICardProps {
   poi: NormalizedPOI;

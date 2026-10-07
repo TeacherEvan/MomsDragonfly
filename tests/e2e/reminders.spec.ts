@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test("reminders page loads", async ({ page }) => {
   // Set intro as seen to skip onboarding

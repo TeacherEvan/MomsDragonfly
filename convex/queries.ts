@@ -1,5 +1,5 @@
-import { query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
+import { internalQuery, query } from "./_generated/server";
 import { validateDeviceId } from "./auth";
 
 export const poiQuery = query({

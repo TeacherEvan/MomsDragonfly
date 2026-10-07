@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
-import type { Expense } from "@/types";
 import { formatAmount } from "@/lib/utils/currency";
+import type { Expense } from "@/types";
 
 interface ExpenseListProps {
   expenses: Expense[];

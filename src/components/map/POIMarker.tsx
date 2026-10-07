@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
-import type { NormalizedPOI } from "@/types";
 import { formatDistance } from "@/lib/utils/geo";
+import type { NormalizedPOI } from "@/types";
 
 interface POIMarkerProps {
   poi: NormalizedPOI;

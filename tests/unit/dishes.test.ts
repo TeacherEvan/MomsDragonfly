@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { parseDishResponse, fallbackDishes } from "../../convex/dishHelpers";
+import { describe, expect, it } from "vitest";
+import { fallbackDishes, parseDishResponse } from "../../convex/dishHelpers";
 
 describe("parseDishResponse", () => {
   it("parses a clean JSON array", () => {

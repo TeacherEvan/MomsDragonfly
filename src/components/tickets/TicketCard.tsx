@@ -1,8 +1,8 @@
 import React from "react";
-import type { Ticket } from "@/types";
-import { formatAmount } from "@/lib/utils/currency";
-import { cn } from "@/lib/utils/cn";
 import { Icon } from "@/components/ui/Icon";
+import { cn } from "@/lib/utils/cn";
+import { formatAmount } from "@/lib/utils/currency";
+import type { Ticket } from "@/types";
 
 interface TicketCardProps {
   ticket: Ticket;

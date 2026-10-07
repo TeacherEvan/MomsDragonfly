@@ -1,10 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useAction } from "convex/react";
+import { useEffect, useState } from "react";
 import { api } from "@/app/providers";
+import { Icon } from "@/components/ui/Icon";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import { weatherInfo } from "@/lib/utils/weather";
-import { Icon } from "@/components/ui/Icon";
 
 interface HighlightsCardProps {
   lat: number;

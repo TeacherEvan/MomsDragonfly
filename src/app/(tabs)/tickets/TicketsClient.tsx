@@ -1,24 +1,24 @@
 "use client";
-import { useQuery, useMutation, useAction } from "convex/react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/app/providers";
-import { getDeviceId } from "@/lib/utils/deviceId";
-import { runTesseract } from "@/lib/tickets/ocr";
-import { parseTicket } from "@/lib/tickets/parse";
+import { OCRResult } from "@/components/tickets/OCRResult";
+import { TicketGallery } from "@/components/tickets/TicketGallery";
+import { TicketScanner } from "@/components/tickets/TicketScanner";
+import { Icon } from "@/components/ui/Icon";
 import {
+  deleteLocalTicket,
+  type LocalTicketRecord,
   listLocalTickets,
+  loadTicketBlob,
   saveLocalTicket,
   saveLocalTicketRecord,
   updateLocalTicket,
-  deleteLocalTicket,
-  loadTicketBlob,
-  type LocalTicketRecord,
 } from "@/lib/idb/tickets";
-import { TicketScanner } from "@/components/tickets/TicketScanner";
-import { OCRResult } from "@/components/tickets/OCRResult";
-import { TicketGallery } from "@/components/tickets/TicketGallery";
+import { runTesseract } from "@/lib/tickets/ocr";
+import { parseTicket } from "@/lib/tickets/parse";
 import { formatAmount } from "@/lib/utils/currency";
-import { Icon } from "@/components/ui/Icon";
+import { getDeviceId } from "@/lib/utils/deviceId";
 import type { Ticket } from "@/types";
 
 interface UITicket extends Ticket {

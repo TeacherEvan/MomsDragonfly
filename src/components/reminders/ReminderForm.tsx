@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import type { Reminder, ReminderRepeat } from "@/types";
 import { cn } from "@/lib/utils/cn";
+import type { Reminder, ReminderRepeat } from "@/types";
 
 interface ReminderFormProps {
   onAdd: (r: Omit<Reminder, "id" | "done">) => void;

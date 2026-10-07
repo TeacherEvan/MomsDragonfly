@@ -1,15 +1,16 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { useRouter } from "next/navigation";
+
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { TripRecorder } from "@/components/journal/TripRecorder";
 import { BottomNav } from "@/components/shell/BottomNav";
 import { CookieConsent } from "@/components/shell/CookieConsent";
 import { InstallPrompt } from "@/components/shell/InstallPrompt";
 import { UpdateBanner } from "@/components/shell/UpdateBanner";
-import { TripRecorder } from "@/components/journal/TripRecorder";
-import { cn } from "@/lib/utils/cn";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
 import { useDisplayPrefs } from "@/hooks/useDisplayPrefs";
+import { cn } from "@/lib/utils/cn";
 
 export default function TabsLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();

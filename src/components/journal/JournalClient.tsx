@@ -1,17 +1,17 @@
 "use client";
+import type { Id } from "convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
 import { useMemo, useState } from "react";
-import { useQuery, useMutation } from "convex/react";
 import { api } from "@/app/providers";
-import { getDeviceId } from "@/lib/utils/deviceId";
 import { MapView } from "@/components/map/MapView";
 import { Icon } from "@/components/ui/Icon";
-import { formatDistance, getQuickPosition } from "@/lib/utils/geo";
 import {
   formatDayLabel,
   mergeJournalDays,
   totalDistance,
 } from "@/lib/journal/stats";
-import type { Id } from "convex/_generated/dataModel";
+import { getDeviceId } from "@/lib/utils/deviceId";
+import { formatDistance, getQuickPosition } from "@/lib/utils/geo";
 
 interface HistoryPoint {
   _id: string;

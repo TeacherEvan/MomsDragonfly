@@ -1,16 +1,16 @@
 "use node";
-import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
+import { action } from "./_generated/server";
 import { validateDeviceId } from "./auth";
-import { fallbackDishes, parseDishResponse, type DishItem } from "./dishHelpers";
+import { type DishItem, fallbackDishes, parseDishResponse } from "./dishHelpers";
 import {
   buildPhotoProxyUrl,
   deriveConvexSiteUrl,
-  mapGoogleDetails,
-  placeCacheKey,
-  PLACE_ENRICH_TTL_MS,
   type GooglePlaceDetails,
+  mapGoogleDetails,
+  PLACE_ENRICH_TTL_MS,
+  placeCacheKey,
 } from "./placeHelpers";
 import { wikipediaImages, wikipediaThumbnail } from "./wikiHelpers";
 
@@ -925,8 +925,8 @@ export const getPlaceDetails = action({
  * sendDueReminders — unchanged: web-push for due reminders.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-import { internalAction } from "./_generated/server";
 import webpush, { type PushSubscription } from "web-push";
+import { internalAction } from "./_generated/server";
 
 interface Reminder {
   _id: string;

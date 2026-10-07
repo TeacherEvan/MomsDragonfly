@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ConvexHttpClient } from "convex/browser";
 import { api } from "convex/_generated/api";
+import { ConvexHttpClient } from "convex/browser";
+import { type NextRequest, NextResponse } from "next/server";
 import {
   parsePushSubscribeRequest,
   parsePushUnsubscribeRequest,

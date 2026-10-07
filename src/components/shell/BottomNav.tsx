@@ -1,9 +1,9 @@
 "use client";
-import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils/cn";
+import { usePathname, useRouter } from "next/navigation";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { cn } from "@/lib/utils/cn";
 
 const tabs: ReadonlyArray<{ href: string; label: string; icon: IconName }> = [
   { href: "/explore", label: "Explore", icon: "compass" },

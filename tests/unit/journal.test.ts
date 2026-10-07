@@ -1,13 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  shouldRecordPoint,
-  totalDistance,
-  groupByDay,
   dayKey,
   formatDayLabel,
-  mergeJournalDays,
-  MIN_GAP_MS,
+  groupByDay,
   MAX_GAP_MS,
+  MIN_GAP_MS,
+  mergeJournalDays,
+  shouldRecordPoint,
+  totalDistance,
 } from "@/lib/journal/stats";
 
 describe("shouldRecordPoint", () => {
