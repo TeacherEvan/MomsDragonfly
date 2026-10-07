@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
 
 test('debug', async ({ page }) => {
-  const errors: string[] = [];
   page.on('console', msg => {
     console.log('CONSOLE:', msg.type(), msg.text());
   });

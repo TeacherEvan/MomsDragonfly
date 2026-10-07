@@ -9,7 +9,9 @@ import React, {
   useRef,
 } from "react";
 import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
+
 import type { NormalizedPOI } from "@/types";
+
 import { POIMarker } from "./POIMarker";
 
 /**

@@ -16,6 +16,7 @@ const List = ReactWindowList as React.ComponentType<{
 
 import { Icon } from "@/components/ui/Icon";
 import type { NormalizedPOI } from "@/types";
+
 import { POICard } from "./POICard";
 
 export type FetchPhase = "idle" | "loading" | "ready" | "empty" | "error";

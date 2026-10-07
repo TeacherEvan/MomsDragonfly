@@ -1,5 +1,7 @@
 import React from "react";
+
 import type { Ticket } from "@/types";
+
 import { TicketCard } from "./TicketCard";
 
 interface TicketGalleryProps {

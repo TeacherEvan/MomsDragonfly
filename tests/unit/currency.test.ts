@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { formatAmount, resolveCurrency } from "@/lib/utils/currency";
 
 describe("formatAmount", () => {

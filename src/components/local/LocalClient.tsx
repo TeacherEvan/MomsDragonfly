@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+
 import { HighlightsCard } from "@/components/explore/HighlightsCard";
 import { LocalDishesCard } from "@/components/explore/LocalDishesCard";
 import { Icon } from "@/components/ui/Icon";

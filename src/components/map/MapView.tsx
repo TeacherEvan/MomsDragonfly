@@ -1,7 +1,9 @@
 "use client";
 import dynamic from "next/dynamic";
 import React, { forwardRef } from "react";
+
 import type { NormalizedPOI } from "@/types";
+
 import type { LeafletMapRef } from "./LeafletMap";
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {

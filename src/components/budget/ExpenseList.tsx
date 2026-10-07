@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+
 import { formatAmount } from "@/lib/utils/currency";
 import type { Expense } from "@/types";
 

@@ -1,8 +1,10 @@
 "use client";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import React, { useEffect, useState } from "react";
+
 import { ToastProvider, useNetworkToast } from "@/components/shell/Toast";
 import { applyDisplayPrefs, getDisplayPrefs } from "@/lib/utils/displayPrefs";
+
 import { api as generatedApi } from "../../convex/_generated/api";
 
 export const api = generatedApi;

@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+
 import { internalQuery, query } from "./_generated/server";
 import { validateDeviceId } from "./auth";
 
@@ -11,8 +12,8 @@ export const poiQuery = query({
       .query("pois")
       .withIndex("by_deviceIds_category", (q) =>
         category === "all"
-          ? q.eq("deviceIds", [deviceId] as any)
-          : q.eq("deviceIds", [deviceId] as any).eq("category", category)
+          ? q.eq("deviceIds", [deviceId])
+          : q.eq("deviceIds", [deviceId]).eq("category", category)
       )
       .filter((q) => q.gt(q.field("fetchedAt"), cutoff))
       .take(150);
@@ -51,7 +52,7 @@ export const recentFetchCheck = query({
     const recent = await ctx.db
       .query("pois")
       .withIndex("by_deviceIds_category", (q) =>
-        q.eq("deviceIds", [deviceId] as any).eq("category", category)
+        q.eq("deviceIds", [deviceId]).eq("category", category)
       )
       .filter((q) => q.gt(q.field("fetchedAt"), cutoff))
       .first();

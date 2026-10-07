@@ -1,3 +1,15 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "plugins": ["simple-import-sort"],
+  "rules": {
+    "simple-import-sort/imports": "error"
+  },
+  "overrides": [
+    {
+      "files": ["convex/_generated/**"],
+      "rules": {
+        "simple-import-sort/imports": "off"
+      }
+    }
+  ]
 }

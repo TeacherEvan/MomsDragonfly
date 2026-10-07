@@ -1,5 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { test as vitestTest } from "vitest";
+
 import schema from "../convex/schema";
 
 // Vitest/Vite resolves this glob at transform time. Passing the module map

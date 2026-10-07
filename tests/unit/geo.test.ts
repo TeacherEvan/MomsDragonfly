@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { formatDistance, getQuickPosition, haversine } from "@/lib/utils/geo";
 
 describe("haversine", () => {

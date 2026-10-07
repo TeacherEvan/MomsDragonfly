@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
+
 import {
   dayKey,
   formatDayLabel,
   groupByDay,
   MAX_GAP_MS,
-  MIN_GAP_MS,
   mergeJournalDays,
+  MIN_GAP_MS,
   shouldRecordPoint,
   totalDistance,
 } from "@/lib/journal/stats";

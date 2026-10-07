@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
+
 import { DragonflyBackground } from "@/components/ui/DragonflyBackground";
-import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
 
 describe("DragonflyBackground", () => {
   it("renders children", () => {

@@ -1,6 +1,7 @@
 "use client";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
+
 import { api } from "@/app/providers";
 import { shouldRecordPoint } from "@/lib/journal/stats";
 import { getDeviceId } from "@/lib/utils/deviceId";

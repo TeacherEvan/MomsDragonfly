@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+
 import {
   applyDisplayPrefs,
   DISPLAY_PREFS_KEY,

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+
 import { TripRecorder } from "@/components/journal/TripRecorder";
 import { BottomNav } from "@/components/shell/BottomNav";
 import { CookieConsent } from "@/components/shell/CookieConsent";

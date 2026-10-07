@@ -17,7 +17,7 @@ pnpm dev               # Next.js on :3000 (Turbopack)
 |---------|--------|-------|
 | `pnpm build` | ✅ passes | Next.js 15 production build |
 | `pnpm typecheck` | ✅ passes | `tsc --noEmit` (root + convex/) |
-| `pnpm lint` | ✅ passes | ESLint + Next.js config |
+| `pnpm lint` | ✅ passes | ESLint + Next.js config; lints `src`, `convex`, `convex-test`, `tests` (import sort enforced) |
 | `pnpm test` | ✅ passes | 149 vitest unit tests in 19 files (jsdom) |
 | `pnpm test:convex` | ✅ passes | 16 convex-test integration tests in 2 files (node) |
 | `pnpm test:e2e` | ✅ passes | 18 Playwright tests (needs `pnpm build` first) |
@@ -43,6 +43,7 @@ public/                # Icons, manifest, sw.js, offline.html, tesseract/ (self-
 - **Convex client**: Created in `src/app/providers.tsx` via `ConvexProvider`
 - **Path aliases**: `@/*` → `src/*`, `convex/_generated/*` → `convex/_generated/*`
 - **Strict TS**: `strict: true` in both tsconfig.json files
+- **Import order**: enforced by `eslint-plugin-simple-import-sort` (`simple-import-sort/imports` in `.eslintrc.json`); `pnpm lint` covers `src`, `convex`, `convex-test`, `tests`. Never hand-sort imports — autofix with `pnpm lint -- --fix`. `convex/_generated/` is exempt from sorting: its exact output comes from `npx convex codegen` and must never be re-ordered (a formatter once re-sorted it and `codegen` reverted it).
 - **PWA**: Manual SW at `public/sw.js` (next-pwa installed but unused; no next-pwa config). SW skips cross-origin requests entirely — external assets (map tiles) go straight to the network; app shell + intro media are cached.
 - **CSP + security headers**: Single source of truth in `next.config.js` (`headers()` applies on Vercel and `next start`). Includes `*.tile.openstreetmap.org`. `vercel.json` and `src/middleware.ts` were removed — do NOT re-add duplicate header config (it had already drifted).
 - **Push notifications (full chain)**: Settings toggle → `requestPushPermission()`/`removePushSubscription()` (`src/lib/notify.ts`) → `POST`/`DELETE /api/push` (validated by `src/lib/push/request.ts`, writes via `ConvexHttpClient`) → `userPrefs.vapidSubscription` → Convex cron `sendDueReminders` sends via `web-push` (honors `notificationsEnabled`, prunes dead endpoints 404/410). Requires `NEXT_PUBLIC_VAPID_PUBLIC_KEY` in `.env.local`/Vercel AND `VAPID_*` in Convex env (`npx convex env set`).

@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
+
 import {
   applyDisplayPrefs,
   DEFAULT_DISPLAY_PREFS,

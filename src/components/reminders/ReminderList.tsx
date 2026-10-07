@@ -1,5 +1,7 @@
 import React from "react";
+
 import type { Reminder } from "@/types";
+
 import { ReminderCard } from "./ReminderCard";
 
 interface ReminderListProps {

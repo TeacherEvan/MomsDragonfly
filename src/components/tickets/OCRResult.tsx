@@ -1,4 +1,5 @@
 import React from "react";
+
 import { formatAmount } from "@/lib/utils/currency";
 
 interface OCRResultProps {

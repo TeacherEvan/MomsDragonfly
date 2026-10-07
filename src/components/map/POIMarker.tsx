@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+
 import { formatDistance } from "@/lib/utils/geo";
 import type { NormalizedPOI } from "@/types";
 

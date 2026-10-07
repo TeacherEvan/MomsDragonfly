@@ -38,7 +38,7 @@ test('explore page loads real locations — food, parks, health, stay (user goal
     const poiCards = page.locator('[data-testid="poi-card"], .poi-card, [role="listitem"]');
     await expect(poiCards.first()).toBeVisible({ timeout: 15000 });
     console.log('✅ POI data cards rendered (real locations loaded)');
-  } catch (e) {
+  } catch {
     // If cards aren't present, check if the page shows an error state or empty state
     // This indicates either: (a) no data from Convex, or (b) data present but not rendered
     const pageContent = await page.content();
