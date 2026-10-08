@@ -213,7 +213,9 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
                 </motion.path>
               </motion.svg>
             ) : (
-              "▶"
+              <svg viewBox="0 0 24 24" className="w-7 h-7 md:w-8 md:h-8 fill-current ml-1" fill="currentColor">
+                <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z" />
+              </svg>
             )}
           </motion.button>
         )}

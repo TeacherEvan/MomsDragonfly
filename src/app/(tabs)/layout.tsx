@@ -10,6 +10,7 @@ import { CookieConsent } from "@/components/shell/CookieConsent";
 import { InstallPrompt } from "@/components/shell/InstallPrompt";
 import { UpdateBanner } from "@/components/shell/UpdateBanner";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
+import { Icon } from "@/components/ui/Icon";
 import { useDisplayPrefs } from "@/hooks/useDisplayPrefs";
 import { cn } from "@/lib/utils/cn";
 
@@ -60,7 +61,7 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") router.push("/settings"); }}
           >
-            ⚙️
+            <Icon name="settings" size={20} />
           </motion.div>
         </div>
       </header>

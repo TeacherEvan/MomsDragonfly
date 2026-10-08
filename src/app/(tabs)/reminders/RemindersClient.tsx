@@ -9,15 +9,24 @@ import { requestPushPermission } from "@/lib/notify";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import type { Reminder } from "@/types";
 
+interface RawReminder {
+  _id: string;
+  title: string;
+  body?: string;
+  dueAt: number;
+  repeat: "none" | "daily" | "weekly";
+  done: boolean;
+}
+
 export default function RemindersClient() {
   const deviceId = getDeviceId();
-  const rawReminders = useQuery(api.queries.remindersQuery, { deviceId }) ?? [];
+  const rawReminders = (useQuery(api.queries.remindersQuery, { deviceId }) ?? []) as RawReminder[];
   const prefs = useQuery(api.queries.prefsQuery, { deviceId });
   const addReminderMut = useMutation(api.mutations.addReminder);
   const toggleMut = useMutation(api.mutations.toggleReminder);
   const deleteMut = useMutation(api.mutations.deleteReminder);
 
-  const reminders: Reminder[] = rawReminders.map((r: { _id: string; title: string; body?: string; dueAt: number; repeat: "none" | "daily" | "weekly"; done: boolean }) => ({
+  const reminders: Reminder[] = rawReminders.map((r) => ({
     id: r._id,
     title: r.title,
     body: r.body,

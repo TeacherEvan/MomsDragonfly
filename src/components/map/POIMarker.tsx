@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 
+import { Icon } from "@/components/ui/Icon";
 import { formatDistance } from "@/lib/utils/geo";
 import type { NormalizedPOI } from "@/types";
 
@@ -32,17 +33,17 @@ export function POIMarker({ poi, onVerify, onRequestRide }: POIMarkerProps) {
       <button
         type="button"
         onClick={onVerify}
-        className="mt-2.5 w-full bg-primary-50 hover:bg-primary-100 text-primary-700 font-medium rounded py-1.5 text-xs transition-colors min-h-[var(--touch-target)]"
+        className="mt-2.5 w-full bg-primary-50 hover:bg-primary-100 text-primary-700 font-medium rounded py-1.5 text-xs transition-colors min-h-[var(--touch-target)] flex items-center justify-center gap-1"
       >
-        ✓ Verify POI ({poi.verifiedCount})
+        <Icon name="check" size={13} /> Verify POI ({poi.verifiedCount})
       </button>
       {onRequestRide && (
         <button
           type="button"
           onClick={onRequestRide}
-          className="mt-2 w-full bg-dragonfly-orange-50 hover:bg-dragonfly-orange-100 text-dragonfly-orange-700 font-medium rounded py-1.5 text-xs transition-colors min-h-[var(--touch-target)]"
+          className="mt-2 w-full bg-dragonfly-orange-50 hover:bg-dragonfly-orange-100 text-dragonfly-orange-700 font-medium rounded py-1.5 text-xs transition-colors min-h-[var(--touch-target)] flex items-center justify-center gap-1"
         >
-          🚗 Request a ride
+          <Icon name="car" size={13} /> Request a ride
         </button>
       )}
     </div>

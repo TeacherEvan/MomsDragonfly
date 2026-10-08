@@ -33,7 +33,21 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }: POICardProps) {
   return (
-    <div onClick={() => onSelect?.(poi)} className="... cursor-pointer hover:scale-[0.98] active:scale-[0.99]" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect?.(poi); }} aria-label={`Details for ${poi.name}`}>
+    <div
+      onClick={() => onSelect?.(poi)}
+      className={cn(
+        "flex items-center gap-3 p-3.5 rounded-xl border border-dragonfly-navy-800",
+        "bg-dragonfly-navy-900/80 backdrop-blur-sm shadow-soft",
+        "cursor-pointer transition-all duration-fast",
+        "hover:border-dragonfly-teal-500/40 hover:shadow-medium active:scale-[0.99]"
+      )}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onSelect?.(poi);
+      }}
+      aria-label={`Details for ${poi.name}`}
+    >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-dragonfly-navy-50 line-clamp-2 text-body">
@@ -51,12 +65,11 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
               {poi.openNow ? "Open" : "Closed"}
             </span>
           )}
-          <span className="inline-flex items-center gap-1 text-caption text-dragonfly-navy-300">Details <Icon name="chevron-right" size={12} /></span>
         </div>
         {poi.address && (
           <p className="text-caption text-dragonfly-navy-400 line-clamp-2 mt-1">{poi.address}</p>
         )}
-        <div className="flex items-center gap-3 mt-2 text-caption">
+        <div className="flex items-center gap-3 mt-2 text-caption flex-wrap">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-dragonfly-teal-500/15 text-dragonfly-teal-300 font-medium">
             <Icon name={CATEGORY_ICONS[poi.category] ?? "map-pin"} size={13} />
             {CATEGORY_LABELS[poi.category] ?? poi.category}
@@ -72,7 +85,9 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
               {poi.rating.toFixed(1)}
             </span>
           )}
-          <span className="inline-flex items-center gap-1 text-caption text-dragonfly-navy-300">Details <Icon name="chevron-right" size={12} /></span>
+          <span className="inline-flex items-center gap-1 text-caption text-dragonfly-navy-300 ml-auto">
+            Details <Icon name="chevron-right" size={12} />
+          </span>
         </div>
       </div>
       <div className="flex items-center gap-1.5 shrink-0">

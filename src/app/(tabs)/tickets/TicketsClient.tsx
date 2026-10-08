@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "@/app/providers";
 import { OCRResult } from "@/components/tickets/OCRResult";
+import { TicketDetailSheet } from "@/components/tickets/TicketDetailSheet";
 import { TicketGallery } from "@/components/tickets/TicketGallery";
 import { TicketScanner } from "@/components/tickets/TicketScanner";
 import { Icon } from "@/components/ui/Icon";
@@ -18,7 +19,6 @@ import {
 } from "@/lib/idb/tickets";
 import { runTesseract } from "@/lib/tickets/ocr";
 import { parseTicket } from "@/lib/tickets/parse";
-import { formatAmount } from "@/lib/utils/currency";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import type { Ticket } from "@/types";
 
@@ -272,7 +272,7 @@ export default function TicketsClient() {
 
   return (
     <div>
-      <header className="px-4 py-3 border-b border-dragonfly-navy-800">
+      <header className="px-4 py-3 border-b border-dragonfly-navy-800 max-w-xl mx-auto">
         <h1 className="text-h1 font-bold text-dragonfly-navy-50">Tickets</h1>
       </header>
       <div className="p-4 space-y-4">
@@ -320,96 +320,12 @@ export default function TicketsClient() {
         onOpen={(t) => setSelected(t as UITicket)}
       />
 
-      {selected && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            className="w-full max-w-md bg-dragonfly-navy-900 border border-dragonfly-navy-700 rounded-2xl overflow-hidden shadow-strong"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {selected.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={selected.imageUrl}
-                alt="Ticket photo"
-                className="w-full max-h-[55vh] object-contain bg-black"
-              />
-            ) : (
-              <div className="w-full h-48 flex items-center justify-center bg-dragonfly-navy-950">
-                <Icon name="ticket" size={44} className="text-dragonfly-navy-500" />
-              </div>
-            )}
-            <div className="p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-bold text-dragonfly-navy-50">
-                    {selected.parsedVenue || "Scanned receipt"}
-                  </h3>
-                  <p className="text-caption text-dragonfly-navy-400">
-                    Scanned {new Date(selected.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                {selected.pendingSync && (
-                  <span className="text-caption px-2 py-0.5 rounded-full bg-dragonfly-amber-500/15 text-dragonfly-amber-400 border border-dragonfly-amber-500/30 font-medium whitespace-nowrap">
-                    Saved offline
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-caption">
-                {selected.parsedAmount !== undefined && (
-                  <div>
-                    <span className="text-dragonfly-navy-400 block">Amount</span>
-                    <span className="font-bold text-dragonfly-teal-300">
-                      {formatAmount(selected.parsedAmount, currency)}
-                    </span>
-                  </div>
-                )}
-                {selected.parsedDate && (
-                  <div>
-                    <span className="text-dragonfly-navy-400 block">Date</span>
-                    <span className="font-bold text-dragonfly-navy-50">
-                      {new Date(selected.parsedDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {selected.ocrText && (
-                <details className="text-caption text-dragonfly-navy-400">
-                  <summary className="cursor-pointer font-medium">
-                    Recognised text
-                  </summary>
-                  <pre className="mt-1.5 p-2 bg-dragonfly-navy-950 rounded-lg border border-dragonfly-navy-700 whitespace-pre-wrap font-mono text-[10px] max-h-40 overflow-auto">
-                    {selected.ocrText}
-                  </pre>
-                </details>
-              )}
-
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => handleDelete(selected)}
-                  className="flex-1 py-2.5 rounded-xl bg-dragonfly-rose-500/15 border border-dragonfly-rose-500/40 text-dragonfly-rose-300 font-semibold text-caption"
-                >
-                  Delete
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelected(null)}
-                  className="flex-1 py-2.5 rounded-xl bg-dragonfly-navy-800 border border-dragonfly-navy-700 text-dragonfly-navy-200 font-semibold text-caption"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <TicketDetailSheet
+        ticket={selected}
+        currency={currency}
+        onClose={() => setSelected(null)}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }

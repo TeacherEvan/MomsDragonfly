@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { api } from "@/app/providers";
 import { MapView } from "@/components/map/MapView";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Icon } from "@/components/ui/Icon";
 import {
   buildGeoJson,
@@ -62,6 +63,7 @@ export function JournalClient() {
   const [noteError, setNoteError] = useState<string | null>(null);
   const [shareBusy, setShareBusy] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
 
   const chrono = useMemo<HistoryPoint[]>(
     () =>
@@ -160,10 +162,7 @@ export function JournalClient() {
   };
 
   const handleDeleteNote = (id: string) => {
-    if (!window.confirm("Delete this note? This can't be undone.")) return;
-    deleteNoteMut({ id: id as Id<"journalNotes">, deviceId }).catch((err) => {
-      console.warn("Note delete failed:", err);
-    });
+    setNoteToDelete(id);
   };
 
   return (
@@ -394,8 +393,8 @@ export function JournalClient() {
                           minute: "2-digit",
                         })}
                       </span>
-                      <span className="font-mono text-dragonfly-navy-500">
-                        {p.lat.toFixed(4)}, {p.lng.toFixed(4)}
+                      <span className="text-caption text-dragonfly-navy-500 font-medium">
+                        Check-in
                       </span>
                     </li>
                   ))}
@@ -414,6 +413,23 @@ export function JournalClient() {
       <p className="text-center text-caption text-dragonfly-navy-600">
         Journal pins and notes are stored per device — no other user of Dragonfly can see them.
       </p>
+
+      <ConfirmDialog
+        open={Boolean(noteToDelete)}
+        title="Delete this note?"
+        message="This memory will be removed from your trip journal and cannot be undone."
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => {
+          if (noteToDelete) {
+            deleteNoteMut({ id: noteToDelete as Id<"journalNotes">, deviceId }).catch((err) => {
+              console.warn("Note delete failed:", err);
+            });
+          }
+          setNoteToDelete(null);
+        }}
+        onCancel={() => setNoteToDelete(null)}
+      />
     </div>
   );
 }

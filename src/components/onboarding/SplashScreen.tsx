@@ -43,6 +43,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       animate={{ opacity: takeOff ? 0 : 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: prefersReducedMotion ? 0.01 : 0.6, ease: "easeInOut" }}
+      aria-label="Welcome to Mom's Dragonfly. Tap to begin."
       className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer"
       onClick={handleClick}
       role="button"
@@ -107,7 +108,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
             className="text-dragonfly-navy-300 text-sm md:text-base font-medium"
           >
-            Your travel companion
+            Made with love, just for you
           </motion.p>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}

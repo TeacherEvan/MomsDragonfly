@@ -30,7 +30,7 @@ describe("IntroVideoModal", () => {
     render(<IntroVideoModal onComplete={vi.fn()} />);
     const playButton = screen.getByTestId("play-button");
     expect(playButton).toBeInTheDocument();
-    expect(playButton).toHaveTextContent("▶");
+    expect(playButton.querySelector("svg")).toBeInTheDocument();
 
     document.createElement = originalCreateElement;
   });

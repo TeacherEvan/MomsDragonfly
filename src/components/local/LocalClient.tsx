@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { HighlightsCard } from "@/components/explore/HighlightsCard";
 import { LocalDishesCard } from "@/components/explore/LocalDishesCard";
+import { useToast } from "@/components/shell/Toast";
 import { Icon } from "@/components/ui/Icon";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { cn } from "@/lib/utils/cn";
@@ -25,6 +26,7 @@ function isSegment(value: string | null): value is LocalSegment {
 export default function LocalClient() {
   const { lat, lng, error: geoError } = useGeolocation();
   const [segment, setSegment] = useState<LocalSegment>("news");
+  const { showToast } = useToast();
 
   // Restore the last window on mount (client-only, so no hydration mismatch).
   useEffect(() => {
@@ -45,12 +47,14 @@ export default function LocalClient() {
       navigator.geolocation.getCurrentPosition(
         () => window.location.reload(),
         () =>
-          alert(
-            "Location permission still denied. Enable it in browser settings to see what's around you."
-          )
+          showToast({
+            message:
+              "Location permission denied — enable it in browser settings to see what's around you.",
+            type: "warning",
+          })
       );
     }
-  }, []);
+  }, [showToast]);
 
   const hasPosition = Boolean(lat && lng && !geoError);
   // The hook exposes no pending flag, so pending = no position yet AND no error.
@@ -84,10 +88,10 @@ export default function LocalClient() {
                   aria-controls={`local-window-${s.id}`}
                   onClick={() => selectSegment(s.id)}
                   className={cn(
-                    "flex-1 rounded-lg px-3 py-2 text-caption font-semibold transition-colors duration-fast min-h-[48px]",
+                    "flex-1 rounded-lg px-3 py-2 text-caption font-semibold transition-all duration-fast min-h-[48px]",
                     isActive
-                      ? "bg-dragonfly-orange-500/15 text-dragonfly-orange-400"
-                      : "text-dragonfly-navy-400 hover:text-dragonfly-navy-200"
+                      ? "bg-dragonfly-orange-500/15 text-dragonfly-orange-400 border border-dragonfly-orange-500/30 shadow-subtle"
+                      : "text-dragonfly-navy-400 hover:text-dragonfly-navy-200 border border-transparent"
                   )}
                 >
                   {s.label}

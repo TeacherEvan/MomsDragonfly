@@ -5,6 +5,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { api } from "@/app/providers";
 import { ExitButton } from "@/components/shell/ExitButton";
 import { useNetworkToast, useToast } from "@/components/shell/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useDisplayPrefs } from "@/hooks/useDisplayPrefs";
 import { removePushSubscription, requestPushPermission } from "@/lib/notify";
 import { cn } from "@/lib/utils/cn";
@@ -47,6 +48,7 @@ export default function SettingsClient() {
   const [currency, setCurrency] = useState("USD");
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const { prefs: displayPrefs, update: updateDisplay, reset: resetDisplay } = useDisplayPrefs();
 
   useEffect(() => {
@@ -98,9 +100,9 @@ export default function SettingsClient() {
 
   return (
     <div className="flex flex-col gap-6 max-w-xl mx-auto p-4 pb-24">
-      <header className="px-4 py-3 border-b border-dragonfly-navy-800">
-        <h1 className="text-h1 font-bold text-dragonfly-navy-50">Settings</h1>
-      </header>
+      <div className="px-4 pb-2 border-b border-dragonfly-navy-800">
+        <h1 className="text-2xl font-black text-dragonfly-navy-50">Settings</h1>
+      </div>
 
       <form onSubmit={handleSave} className="space-y-6 px-4">
         {/* Default Search Radius */}
@@ -226,20 +228,7 @@ export default function SettingsClient() {
         {/* Reset Button */}
         <button
           type="button"
-          onClick={() => {
-            if (confirm("Reset all settings to defaults? This cannot be undone.")) {
-              savePrefsMut({
-                deviceId,
-                defaultRadius: 1000,
-                currency: "USD",
-                notificationsEnabled: false,
-                onboardingComplete: false,
-                tripStartDate: undefined,
-              });
-              resetDisplay();
-              showSuccess("Settings reset to defaults");
-            }
-          }}
+          onClick={() => setShowResetConfirm(true)}
           className="w-full text-dragonfly-teal-400 hover:text-dragonfly-teal-300 font-semibold py-2 text-sm underline transition-colors duration-fast"
         >
           Reset to Defaults
@@ -249,6 +238,28 @@ export default function SettingsClient() {
       <div className="px-4">
         <ExitButton />
       </div>
+
+      <ConfirmDialog
+        open={showResetConfirm}
+        title="Reset all settings to defaults?"
+        message="This will restore all preferences and cannot be undone."
+        confirmLabel="Reset"
+        danger
+        onConfirm={() => {
+          savePrefsMut({
+            deviceId,
+            defaultRadius: 1000,
+            currency: "USD",
+            notificationsEnabled: false,
+            onboardingComplete: false,
+            tripStartDate: undefined,
+          });
+          resetDisplay();
+          showSuccess("Settings reset to defaults");
+          setShowResetConfirm(false);
+        }}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 }

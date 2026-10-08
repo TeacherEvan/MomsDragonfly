@@ -110,9 +110,6 @@ export function RideSheet({ poi, pickup, onClose }: RideSheetProps) {
               {poi.address && (
                 <p className="mt-1 text-caption text-dragonfly-navy-400">{poi.address}</p>
               )}
-              <p className="mt-1 text-caption font-mono text-dragonfly-navy-500">
-                {poi.lat.toFixed(5)}, {poi.lng.toFixed(5)}
-              </p>
             </div>
 
             <div className="flex flex-col gap-2.5">
@@ -140,10 +137,10 @@ export function RideSheet({ poi, pickup, onClose }: RideSheetProps) {
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="mt-3 text-center text-caption font-medium text-dragonfly-orange-400"
+                  className="mt-3 text-center text-caption font-medium text-dragonfly-orange-400 flex items-center justify-center gap-1"
                   role="status"
                 >
-                  ✓ Destination copied — paste it as your drop-off in Bolt
+                  <Icon name="check" size={14} /> Destination copied — paste it as your drop-off in Bolt
                 </motion.p>
               )}
             </AnimatePresence>

@@ -26,7 +26,7 @@ describe("BottomNav", () => {
     expect(screen.getByRole("button", { name: /reminders/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /tickets/i })).toBeInTheDocument();
     const nav = screen.getByRole("navigation");
-    expect(nav.querySelectorAll('[role="button"]')).toHaveLength(6);
+    expect(nav.querySelectorAll('button')).toHaveLength(6);
   });
 
   it("applies dragonfly-orange color to active tab", () => {

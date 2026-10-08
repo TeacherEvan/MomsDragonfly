@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, ReactNode, useCallback, useContext, useState } from "react";
 
+import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils/cn";
 
 interface Toast {
@@ -65,10 +66,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             )}
             <button
               onClick={() => hideToast(toast.id)}
-              className="text-white/70 hover:text-white p-1 min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center"
+              className="text-white/70 hover:text-white p-1 min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors"
               aria-label="Dismiss"
             >
-              ✕
+              <Icon name="close" size={16} />
             </button>
           </div>
         ))}

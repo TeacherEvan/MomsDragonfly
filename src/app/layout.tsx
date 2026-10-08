@@ -13,12 +13,15 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Mom's Dragonfly",
-  description: "Your travel companion",
+  description: "Made with love, just for you",
   manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ea580c",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#061416" },
+    { media: "(prefers-color-scheme: light)", color: "#ea580c" },
+  ],
 };
 
 export default function RootLayout({

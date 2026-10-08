@@ -1,5 +1,5 @@
 "use client";
-import React, { useId, useMemo } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { List as ReactWindowList } from "react-window";
 
 const List = ReactWindowList as React.ComponentType<{
@@ -80,6 +80,22 @@ export function POIList({
   const listId = useId();
   const liveRegionId = `${listId}-live`;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [listHeight, setListHeight] = useState(400);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const h = entries[0]?.contentRect.height;
+      if (h && h > 0) {
+        setListHeight(Math.min(560, Math.max(240, h)));
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const rowData = useMemo<ListRowProps>(
     () => ({ pois, onVerify, onShowOnMap, onRequestRide, onSelect }),
 [pois, onVerify, onShowOnMap, onRequestRide, onSelect]
@@ -153,15 +169,17 @@ export function POIList({
       >
         {pois.length} places found{category && category !== "all" ? ` in ${category}` : ""}
       </div>
-      <List
-        height={400}
-        rowCount={pois.length}
-        rowHeight={ITEM_HEIGHT}
-        width="100%"
-        overscanCount={3}
-        rowProps={rowData}
-        rowComponent={POIRow}
-      />
+      <div ref={containerRef} className="h-[60vh] max-h-[560px] min-h-[240px]">
+        <List
+          height={listHeight}
+          rowCount={pois.length}
+          rowHeight={ITEM_HEIGHT}
+          width="100%"
+          overscanCount={3}
+          rowProps={rowData}
+          rowComponent={POIRow}
+        />
+      </div>
     </div>
   );
 }

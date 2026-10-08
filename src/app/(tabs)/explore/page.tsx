@@ -13,6 +13,7 @@ import { POIFilter } from "@/components/poi/POIFilter";
 import type { FetchPhase } from "@/components/poi/POIList";
 import { POIList } from "@/components/poi/POIList";
 import { RideSheet } from "@/components/ride/RideSheet";
+import { useToast } from "@/components/shell/Toast";
 import { Icon } from "@/components/ui/Icon";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { getDeviceId } from "@/lib/utils/deviceId";
@@ -26,6 +27,7 @@ const CORE_CATEGORIES = ["restaurant", "park", "attraction"] as const;
 
 export default function ExplorePage() {
   const { lat, lng, error: geoError } = useGeolocation();
+  const { showToast } = useToast();
   const [category, setCategory] = useState("all");
   const [rideTarget, setRideTarget] = useState<NormalizedPOI | null>(null);
   const [selectedPoi, setSelectedPoi] = useState<NormalizedPOI | null>(null);
@@ -236,9 +238,11 @@ export default function ExplorePage() {
                     navigator.geolocation.getCurrentPosition(
                       () => window.location.reload(),
                       () =>
-                        alert(
-                          "Location permission still denied. Enable in browser settings to use the map."
-                        )
+                        showToast({
+                          message:
+                            "Location permission still denied. Enable in browser settings to use the map.",
+                          type: "warning",
+                        })
                     );
                   }
                 }}

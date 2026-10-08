@@ -53,12 +53,12 @@ describe("ExitButton", () => {
   });
 
   it("asks for confirmation and does nothing when cancelled", () => {
-    vi.spyOn(window, "confirm").mockReturnValue(false);
     renderExitButton();
 
     fireEvent.click(screen.getByTestId("exit-button"));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
-    expect(window.confirm).toHaveBeenCalledWith("Exit Mom's Dragonfly?");
     expect(closeMock).not.toHaveBeenCalled();
     act(() => {
       vi.advanceTimersByTime(500);
@@ -67,19 +67,19 @@ describe("ExitButton", () => {
   });
 
   it("tries to close the window when confirmed", () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     renderExitButton();
 
     fireEvent.click(screen.getByTestId("exit-button"));
+    fireEvent.click(screen.getByRole("button", { name: "Exit" }));
 
     expect(closeMock).toHaveBeenCalledTimes(1);
   });
 
   it("shows a graceful exit hint and returns to Explore when the close is blocked", () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     renderExitButton();
 
     fireEvent.click(screen.getByTestId("exit-button"));
+    fireEvent.click(screen.getByRole("button", { name: "Exit" }));
     expect(closeMock).toHaveBeenCalledTimes(1);
 
     act(() => {
@@ -91,10 +91,10 @@ describe("ExitButton", () => {
   });
 
   it("stays quiet when the window actually closes", () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     renderExitButton();
 
     fireEvent.click(screen.getByTestId("exit-button"));
+    fireEvent.click(screen.getByRole("button", { name: "Exit" }));
     closedFlag = true; // simulate the browser closing the window
 
     act(() => {

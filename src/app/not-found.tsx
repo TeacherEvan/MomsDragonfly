@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { BottomNav } from "@/components/shell/BottomNav";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
+import { Icon } from "@/components/ui/Icon";
 
 export default function NotFound() {
   return (
@@ -19,7 +20,7 @@ export default function NotFound() {
           className="p-2 rounded-lg text-dragonfly-navy-400 hover:text-dragonfly-gold-400 hover:bg-dragonfly-navy-800 transition-colors min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center"
           aria-label="Settings"
         >
-          ⚙️
+          <Icon name="settings" size={20} />
         </Link>
       </header>
 

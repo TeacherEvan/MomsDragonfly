@@ -87,7 +87,7 @@ export function ExpenseForm({ onAdd, currency, disabled = false }: ExpenseFormPr
         </div>
       </div>
 
-<div>
+      <div>
         <label className="block text-caption font-semibold text-dragonfly-navy-300 mb-1">
           Description (Optional)
         </label>

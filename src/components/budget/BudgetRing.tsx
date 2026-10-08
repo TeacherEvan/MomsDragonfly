@@ -110,7 +110,10 @@ export function BudgetRing({ spent, total, currency }: BudgetRingProps) {
           x="50%"
           y="46%"
           textAnchor="middle"
-          className="text-2xl font-black"
+          dominantBaseline="central"
+          fontSize="28"
+          fontWeight="900"
+          fontFamily="system-ui, -apple-system, sans-serif"
           fill={color}
         >
           {percent}%

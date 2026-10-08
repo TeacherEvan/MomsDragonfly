@@ -71,7 +71,7 @@ return (
             disabled={isRetrying}
             className="mt-2.5 w-full bg-dragonfly-gold-500 hover:bg-dragonfly-gold-400 text-dragonfly-navy-950 rounded-lg py-2 font-bold text-caption shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-colors duration-fast"
           >
-            {isRetrying ? "Analyzing with Gemini AI..." : "✨ Analyze with Gemini Vision"}
+            {isRetrying ? "Analyzing with Gemini AI..." : "Analyze with Gemini Vision"}
           </button>
           {aiError && (
             <p className="mt-2 text-[11px] text-dragonfly-rose-300">{aiError}</p>

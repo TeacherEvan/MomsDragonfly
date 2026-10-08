@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils/cn";
 import type { Reminder } from "@/types";
 
@@ -31,7 +32,7 @@ export function ReminderCard({ reminder, onToggle, onDelete }: ReminderCardProps
         )}
         aria-label={reminder.done ? "Mark as active" : "Mark as completed"}
       >
-        {reminder.done && "✓"}
+        {reminder.done && <Icon name="check" size={14} />}
       </button>
 
       <div className="flex-1 min-w-0">
@@ -47,7 +48,10 @@ export function ReminderCard({ reminder, onToggle, onDelete }: ReminderCardProps
           <p className="text-caption text-dragonfly-navy-400 truncate mt-0.5">{reminder.body}</p>
         )}
         <div className="flex items-center gap-2 text-[11px] text-dragonfly-navy-400 mt-1">
-          <span>⏰ {due.toLocaleString()}</span>
+          <span className="inline-flex items-center gap-1">
+            <Icon name="bell" size={12} />
+            {due.toLocaleString()}
+          </span>
           {reminder.repeat !== "none" && (
             <span className="px-1.5 py-0.2 rounded bg-dragonfly-navy-700 text-dragonfly-navy-200 capitalize font-medium">
               {reminder.repeat}
@@ -59,10 +63,10 @@ export function ReminderCard({ reminder, onToggle, onDelete }: ReminderCardProps
       <button
         type="button"
         onClick={onDelete}
-        className="text-dragonfly-navy-400 hover:text-dragonfly-rose-400 p-2 text-sm font-bold min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors duration-fast"
+        className="text-dragonfly-navy-400 hover:text-dragonfly-rose-400 p-2 min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors duration-fast"
         aria-label={`Delete reminder: ${reminder.title}`}
       >
-        ✕
+        <Icon name="close" size={16} />
       </button>
     </div>
   );

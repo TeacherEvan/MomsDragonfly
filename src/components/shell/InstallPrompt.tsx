@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
+import { Icon } from "@/components/ui/Icon";
 import {
   buildChromeIntentUrl,
   classifyInstallEnvironment,
@@ -124,10 +125,10 @@ export function InstallPrompt() {
             <button
               type="button"
               onClick={dismiss}
-              className="text-primary-500/70 hover:text-primary-500 p-1 text-sm font-bold transition-colors duration-fast"
+              className="text-primary-500/70 hover:text-primary-500 p-1 min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors duration-fast"
               aria-label="Dismiss install banner"
             >
-              ✕
+              <Icon name="close" size={16} />
             </button>
           </div>
         </>
@@ -147,10 +148,10 @@ export function InstallPrompt() {
           <button
             type="button"
             onClick={dismiss}
-            className="text-primary-500/70 hover:text-primary-500 p-1 text-sm font-bold transition-colors duration-fast shrink-0"
+            className="text-primary-500/70 hover:text-primary-500 p-1 min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors duration-fast shrink-0"
             aria-label="Dismiss install banner"
           >
-            ✕
+            <Icon name="close" size={16} />
           </button>
         </>
       ) : (
@@ -173,10 +174,10 @@ export function InstallPrompt() {
             <button
               type="button"
               onClick={dismiss}
-              className="text-primary-500/70 hover:text-primary-500 p-1 text-sm font-bold transition-colors duration-fast"
+              className="text-primary-500/70 hover:text-primary-500 p-1 min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors duration-fast"
               aria-label="Dismiss install banner"
             >
-              ✕
+              <Icon name="close" size={16} />
             </button>
           </div>
         </>

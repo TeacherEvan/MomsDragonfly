@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 
+import { Icon } from "@/components/ui/Icon";
 import { formatAmount } from "@/lib/utils/currency";
 import type { Expense } from "@/types";
 
@@ -55,10 +56,10 @@ export function ExpenseList({ expenses, currency, onDelete }: ExpenseListProps) 
           <button
             type="button"
             onClick={() => onDelete(e.id)}
-            className="text-dragonfly-navy-400 hover:text-dragonfly-rose-400 p-2 text-sm font-bold min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors duration-fast"
+            className="text-dragonfly-navy-400 hover:text-dragonfly-rose-400 p-2 min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center transition-colors duration-fast"
             aria-label={`Delete expense ${formatAmount(e.amount, currency)}`}
           >
-            ✕
+            <Icon name="trash" size={16} />
           </button>
         </div>
       ))}

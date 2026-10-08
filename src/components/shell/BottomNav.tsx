@@ -47,7 +47,8 @@ export function BottomNav() {
             const isActive = pathname.startsWith(href);
             return (
               <li key={href} className="flex-1 relative">
-                <motion.div
+                <motion.button
+                  type="button"
                   onClick={() => handleTabClick(index)}
                   className={cn(
                     "flex flex-col items-center justify-center py-2 text-caption transition-colors duration-fast",
@@ -58,9 +59,6 @@ export function BottomNav() {
                   )}
                   aria-current={isActive ? "page" : undefined}
                   whileTap={{ scale: 0.95 }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleTabClick(index); }}
                 >
                   <span className="mb-0.5 relative z-10">
                     <Icon name={icon} size={22} strokeWidth={isActive ? 2.1 : 1.75} />
@@ -68,7 +66,7 @@ export function BottomNav() {
                   <span className="relative z-10 whitespace-nowrap text-[11px] leading-tight sm:text-caption">
                     {label}
                   </span>
-                </motion.div>
+                </motion.button>
               </li>
             );
           })}

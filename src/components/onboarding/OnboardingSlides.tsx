@@ -107,7 +107,7 @@ export function OnboardingSlides({ onFinish }: OnboardingSlidesProps) {
             transition={{ duration: 0.3, delay: 0.5 }}
             onClick={next}
             className={cn(
-              "w-full bg-primary-500 hover:bg-primary-400 text-dragonfly-navy-950 font-semibold py-2.5 rounded-xl text-sm transition-all duration-fast active:scale-[0.98]",
+              "w-full bg-dragonfly-orange-500 hover:bg-dragonfly-orange-400 text-dragonfly-navy-950 font-semibold py-2.5 rounded-xl text-sm transition-all duration-fast active:scale-[0.98]",
               "min-h-[var(--touch-target)]"
             )}
             whileTap={{ scale: 0.98 }}
