@@ -31,7 +31,11 @@ export default defineSchema({
     vapidSubscription: v.optional(v.string()),
     onboardingComplete: v.boolean(),
     tripStartDate: v.optional(v.number()),
-  }).index("by_deviceId", ["deviceId"]),
+    shareEnabled: v.optional(v.boolean()),
+    shareToken: v.optional(v.string()),
+  })
+    .index("by_deviceId", ["deviceId"])
+    .index("by_shareToken", ["shareToken"]),
 
   // ── Location history ─────────────────────────────────────────────────────────
   locationHistory: defineTable({

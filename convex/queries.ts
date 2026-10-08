@@ -135,6 +135,47 @@ export const journalNotesQuery = query({
   },
 });
 
+/**
+ * Public, read-only view of a device's journal for the live share link.
+ * The unguessable token is the only credential — viewers have no deviceId
+ * and cannot write. Returns { shared: false } for unknown/disabled tokens.
+ */
+export const shareView = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    if (!/^[0-9a-f-]{36}$/i.test(token)) {
+      return { shared: false as const };
+    }
+    const prefs = await ctx.db
+      .query("userPrefs")
+      .withIndex("by_shareToken", (q) => q.eq("shareToken", token))
+      .unique();
+    if (!prefs || prefs.shareEnabled !== true) {
+      return { shared: false as const };
+    }
+    const pointsDesc = await ctx.db
+      .query("locationHistory")
+      .withIndex("by_deviceId_timestamp", (q) =>
+        q.eq("deviceId", prefs.deviceId)
+      )
+      .order("desc")
+      .take(500);
+    const notes = await ctx.db
+      .query("journalNotes")
+      .withIndex("by_deviceId_createdAt", (q) =>
+        q.eq("deviceId", prefs.deviceId)
+      )
+      .order("desc")
+      .take(50);
+    return {
+      shared: true as const,
+      points: pointsDesc.reverse(),
+      notes,
+      tripStartDate: prefs.tripStartDate ?? null,
+    };
+  },
+});
+
 /** Cache lookup for location highlights. Server-side only (called by the action). */
 export const getHighlightsCache = internalQuery({
   args: { locKey: v.string() },

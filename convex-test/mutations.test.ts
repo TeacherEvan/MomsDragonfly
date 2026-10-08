@@ -310,3 +310,38 @@ test("dishes cache upserts by locKey (internal functions)", async (t) => {
   expect(all).toHaveLength(1); // upsert, not a duplicate
   expect(all[0].payload).toContain('"fetchedAt":2');
 });
+test("enableShare mints a token and shareView exposes the trail", async (t) => {
+  const deviceId = testDeviceId();
+  await t.mutation(api.mutations.savePrefs, { deviceId });
+  await t.mutation(api.mutations.saveLocation, { deviceId, lat: 10, lng: 20, accuracy: 5 });
+  await t.mutation(api.mutations.addJournalNote, { deviceId, text: "hello", lat: 10, lng: 20 });
+
+  const token = await t.mutation(api.mutations.enableShare, { deviceId });
+  expect(typeof token).toBe("string");
+
+  const view = await t.query(api.queries.shareView, { token });
+  expect(view.shared).toBe(true);
+  if (view.shared) {
+    expect(view.points).toHaveLength(1);
+    expect(view.notes).toHaveLength(1);
+  }
+});
+
+test("disableShare hides the trail from shareView", async (t) => {
+  const deviceId = testDeviceId();
+  await t.mutation(api.mutations.savePrefs, { deviceId });
+  const token = await t.mutation(api.mutations.enableShare, { deviceId });
+  await t.mutation(api.mutations.disableShare, { deviceId });
+
+  const view = await t.query(api.queries.shareView, { token });
+  expect(view.shared).toBe(false);
+});
+
+test("shareView rejects unknown and malformed tokens", async (t) => {
+  const bad = await t.query(api.queries.shareView, { token: "not-a-token" });
+  expect(bad.shared).toBe(false);
+  const unknown = await t.query(api.queries.shareView, {
+    token: "123e4567-e89b-42d3-a456-426614174000",
+  });
+  expect(unknown.shared).toBe(false);
+});

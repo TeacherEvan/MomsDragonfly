@@ -116,6 +116,52 @@ export const clearPushSubscription = mutation({
   },
 });
 
+/**
+ * Enables a public read-only share link for this device's journal.
+ * Reuses the existing token if one was ever minted so re-enabling keeps
+ * previously shared links working; the viewer only sees data while
+ * shareEnabled is true.
+ */
+export const enableShare = mutation({
+  args: { deviceId: v.string() },
+  handler: async (ctx, { deviceId }) => {
+    validateDeviceId(deviceId);
+    const existing = await ctx.db
+      .query("userPrefs")
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
+      .unique();
+    const shareToken = existing?.shareToken ?? crypto.randomUUID();
+    if (existing) {
+      await ctx.db.patch(existing._id, { shareEnabled: true, shareToken });
+    } else {
+      await ctx.db.insert("userPrefs", {
+        deviceId,
+        defaultRadius: 1000,
+        currency: "USD",
+        notificationsEnabled: false,
+        onboardingComplete: false,
+        shareEnabled: true,
+        shareToken,
+      });
+    }
+    return shareToken;
+  },
+});
+
+export const disableShare = mutation({
+  args: { deviceId: v.string() },
+  handler: async (ctx, { deviceId }) => {
+    validateDeviceId(deviceId);
+    const existing = await ctx.db
+      .query("userPrefs")
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, { shareEnabled: false });
+    }
+  },
+});
+
 export const saveLocation = mutation({
   args: {
     deviceId: v.string(),

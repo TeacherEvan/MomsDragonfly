@@ -7,10 +7,18 @@ import { api } from "@/app/providers";
 import { MapView } from "@/components/map/MapView";
 import { Icon } from "@/components/ui/Icon";
 import {
+  buildGeoJson,
+  buildGpx,
+  buildShareSummary,
+  canUseWebShare,
+  downloadTextFile,
+} from "@/lib/journal/share";
+import {
   formatDayLabel,
   mergeJournalDays,
   totalDistance,
 } from "@/lib/journal/stats";
+import { copyText } from "@/lib/utils/clipboard";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import { formatDistance, getQuickPosition } from "@/lib/utils/geo";
 
@@ -46,10 +54,14 @@ export function JournalClient() {
   const prefs = useQuery(api.queries.prefsQuery, { deviceId });
   const addNoteMut = useMutation(api.mutations.addJournalNote);
   const deleteNoteMut = useMutation(api.mutations.deleteJournalNote);
+  const enableShareMut = useMutation(api.mutations.enableShare);
+  const disableShareMut = useMutation(api.mutations.disableShare);
 
   const [noteText, setNoteText] = useState("");
   const [noteSaving, setNoteSaving] = useState(false);
   const [noteError, setNoteError] = useState<string | null>(null);
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const chrono = useMemo<HistoryPoint[]>(
     () =>
@@ -103,6 +115,47 @@ export function JournalClient() {
       setNoteError("Couldn't save the note — check your connection and try again.");
     } finally {
       setNoteSaving(false);
+    }
+  };
+
+  const handleToggleShare = async () => {
+    if (shareBusy) return;
+    setShareBusy(true);
+    try {
+      if (prefs?.shareEnabled) {
+        await disableShareMut({ deviceId });
+      } else {
+        await enableShareMut({ deviceId });
+      }
+    } catch (err) {
+      console.warn("Share toggle failed:", err);
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
+  const shareUrl =
+    typeof window !== "undefined" && prefs?.shareToken
+      ? `${window.location.origin}/share/${prefs.shareToken}`
+      : null;
+
+  const handleCopyShareLink = async () => {
+    if (!shareUrl) return;
+    const ok = await copyText(shareUrl);
+    setShareCopied(ok);
+    setTimeout(() => setShareCopied(false), 2000);
+  };
+
+  const handleWebShare = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.share({
+        title: "My trip journal",
+        text: buildShareSummary(chrono, totalMetres, formatDistance),
+        url: shareUrl,
+      });
+    } catch {
+      await handleCopyShareLink();
     }
   };
 
@@ -196,6 +249,63 @@ export function JournalClient() {
           />
         </>
       )}
+
+      <section aria-label="Share trip journal" className="rounded-xl border border-dragonfly-navy-800 bg-surface-900/70 p-3 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <p className="text-body font-bold text-dragonfly-navy-50">Share journal</p>
+          <button
+            onClick={handleToggleShare}
+            disabled={shareBusy}
+            className="rounded-full px-3 py-1 text-caption font-semibold bg-dragonfly-orange-500/15 text-dragonfly-orange-400 disabled:opacity-50"
+          >
+            {prefs?.shareEnabled ? "Stop sharing" : "Start live link"}
+          </button>
+        </div>
+        {prefs?.shareEnabled && shareUrl && (
+          <div className="flex flex-col gap-2">
+            <p className="text-caption text-dragonfly-navy-400 break-all">{shareUrl}</p>
+            <div className="flex gap-2">
+              <button onClick={handleCopyShareLink} className="rounded-full px-3 py-1 text-caption font-semibold bg-dragonfly-navy-800 text-dragonfly-navy-200">
+                {shareCopied ? "Copied!" : "Copy link"}
+              </button>
+              {canUseWebShare() && (
+                <button onClick={handleWebShare} className="rounded-full px-3 py-1 text-caption font-semibold bg-dragonfly-navy-800 text-dragonfly-navy-200">
+                  Share...
+                </button>
+              )}
+            </div>
+            <p className="text-caption text-dragonfly-navy-500">
+              Anyone with the link sees a live, read-only view of your trail.
+            </p>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <button
+            onClick={() =>
+              downloadTextFile(
+                `moms-dragonfly-trail.gpx`,
+                buildGpx(chrono, (notesData ?? []) as JournalNote[]),
+                "application/gpx+xml"
+              )
+            }
+            className="rounded-full px-3 py-1 text-caption font-semibold bg-dragonfly-navy-800 text-dragonfly-navy-200"
+          >
+            Export GPX
+          </button>
+          <button
+            onClick={() =>
+              downloadTextFile(
+                `moms-dragonfly-trail.geojson`,
+                buildGeoJson(chrono),
+                "application/geo+json"
+              )
+            }
+            className="rounded-full px-3 py-1 text-caption font-semibold bg-dragonfly-navy-800 text-dragonfly-navy-200"
+          >
+            Export GeoJSON
+          </button>
+        </div>
+      </section>
 
       {pointsData !== undefined &&
         notesData !== undefined &&
