@@ -9,6 +9,7 @@ import { BottomNav } from "@/components/shell/BottomNav";
 import { CookieConsent } from "@/components/shell/CookieConsent";
 import { InstallPrompt } from "@/components/shell/InstallPrompt";
 import { UpdateBanner } from "@/components/shell/UpdateBanner";
+import { DragonflyDoubleOverlay } from "@/components/ui/DragonflyDoubleOverlay";
 import { DragonflySilhouette } from "@/components/ui/DragonflySilhouette";
 import { Icon } from "@/components/ui/Icon";
 import { useDisplayPrefs } from "@/hooks/useDisplayPrefs";
@@ -18,7 +19,7 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   useDisplayPrefs();
   return (
-    <div className="flex flex-col min-h-screen bg-dragonfly-navy-950">
+    <DragonflyDoubleOverlay mode="ambient">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-dragonfly-gold-500 focus:text-dragonfly-navy-950 focus:rounded-lg focus:font-semibold focus:outline-none focus:ring-2 focus:ring-dragonfly-gold-500 focus:ring-offset-2 focus:ring-offset-dragonfly-navy-950"
@@ -70,6 +71,6 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
 
       <BottomNav />
       <CookieConsent />
-    </div>
+    </DragonflyDoubleOverlay>
   );
 }
