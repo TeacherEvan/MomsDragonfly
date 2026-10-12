@@ -1,7 +1,7 @@
 # Mom's Dragonfly — Task Status / Todos Sheet
 
-> **Last updated:** 2026-09-21  
-> **Source:** `docs/.scratch-audit/CODEBASE_STATE.md` + recent commit `7f588a7`  
+> **Last updated:** 2026-10-13  
+> **Source:** `docs/.scratch-audit/CODEBASE_STATE.md` + review follow-ups  
 > **Purpose:** Reflect what has been done and what still needs doing — no hidden gaps.
 
 ---
@@ -10,13 +10,14 @@
 
 || Metric | Value | Status |
 ||--------|-------|--------|
-|| Framework version | Next.js 15.5.25 | ✅ Confirmed |
+|| Framework version | Next.js 15.5.27 | ✅ Confirmed |
 || TypeScript | Strict mode | ✅ Confirmed |
-|| Build (`npm run build`) | Passes (0 errors) | ✅ Confirmed |
-|| Type check (`npm run typecheck`) | Passes | ✅ Confirmed |
-|| Unit tests (`npm test`) | 48 passing (post-commit update) | ✅ Confirmed |
-|| E2E tests (`npm run test:e2e`) | 15 passing | ✅ Confirmed |
-|| Lint (`npm run lint`) | Passes (1 warning: tesseract-wrapper) | ✅ Confirmed |
+|| Build (`pnpm build`) | Passes (0 errors) | ✅ Confirmed |
+|| Type check (`pnpm typecheck`) | Passes | ✅ Confirmed |
+|| Unit tests (`pnpm test`) | 156 passing in 21 files | ✅ Confirmed |
+|| Convex tests (`pnpm test:convex`) | 21 passing in 2 files | ✅ Confirmed |
+|| E2E tests (`pnpm test:e2e`) | 18 passing | ✅ Confirmed |
+|| Lint (`pnpm lint`) | Passes (0 warnings/errors) | ✅ Confirmed |
 || Design system (dragonfly palette) | Implemented in `tailwind.config.ts` + `theme/dragonfly.ts` | ✅ Completed `7f588a7` |
 || Premium onboarding (Splash → Video → Slides) | Implemented (`IntroVideoModal`, `SplashScreen`) | ✅ Completed `7f588a7` |
 || BottomNav flying dragonfly indicator | Implemented (`BottomNav.tsx`) | ✅ Completed `7f588a7` |

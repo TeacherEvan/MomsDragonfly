@@ -18,8 +18,8 @@ pnpm dev               # Next.js on :3000 (Turbopack)
 | `pnpm build` | ✅ passes | Next.js 15 production build |
 | `pnpm typecheck` | ✅ passes | `tsc --noEmit` (root + convex/) |
 | `pnpm lint` | ✅ passes | ESLint + Next.js config; lints `src`, `convex`, `convex-test`, `tests` (import sort enforced) |
-| `pnpm test` | ✅ passes | 149 vitest unit tests in 19 files (jsdom) |
-| `pnpm test:convex` | ✅ passes | 16 convex-test integration tests in 2 files (node) |
+| `pnpm test` | ✅ passes | 156 vitest unit tests in 21 files (jsdom) |
+| `pnpm test:convex` | ✅ passes | 21 convex-test integration tests in 2 files (node) |
 | `pnpm test:e2e` | ✅ passes | 18 Playwright tests (needs `pnpm build` first) |
 | `pnpm test:lhci` | ⚠️ untested | Lighthouse CI (requires production URL) |
 
@@ -61,7 +61,7 @@ public/                # Icons, manifest, sw.js, offline.html, tesseract/ (self-
 ## Convex Backend
 
 - **Schema**: `convex/schema.ts` (pois, userPrefs, locationHistory, highlightsCache, expenses, budgets, reminders, tickets)
-- **Queries**: `convex/queries.ts` — all guarded by `validateDeviceId()`
+- **Queries**: `convex/queries.ts` — all guarded by `validateDeviceId()`; public queries must never return raw documents containing `deviceId` (allow-list / project fields explicitly); cron-only queries must be `internalQuery`.
 - **Mutations**: `convex/mutations.ts` — all guarded by `validateDeviceId()`
 - **Actions**: `convex/actions.ts` — external APIs (Google Places, Overpass, Brave, Gemini) — `"use node"` directives
 - **Crons**: `convex/crons.ts` — purge POIs hourly, send reminders 5min, purge tickets hourly (batched, BATCH_SIZE=500)
@@ -124,3 +124,17 @@ Pushing to GitHub also works when the Vercel git integration is connected.
 - Design specs: `docs/superpowers/specs/`
 - Convex AI guidelines: `convex/_generated/ai/guidelines.md`
 - Env setup commands: `.env.setup.md`
+
+<!-- convex-ai-start -->
+
+This project uses [Convex](https://convex.dev) as its backend.
+
+When working on Convex code, **always read
+`convex/_generated/ai/guidelines.md` first** for important guidelines on
+how to correctly use Convex APIs and patterns. The file contains rules that
+override what you may have learned about Convex from training data.
+
+Convex agent skills for common tasks can be installed by running
+`npx convex ai-files install`.
+
+<!-- convex-ai-end -->
