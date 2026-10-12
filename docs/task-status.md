@@ -14,8 +14,8 @@
 || TypeScript | Strict mode | ✅ Confirmed |
 || Build (`pnpm build`) | Passes (0 errors) | ✅ Confirmed |
 || Type check (`pnpm typecheck`) | Passes | ✅ Confirmed |
-|| Unit tests (`pnpm test`) | 156 passing in 21 files | ✅ Confirmed |
-|| Convex tests (`pnpm test:convex`) | 21 passing in 2 files | ✅ Confirmed |
+|| Unit tests (`pnpm test`) | 159 passing in 21 files | ✅ Confirmed |
+|| Convex tests (`pnpm test:convex`) | 23 passing in 2 files | ✅ Confirmed |
 || E2E tests (`pnpm test:e2e`) | 21 passing | ✅ Confirmed |
 || Lint (`pnpm lint`) | Passes (0 warnings/errors) | ✅ Confirmed |
 || Design system (dragonfly palette) | Implemented in `tailwind.config.ts` + `theme/dragonfly.ts` | ✅ Completed `7f588a7` |

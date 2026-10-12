@@ -417,3 +417,144 @@ test("upcomingRemindersQuery is internal and retrieves due reminders", async (t)
   expect(titles).not.toContain("Reminder A (Future)");
 });
 
+test("rekeyDevice migrates all user records, revokes share link, and isolates old identity", async (t) => {
+  const deviceA = testDeviceId();
+  const deviceB = testDeviceId();
+  const now = Date.now();
+
+  // 1. Seed device A with data across all tables
+  await t.mutation(api.mutations.savePrefs, {
+    deviceId: deviceA,
+    defaultRadius: 2000,
+    currency: "EUR",
+    notificationsEnabled: true,
+    onboardingComplete: true,
+  });
+
+  const shareToken = await t.mutation(api.mutations.enableShare, { deviceId: deviceA });
+  expect(shareToken).toBeDefined();
+
+  await t.mutation(api.mutations.saveLocation, {
+    deviceId: deviceA,
+    lat: 13.7563,
+    lng: 100.5018,
+    accuracy: 10,
+  });
+  await t.mutation(api.mutations.saveLocation, {
+    deviceId: deviceA,
+    lat: 13.7580,
+    lng: 100.5030,
+    accuracy: 12,
+  });
+
+  await t.mutation(api.mutations.addJournalNote, {
+    deviceId: deviceA,
+    text: "Bangkok street food memories",
+    lat: 13.7563,
+    lng: 100.5018,
+  });
+
+  await t.mutation(api.mutations.addExpense, {
+    deviceId: deviceA,
+    amount: 150,
+    currency: "THB",
+    category: "food",
+    note: "Pad Thai",
+    date: now,
+  });
+
+  await t.mutation(api.mutations.addReminder, {
+    deviceId: deviceA,
+    title: "Flight check-in",
+    dueAt: now + 3600000,
+    repeat: "none",
+  });
+
+  await t.mutation(api.mutations.createTicket, {
+    deviceId: deviceA,
+    ocrText: "Boarding pass BKK-JNB",
+    parsedVenue: "Suvarnabhumi Airport",
+    parsedAmount: 450,
+  });
+
+  // Verify shareView is active under deviceA
+  const viewBefore = await t.query(api.queries.shareView, { token: shareToken });
+  expect(viewBefore.shared).toBe(true);
+
+  // 2. Perform the rekey from deviceA to deviceB
+  const result = await t.mutation(api.mutations.rekeyDevice, {
+    oldDeviceId: deviceA,
+    newDeviceId: deviceB,
+  });
+  expect(result.success).toBe(true);
+  expect(result.migrated).toBeGreaterThanOrEqual(7);
+
+  // 3. Verify deviceA has NOTHING left
+  const prefsA = await t.query(api.queries.prefsQuery, { deviceId: deviceA });
+  expect(prefsA).toBeNull();
+
+  const notesA = await t.query(api.queries.journalNotesQuery, { deviceId: deviceA });
+  expect(notesA).toHaveLength(0);
+
+  const expensesA = await t.query(api.queries.expensesQuery, { deviceId: deviceA });
+  expect(expensesA).toHaveLength(0);
+
+  const remindersA = await t.query(api.queries.remindersQuery, { deviceId: deviceA });
+  expect(remindersA).toHaveLength(0);
+
+  const ticketsA = await t.query(api.queries.ticketsQuery, { deviceId: deviceA });
+  expect(ticketsA).toHaveLength(0);
+
+  const historyA = await t.query(api.queries.historyQuery, { deviceId: deviceA, limit: 100 });
+  expect(historyA).toHaveLength(0);
+
+  // 4. Verify all records migrated cleanly to deviceB
+  const prefsB = await t.query(api.queries.prefsQuery, { deviceId: deviceB });
+  expect(prefsB).toBeDefined();
+  expect(prefsB?.currency).toBe("EUR");
+  expect(prefsB?.shareEnabled).toBe(false); // share link revoked on rekey
+  expect(prefsB?.shareToken).toBeUndefined();
+
+  const notesB = await t.query(api.queries.journalNotesQuery, { deviceId: deviceB });
+  expect(notesB).toHaveLength(1);
+  expect(notesB[0].text).toBe("Bangkok street food memories");
+
+  const expensesB = await t.query(api.queries.expensesQuery, { deviceId: deviceB });
+  expect(expensesB).toHaveLength(1);
+  expect(expensesB[0].amount).toBe(150);
+
+  const remindersB = await t.query(api.queries.remindersQuery, { deviceId: deviceB });
+  expect(remindersB).toHaveLength(1);
+  expect(remindersB[0].title).toBe("Flight check-in");
+
+  const ticketsB = await t.query(api.queries.ticketsQuery, { deviceId: deviceB });
+  expect(ticketsB).toHaveLength(1);
+  expect(ticketsB[0].ocrText).toBe("Boarding pass BKK-JNB");
+
+  const historyB = await t.query(api.queries.historyQuery, { deviceId: deviceB, limit: 100 });
+  expect(historyB).toHaveLength(2);
+
+  // 5. Verify old share token is revoked
+  const viewAfter = await t.query(api.queries.shareView, { token: shareToken });
+  expect(viewAfter.shared).toBe(false);
+});
+
+test("rekeyDevice rejects identical or invalid device IDs", async (t) => {
+  const device = testDeviceId();
+
+  await expect(
+    t.mutation(api.mutations.rekeyDevice, {
+      oldDeviceId: device,
+      newDeviceId: device,
+    })
+  ).rejects.toThrow("New device ID must differ from old device ID");
+
+  await expect(
+    t.mutation(api.mutations.rekeyDevice, {
+      oldDeviceId: "unknown",
+      newDeviceId: testDeviceId(),
+    })
+  ).rejects.toThrow("Invalid deviceId");
+});
+
+

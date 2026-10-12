@@ -4,6 +4,7 @@ import {
   buildGeoJson,
   buildGpx,
   buildShareSummary,
+  isValidShareToken,
 } from "@/lib/journal/share";
 
 const points = [
@@ -46,5 +47,21 @@ describe("buildShareSummary", () => {
     const text = buildShareSummary(points, 1500, () => "1.5 km");
     expect(text).toContain("2 pins");
     expect(text).toContain("1.5 km");
+  });
+});
+
+describe("isValidShareToken", () => {
+  it("accepts standard UUID v4 tokens", () => {
+    expect(isValidShareToken("123e4567-e89b-42d3-a456-426614174000")).toBe(true);
+    expect(isValidShareToken("C56A4180-65AA-42EC-A945-5FD21DEC0538")).toBe(true);
+  });
+
+  it("rejects invalid, malformed, or injected strings", () => {
+    expect(isValidShareToken("")).toBe(false);
+    expect(isValidShareToken("not-a-token")).toBe(false);
+    expect(isValidShareToken("123e4567-e89b-42d3-a456-42661417400")).toBe(false); // too short
+    expect(isValidShareToken("123e4567-e89b-42d3-a456-4266141740000")).toBe(false); // too long
+    expect(isValidShareToken("123e4567-e89b-42d3-a456-42661417400g")).toBe(false); // invalid hex
+    expect(isValidShareToken("123e4567-e89b-42d3-a456-426614174000; DROP TABLE")).toBe(false);
   });
 });

@@ -13,6 +13,7 @@ import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as dishHelpers from "../dishHelpers.js";
 import type * as http from "../http.js";
+import type * as limits from "../limits.js";
 import type * as mutations from "../mutations.js";
 import type * as placeHelpers from "../placeHelpers.js";
 import type * as queries from "../queries.js";
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   dishHelpers: typeof dishHelpers;
   http: typeof http;
+  limits: typeof limits;
   mutations: typeof mutations;
   placeHelpers: typeof placeHelpers;
   queries: typeof queries;

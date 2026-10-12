@@ -24,7 +24,7 @@ export default function SharePage({
     return () => clearTimeout(timer);
   }, [isValidFormat]);
 
-  if (!isValidFormat || (data === undefined && timedOut)) {
+  if (!isValidFormat || (data && !data.shared)) {
     return (
       <main className="p-6 max-w-xl mx-auto flex flex-col gap-2">
         <h1 className="text-h1 font-bold text-dragonfly-navy-50">
@@ -39,23 +39,22 @@ export default function SharePage({
   }
 
   if (data === undefined) {
+    if (timedOut) {
+      return (
+        <main className="p-6 max-w-xl mx-auto flex flex-col gap-2">
+          <h1 className="text-h1 font-bold text-dragonfly-navy-50">
+            Shared journal unavailable
+          </h1>
+          <p className="text-body text-dragonfly-navy-400">
+            This share link is taking longer than expected or is currently offline.
+            Check your connection or ask the traveller to verify the link.
+          </p>
+        </main>
+      );
+    }
     return (
       <main className="p-6 max-w-xl mx-auto text-dragonfly-navy-400 animate-pulse">
         Loading shared journal...
-      </main>
-    );
-  }
-
-  if (!data.shared) {
-    return (
-      <main className="p-6 max-w-xl mx-auto flex flex-col gap-2">
-        <h1 className="text-h1 font-bold text-dragonfly-navy-50">
-          Shared journal unavailable
-        </h1>
-        <p className="text-body text-dragonfly-navy-400">
-          This share link is off or no longer valid. Ask the traveller to
-          enable sharing again from their Trip Journal.
-        </p>
       </main>
     );
   }

@@ -58,4 +58,14 @@ describe("DragonflyDoubleOverlay", () => {
 
     expect(container.querySelector("canvas")).toBeNull();
   });
+
+  it("renders canvas when motion is enabled", () => {
+    const { container } = render(
+      <DragonflyDoubleOverlay>
+        <div>Content</div>
+      </DragonflyDoubleOverlay>
+    );
+
+    expect(container.querySelector("canvas")).not.toBeNull();
+  });
 });

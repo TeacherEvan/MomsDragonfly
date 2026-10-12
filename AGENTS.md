@@ -18,8 +18,8 @@ pnpm dev               # Next.js on :3000 (Turbopack)
 | `pnpm build` | ✅ passes | Next.js 15 production build |
 | `pnpm typecheck` | ✅ passes | `tsc --noEmit` (root + convex/) |
 | `pnpm lint` | ✅ passes | ESLint + Next.js config; lints `src`, `convex`, `convex-test`, `tests` (import sort enforced) |
-| `pnpm test` | ✅ passes | 156 vitest unit tests in 21 files (jsdom) |
-| `pnpm test:convex` | ✅ passes | 21 convex-test integration tests in 2 files (node) |
+| `pnpm test` | ✅ passes | 159 vitest unit tests in 21 files (jsdom) |
+| `pnpm test:convex` | ✅ passes | 23 convex-test integration tests in 2 files (node) |
 | `pnpm test:e2e` | ✅ passes | 21 Playwright tests (needs `pnpm build` first) |
 | `pnpm test:lhci` | ⚠️ untested | Lighthouse CI (requires production URL) |
 

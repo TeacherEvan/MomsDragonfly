@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { internalMutation, mutation } from "./_generated/server";
 import { validateDeviceId } from "./auth";
+import { MAX_EXPENSES, MAX_NOTES, MAX_REMINDERS, MAX_TICKETS } from "./limits";
 
 interface PoiInput {
   placeId: string;
@@ -168,6 +169,7 @@ export const rotateShare = mutation({
     const newShareToken = crypto.randomUUID();
     const now = Date.now();
     await ctx.db.patch(existing._id, {
+      shareEnabled: true,
       shareToken: newShareToken,
       shareTokenCreatedAt: now,
     });
@@ -186,6 +188,106 @@ export const disableShare = mutation({
     if (existing) {
       await ctx.db.patch(existing._id, { shareEnabled: false });
     }
+  },
+});
+
+/**
+ * Reset and rotate device identity.
+ * Safely migrates all user preferences, locations, notes, expenses,
+ * reminders, tickets, and budgets from oldDeviceId to newDeviceId,
+ * while automatically revoking any active public share links.
+ */
+export const rekeyDevice = mutation({
+  args: {
+    oldDeviceId: v.string(),
+    newDeviceId: v.string(),
+  },
+  handler: async (ctx, { oldDeviceId, newDeviceId }) => {
+    validateDeviceId(oldDeviceId);
+    validateDeviceId(newDeviceId);
+    if (oldDeviceId === newDeviceId) {
+      throw new Error("New device ID must differ from old device ID");
+    }
+
+    let migrated = 0;
+
+    // 1. User preferences: re-key and revoke public share link
+    const oldPrefs = await ctx.db
+      .query("userPrefs")
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", oldDeviceId))
+      .unique();
+
+    if (oldPrefs) {
+      await ctx.db.patch(oldPrefs._id, {
+        deviceId: newDeviceId,
+        shareEnabled: false,
+        shareToken: undefined,
+        shareTokenCreatedAt: undefined,
+      });
+      migrated++;
+    }
+
+    // 2. Location history
+    const locations = await ctx.db
+      .query("locationHistory")
+      .withIndex("by_deviceId_timestamp", (q) => q.eq("deviceId", oldDeviceId))
+      .take(1000);
+    for (const loc of locations) {
+      await ctx.db.patch(loc._id, { deviceId: newDeviceId });
+    }
+    migrated += locations.length;
+
+    // 3. Journal notes
+    const notes = await ctx.db
+      .query("journalNotes")
+      .withIndex("by_deviceId_createdAt", (q) => q.eq("deviceId", oldDeviceId))
+      .take(MAX_NOTES);
+    for (const note of notes) {
+      await ctx.db.patch(note._id, { deviceId: newDeviceId });
+    }
+    migrated += notes.length;
+
+    // 4. Expenses
+    const expenses = await ctx.db
+      .query("expenses")
+      .withIndex("by_deviceId_date", (q) => q.eq("deviceId", oldDeviceId))
+      .take(MAX_EXPENSES);
+    for (const exp of expenses) {
+      await ctx.db.patch(exp._id, { deviceId: newDeviceId });
+    }
+    migrated += expenses.length;
+
+    // 5. Reminders
+    const reminders = await ctx.db
+      .query("reminders")
+      .withIndex("by_deviceId_dueAt", (q) => q.eq("deviceId", oldDeviceId))
+      .take(MAX_REMINDERS);
+    for (const rem of reminders) {
+      await ctx.db.patch(rem._id, { deviceId: newDeviceId });
+    }
+    migrated += reminders.length;
+
+    // 6. Tickets
+    const tickets = await ctx.db
+      .query("tickets")
+      .withIndex("by_deviceId_createdAt", (q) => q.eq("deviceId", oldDeviceId))
+      .take(MAX_TICKETS);
+    for (const ticket of tickets) {
+      await ctx.db.patch(ticket._id, { deviceId: newDeviceId });
+    }
+    migrated += tickets.length;
+
+    // 7. Budgets
+    const budgets = await ctx.db
+      .query("budgets")
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", oldDeviceId))
+      .take(100);
+    for (const b of budgets) {
+      await ctx.db.patch(b._id, { deviceId: newDeviceId });
+    }
+    migrated += budgets.length;
+
+    return { success: true, migrated };
   },
 });
 

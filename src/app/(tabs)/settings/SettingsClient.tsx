@@ -40,7 +40,8 @@ export default function SettingsClient() {
   const deviceId = getDeviceId();
   const prefs = useQuery(api.queries.prefsQuery, { deviceId });
   const savePrefsMut = useMutation(api.mutations.savePrefs);
-  const { showSuccess } = useNetworkToast();
+  const rekeyDeviceMut = useMutation(api.mutations.rekeyDevice);
+  const { showSuccess, showError } = useNetworkToast();
   const { showToast } = useToast();
 
   const [tripStartDate, setTripStartDate] = useState("");
@@ -48,7 +49,9 @@ export default function SettingsClient() {
   const [currency, setCurrency] = useState("USD");
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRekeying, setIsRekeying] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showRekeyConfirm, setShowRekeyConfirm] = useState(false);
   const { prefs: displayPrefs, update: updateDisplay, reset: resetDisplay } = useDisplayPrefs();
 
   useEffect(() => {
@@ -212,6 +215,28 @@ export default function SettingsClient() {
           />
         </div>
 
+        {/* Privacy & Device Identity */}
+        <div className="bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-700 p-4">
+          <h3 className="font-semibold text-dragonfly-navy-50 mb-1">Privacy & Device Identity</h3>
+          <p className="text-caption text-dragonfly-navy-400 mb-3">
+            Mom&apos;s Dragonfly secures your trip history and expenses under an anonymous device ID with no login or tracking.
+          </p>
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-dragonfly-navy-950/70 border border-dragonfly-navy-800 mb-3 text-caption">
+            <span className="text-dragonfly-navy-500 font-mono text-[11px] truncate max-w-[200px]">
+              {deviceId.length > 14 ? `${deviceId.slice(0, 8)}...${deviceId.slice(-6)}` : deviceId}
+            </span>
+            <span className="text-dragonfly-teal-400 text-xs font-semibold">Active</span>
+          </div>
+          <button
+            type="button"
+            disabled={isRekeying}
+            onClick={() => setShowRekeyConfirm(true)}
+            className="w-full text-center text-xs font-semibold py-2.5 px-3 rounded-lg border border-dragonfly-navy-600 bg-dragonfly-navy-900/60 text-dragonfly-navy-200 hover:text-dragonfly-orange-400 hover:border-dragonfly-orange-500/50 transition-colors disabled:opacity-50"
+          >
+            {isRekeying ? "Resetting identity…" : "Reset Device Identity"}
+          </button>
+        </div>
+
         {/* Save Button */}
         <button
           type="submit"
@@ -259,6 +284,33 @@ export default function SettingsClient() {
           setShowResetConfirm(false);
         }}
         onCancel={() => setShowResetConfirm(false)}
+      />
+
+      <ConfirmDialog
+        open={showRekeyConfirm}
+        title="Reset device identity?"
+        message="This generates a new secure identifier for this device and transfers all your saved journals, expenses, and settings to it. Any existing public share links will be immediately invalidated."
+        confirmLabel="Reset Identity"
+        danger
+        onConfirm={async () => {
+          setIsRekeying(true);
+          try {
+            const newDeviceId = crypto.randomUUID();
+            await rekeyDeviceMut({ oldDeviceId: deviceId, newDeviceId });
+            localStorage.setItem("mdf_device_id", newDeviceId);
+            showSuccess("Device identity reset. All data safely migrated.");
+            setShowRekeyConfirm(false);
+            setTimeout(() => {
+              window.location.reload();
+            }, 600);
+          } catch (err) {
+            console.warn("Failed to rekey device:", err);
+            showError("Could not reset device identity. Please try again.");
+          } finally {
+            setIsRekeying(false);
+          }
+        }}
+        onCancel={() => setShowRekeyConfirm(false)}
       />
     </div>
   );

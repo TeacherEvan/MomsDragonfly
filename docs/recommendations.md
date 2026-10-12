@@ -16,19 +16,20 @@
 - **Next.js 15.5.27 bundled postcss / source-map-js advisories**: `next` vendor-bundles its own `postcss` and `source-map-js` internally. Upstream Next.js release required to bump internal PostCSS past 8.5.23.
 - **Deferred major updates**: React 19, Next 16, ESLint 10, Tailwind 4, Framer Motion 14.
 
-## Phase 5 Design Note: Device Identity Reset Flow
+## Phase 5: Device Identity Reset Flow — ✅ Implemented & Tested
 When a `deviceId` has been leaked, travellers need a clean mechanism to generate a new device identity without data loss.
 
-### Proposed Architecture:
-1. **Mutation (`rekeyDevice({ oldDeviceId, newDeviceId })`)**:
+### Implementation Summary:
+1. **Mutation (`rekeyDevice({ oldDeviceId, newDeviceId })`)** (`convex/mutations.ts`):
    - Validates both `oldDeviceId` and `newDeviceId` format via `validateDeviceId`.
    - Atomically updates all device-scoped tables in Convex: `userPrefs`, `locationHistory`, `journalNotes`, `expenses`, `budgets`, `reminders`, `tickets`.
-   - Rotates or revokes any existing `shareToken`.
-2. **Client-side Workflow (Settings → Privacy & Identity)**:
-   - "Reset Device Identity" action with prominent confirmation dialog.
+   - Automatically revokes any active `shareToken` to prevent old share links from accessing re-keyed data.
+   - Verified via integration tests in `convex-test/mutations.test.ts` (23 total Convex integration tests passing).
+2. **Client-side Workflow (Settings → Privacy & Device Identity)** (`src/app/(tabs)/settings/SettingsClient.tsx`):
+   - "Reset Device Identity" action with prominent `ConfirmDialog` modal explaining the transfer.
    - Generates a new cryptographically secure UUID (`crypto.randomUUID()`).
-   - Invokes `rekeyDevice` mutation.
-   - Upon mutation success, updates `localStorage.setItem("mdf_device_id", newDeviceId)` and triggers client-side storage events so active queries immediately subscribe to the new device scope.
+   - Invokes `rekeyDevice` mutation with network toast feedback.
+   - Upon mutation success, updates `localStorage.setItem("mdf_device_id", newDeviceId)`, dispatches storage/custom events, and triggers a clean reload so active queries subscribe to the new device scope.
 3. **Emergency Disconnect / Hard Reset**:
-   - Optional setting to purge local IDB blobs, unregister push subscriptions, clear `localStorage`, and generate an unlinked `deviceId` without migrating historical data.
+   - Optional future enhancement to purge local IDB blobs, unregister push subscriptions, and generate an unlinked `deviceId` without migrating historical data.
 

@@ -140,8 +140,10 @@ export function DragonflyDoubleOverlay({
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
+      const width = canvas.offsetWidth || window.innerWidth;
+      const height = canvas.offsetHeight || window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
@@ -263,6 +265,21 @@ export function DragonflyDoubleOverlay({
   return (
     <div className={cn("relative isolate flex flex-col min-h-screen bg-dragonfly-navy-950", className)}>
       <div className="absolute inset-0 bg-wing-pattern opacity-30 pointer-events-none" aria-hidden="true" />
+
+      {/* Fallback image while canvas image is loading to prevent any blank flicker */}
+      <div
+        className={cn(
+          "absolute inset-0 -z-10 pointer-events-none transition-opacity duration-700",
+          imgReady ? "opacity-0" : "opacity-25"
+        )}
+        style={{
+          backgroundImage: `url("${imageSrc}")`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+        aria-hidden="true"
+      />
 
       {/* Dynamic canvas */}
       <canvas
