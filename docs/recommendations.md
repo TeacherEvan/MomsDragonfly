@@ -15,3 +15,20 @@
 - **Deploy pipeline**: this run's convex codegen uploaded functions to dev; production deploy (`npx convex deploy --yes`) and Vercel redeploy still pending owner sign-off.
 - **Next.js 15.5.27 bundled postcss / source-map-js advisories**: `next` vendor-bundles its own `postcss` and `source-map-js` internally. Upstream Next.js release required to bump internal PostCSS past 8.5.23.
 - **Deferred major updates**: React 19, Next 16, ESLint 10, Tailwind 4, Framer Motion 14.
+
+## Phase 5 Design Note: Device Identity Reset Flow
+When a `deviceId` has been leaked, travellers need a clean mechanism to generate a new device identity without data loss.
+
+### Proposed Architecture:
+1. **Mutation (`rekeyDevice({ oldDeviceId, newDeviceId })`)**:
+   - Validates both `oldDeviceId` and `newDeviceId` format via `validateDeviceId`.
+   - Atomically updates all device-scoped tables in Convex: `userPrefs`, `locationHistory`, `journalNotes`, `expenses`, `budgets`, `reminders`, `tickets`.
+   - Rotates or revokes any existing `shareToken`.
+2. **Client-side Workflow (Settings → Privacy & Identity)**:
+   - "Reset Device Identity" action with prominent confirmation dialog.
+   - Generates a new cryptographically secure UUID (`crypto.randomUUID()`).
+   - Invokes `rekeyDevice` mutation.
+   - Upon mutation success, updates `localStorage.setItem("mdf_device_id", newDeviceId)` and triggers client-side storage events so active queries immediately subscribe to the new device scope.
+3. **Emergency Disconnect / Hard Reset**:
+   - Optional setting to purge local IDB blobs, unregister push subscriptions, clear `localStorage`, and generate an unlinked `deviceId` without migrating historical data.
+

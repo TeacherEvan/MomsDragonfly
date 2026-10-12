@@ -1,9 +1,10 @@
 "use client";
 import { useQuery } from "convex/react";
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 
 import { api } from "@/app/providers";
 import { MapView } from "@/components/map/MapView";
+import { isValidShareToken } from "@/lib/journal/share";
 
 export default function SharePage({
   params,
@@ -11,7 +12,31 @@ export default function SharePage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = use(params);
-  const data = useQuery(api.queries.shareView, { token });
+  const isValidFormat = isValidShareToken(token);
+  const data = useQuery(api.queries.shareView, isValidFormat ? { token } : "skip");
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (!isValidFormat) return;
+    const timer = setTimeout(() => {
+      setTimedOut(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [isValidFormat]);
+
+  if (!isValidFormat || (data === undefined && timedOut)) {
+    return (
+      <main className="p-6 max-w-xl mx-auto flex flex-col gap-2">
+        <h1 className="text-h1 font-bold text-dragonfly-navy-50">
+          Shared journal unavailable
+        </h1>
+        <p className="text-body text-dragonfly-navy-400">
+          This share link is off or no longer valid. Ask the traveller to
+          enable sharing again from their Trip Journal.
+        </p>
+      </main>
+    );
+  }
 
   if (data === undefined) {
     return (

@@ -14,6 +14,10 @@ export interface ShareNote {
   createdAt: number;
 }
 
+export function isValidShareToken(token: string): boolean {
+  return /^[0-9a-f-]{36}$/i.test(token);
+}
+
 function escapeXml(value: string): string {
   return value
     .replace(/&/g, "&amp;")

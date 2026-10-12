@@ -16,7 +16,7 @@
 || Type check (`pnpm typecheck`) | Passes | ✅ Confirmed |
 || Unit tests (`pnpm test`) | 156 passing in 21 files | ✅ Confirmed |
 || Convex tests (`pnpm test:convex`) | 21 passing in 2 files | ✅ Confirmed |
-|| E2E tests (`pnpm test:e2e`) | 18 passing | ✅ Confirmed |
+|| E2E tests (`pnpm test:e2e`) | 21 passing | ✅ Confirmed |
 || Lint (`pnpm lint`) | Passes (0 warnings/errors) | ✅ Confirmed |
 || Design system (dragonfly palette) | Implemented in `tailwind.config.ts` + `theme/dragonfly.ts` | ✅ Completed `7f588a7` |
 || Premium onboarding (Splash → Video → Slides) | Implemented (`IntroVideoModal`, `SplashScreen`) | ✅ Completed `7f588a7` |
