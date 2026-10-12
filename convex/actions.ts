@@ -438,10 +438,12 @@ export const fetchEntertainment = action({
 
 export const geminiOCR = action({
   args: {
+    deviceId: v.string(),
     imageBase64: v.string(),
     mimeType: v.string(),
   },
-  handler: async (_ctx, { imageBase64, mimeType }) => {
+  handler: async (_ctx, { deviceId, imageBase64, mimeType }) => {
+    validateDeviceId(deviceId);
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.warn("GEMINI_API_KEY not set — AI analysis disabled");

@@ -212,7 +212,7 @@ export default function TicketsClient() {
     try {
       const base64 = await blobToBase64(blob);
       const result = await Promise.race([
-        geminiAction({ imageBase64: base64, mimeType: blob.type || "image/jpeg" }),
+        geminiAction({ deviceId, imageBase64: base64, mimeType: blob.type || "image/jpeg" }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("AI analysis timed out")), 45_000)
         ),
@@ -239,7 +239,7 @@ export default function TicketsClient() {
       setAiState("failed");
       setNotice("AI analysis failed — your photo is saved.");
     }
-  }, [lastCaptureId, geminiAction, refreshLocal, trySync]);
+  }, [lastCaptureId, geminiAction, refreshLocal, trySync, deviceId]);
 
   const handleDelete = useCallback(
     async (ticket: Ticket) => {

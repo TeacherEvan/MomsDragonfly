@@ -20,7 +20,7 @@ pnpm dev               # Next.js on :3000 (Turbopack)
 | `pnpm lint` | ✅ passes | ESLint + Next.js config; lints `src`, `convex`, `convex-test`, `tests` (import sort enforced) |
 | `pnpm test` | ✅ passes | 159 vitest unit tests in 21 files (jsdom) |
 | `pnpm test:convex` | ✅ passes | 23 convex-test integration tests in 2 files (node) |
-| `pnpm test:e2e` | ✅ passes | 21 Playwright tests (needs `pnpm build` first) |
+| `pnpm test:e2e` | ✅ passes | 22 Playwright tests (needs `pnpm build` first) |
 | `pnpm test:lhci` | ⚠️ untested | Lighthouse CI (requires production URL) |
 
 ## Project Structure
