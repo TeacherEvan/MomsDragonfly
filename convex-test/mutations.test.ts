@@ -324,6 +324,17 @@ test("enableShare mints a token and shareView exposes the trail", async (t) => {
   if (view.shared) {
     expect(view.points).toHaveLength(1);
     expect(view.notes).toHaveLength(1);
+
+    // Security assertion: deviceId must never be exposed to public shareView
+    expect(JSON.stringify(view)).not.toContain(deviceId);
+    expect(JSON.stringify(view)).not.toContain('"deviceId"');
+
+    // Schema projection assertions
+    const pointKeys = Object.keys(view.points[0]).sort();
+    expect(pointKeys).toEqual(["accuracy", "lat", "lng", "timestamp"]);
+
+    const noteKeys = Object.keys(view.notes[0]).sort();
+    expect(noteKeys).toEqual(["_id", "createdAt", "lat", "lng", "text"]);
   }
 });
 
@@ -345,3 +356,36 @@ test("shareView rejects unknown and malformed tokens", async (t) => {
   });
   expect(unknown.shared).toBe(false);
 });
+
+test("upcomingRemindersQuery is internal and retrieves due reminders", async (t) => {
+  const deviceA = testDeviceId();
+  const deviceB = testDeviceId();
+  const now = Date.now();
+
+  await t.mutation(api.mutations.addReminder, {
+    deviceId: deviceA,
+    title: "Reminder A (Due)",
+    dueAt: now - 1000,
+    repeat: "none",
+  });
+  await t.mutation(api.mutations.addReminder, {
+    deviceId: deviceB,
+    title: "Reminder B (Due)",
+    dueAt: now - 500,
+    repeat: "none",
+  });
+  await t.mutation(api.mutations.addReminder, {
+    deviceId: deviceA,
+    title: "Reminder A (Future)",
+    dueAt: now + 60000,
+    repeat: "none",
+  });
+
+  const due = await t.query(internal.queries.upcomingRemindersQuery, { before: now });
+  expect(due.length).toBeGreaterThanOrEqual(2);
+  const titles = due.map((r: { title: string }) => r.title);
+  expect(titles).toContain("Reminder A (Due)");
+  expect(titles).toContain("Reminder B (Due)");
+  expect(titles).not.toContain("Reminder A (Future)");
+});
+

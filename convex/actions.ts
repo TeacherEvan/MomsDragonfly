@@ -962,7 +962,7 @@ export const sendDueReminders = internalAction({
     webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
 
     const now = Date.now();
-    const due = (await ctx.runQuery(api.queries.upcomingRemindersQuery, {
+    const due = (await ctx.runQuery(internal.queries.upcomingRemindersQuery, {
       before: now,
     })) as Reminder[];
 

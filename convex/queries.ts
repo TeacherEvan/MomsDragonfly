@@ -95,7 +95,7 @@ export const remindersQuery = query({
   },
 });
 
-export const upcomingRemindersQuery = query({
+export const upcomingRemindersQuery = internalQuery({
   args: { before: v.number() },
   handler: async (ctx, { before }) => {
     return ctx.db
@@ -107,7 +107,7 @@ export const upcomingRemindersQuery = query({
           q.eq(q.field("sentAt"), undefined)
         )
       )
-      .collect();
+      .take(500);
   },
 });
 
@@ -169,8 +169,19 @@ export const shareView = query({
       .take(50);
     return {
       shared: true as const,
-      points: pointsDesc.reverse(),
-      notes,
+      points: pointsDesc.reverse().map((p) => ({
+        lat: p.lat,
+        lng: p.lng,
+        accuracy: p.accuracy,
+        timestamp: p.timestamp,
+      })),
+      notes: notes.map((n) => ({
+        _id: n._id,
+        text: n.text,
+        lat: n.lat,
+        lng: n.lng,
+        createdAt: n.createdAt,
+      })),
       tripStartDate: prefs.tripStartDate ?? null,
     };
   },
