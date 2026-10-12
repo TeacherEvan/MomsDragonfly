@@ -13,3 +13,5 @@
 - **Rate-limit / cap `shareView` payload** (now 500 points/50 notes, fine at current scale); revisit if public links get hammered.
 - **E2E coverage for the share happy path** (enable share in UI → visit link shows trail). Needs seeded locationHistory. Effort: half day.
 - **Deploy pipeline**: this run's convex codegen uploaded functions to dev; production deploy (`npx convex deploy --yes`) and Vercel redeploy still pending owner sign-off.
+- **Next.js 15.5.27 bundled postcss / source-map-js advisories**: `next` vendor-bundles its own `postcss` and `source-map-js` internally. Upstream Next.js release required to bump internal PostCSS past 8.5.23.
+- **Deferred major updates**: React 19, Next 16, ESLint 10, Tailwind 4, Framer Motion 14.
