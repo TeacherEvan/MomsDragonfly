@@ -1,5 +1,5 @@
 // Service worker for Mom's Dragonfly PWA
-const CACHE_NAME = 'moms-dragonfly-v3';
+const CACHE_NAME = 'moms-dragonfly-v4';
 const MEDIA_CACHE = 'moms-dragonfly-media-v1';
 const OFFLINE_URL = '/offline.html';
 
@@ -13,6 +13,7 @@ const PRECACHE_URLS = [
   '/tickets',
   OFFLINE_URL,
   '/intro.jpg',
+  '/dragonfly-backdrop.jpg',
 ];
 
 // Install event - precache static assets

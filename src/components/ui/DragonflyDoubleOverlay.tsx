@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
 interface DragonflyDoubleOverlayProps {
-  mode?: "ambient" | "immersive";
   children: React.ReactNode;
   className?: string;
   imageSrc?: string;
@@ -20,53 +19,73 @@ interface LayerState {
 }
 
 export function DragonflyDoubleOverlay({
-  mode = "ambient",
   children,
   className,
   imageSrc = "/dragonfly-backdrop.jpg",
 }: DragonflyDoubleOverlayProps) {
-  const prefersReducedMotion = typeof window !== "undefined" && typeof window.matchMedia === "function"
-    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const [mounted, setMounted] = useState(false);
+  const [imgReady, setImgReady] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const imageRef = useRef<HTMLImageElement | null>(null);
-  const timeRef = useRef(0);
   const layersRef = useRef<LayerState[]>([
-    // Layer 1: base layer - larger, slower, slightly blurred
     { x: 0, y: 0, scale: 1.15, rotation: 0, opacity: 0.28, blur: 1.5 },
-    // Layer 2: overlay layer - smaller, faster, sharper, offset
-    { x: 0, y: 0, scale: 1.05, rotation: 0, opacity: 0.22, blur: 0 },
+    { x: 0, y: 0, scale: 1.08, rotation: 0, opacity: 0.22, blur: 0 },
   ]);
 
+  // Check reduced motion (both CSS class and media query)
   useEffect(() => {
     setMounted(true);
+
+    const checkReduceMotion = () => {
+      const mediaQuery = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const classCheck = typeof document !== "undefined" && document.documentElement.classList.contains("reduce-motion");
+      setReduceMotion(Boolean(mediaQuery || classCheck));
+    };
+
+    checkReduceMotion();
+
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onMediaChange = () => checkReduceMotion();
+    media.addEventListener("change", onMediaChange);
+
+    const observer = new MutationObserver(() => checkReduceMotion());
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
+    return () => {
+      media.removeEventListener("change", onMediaChange);
+      observer.disconnect();
+    };
   }, []);
 
   // Load image
   useEffect(() => {
+    let active = true;
     const img = new Image();
     img.src = imageSrc;
-    img.crossOrigin = "anonymous";
     img.onload = () => {
+      if (!active) return;
       imageRef.current = img;
+      setImgReady(true);
     };
     return () => {
+      active = false;
       imageRef.current = null;
     };
   }, [imageSrc]);
 
-  // Perlin noise implementation for organic motion
+  // Perlin noise generator
   const noiseRef = useRef<((x: number, y: number, z: number) => number) | null>(null);
-
   if (!noiseRef.current) {
     const perm = new Array(512);
     const grad3 = [
-      [1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],
-      [1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],
-      [0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]
+      [1, 1, 0], [-1, 1, 0], [1, -1, 0], [-1, -1, 0],
+      [1, 0, 1], [-1, 0, 1], [1, 0, -1], [-1, 0, -1],
+      [0, 1, 1], [0, -1, 1], [0, 1, -1], [0, -1, -1],
     ];
-    
+
     for (let i = 0; i < 256; i++) perm[i] = i;
     for (let i = 255; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -92,16 +111,23 @@ export function DragonflyDoubleOverlay({
       const A = perm[X] + Y, AA = perm[A] + Z, AB = perm[A + 1] + Z;
       const B = perm[X + 1] + Y, BA = perm[B] + Z, BB = perm[B + 1] + Z;
       return lerp(
-        lerp(lerp(grad(perm[AA], x, y, z), grad(perm[BA], x - 1, y, z), u),
-             lerp(grad(perm[AB], x, y - 1, z), grad(perm[BB], x - 1, y - 1, z), u), v),
-        lerp(lerp(grad(perm[AA + 1], x, y, z - 1), grad(perm[BA + 1], x - 1, y, z - 1), u),
-             lerp(grad(perm[AB + 1], x, y - 1, z - 1), grad(perm[BB + 1], x - 1, y - 1, z - 1), u), v), w);
+        lerp(
+          lerp(grad(perm[AA], x, y, z), grad(perm[BA], x - 1, y, z), u),
+          lerp(grad(perm[AB], x, y - 1, z), grad(perm[BB], x - 1, y - 1, z), u),
+          v
+        ),
+        lerp(
+          lerp(grad(perm[AA + 1], x, y, z - 1), grad(perm[BA + 1], x - 1, y, z - 1), u),
+          lerp(grad(perm[AB + 1], x, y - 1, z - 1), grad(perm[BB + 1], x - 1, y - 1, z - 1), u),
+          v
+        ),
+        w
+      );
     };
   }
 
   const noise = noiseRef.current;
-
-  const shouldAnimate = !prefersReducedMotion && mounted && imageRef.current;
+  const shouldAnimate = !reduceMotion && mounted && imgReady;
 
   useEffect(() => {
     if (!shouldAnimate) return;
@@ -113,60 +139,46 @@ export function DragonflyDoubleOverlay({
     if (!ctx) return;
 
     const resize = () => {
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       canvas.width = canvas.offsetWidth * dpr;
       canvas.height = canvas.offsetHeight * dpr;
-      canvas.style.width = "100%";
-      canvas.style.height = "100%";
-      ctx.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     resize();
     window.addEventListener("resize", resize);
 
-    const animate = (time: number) => {
-      if (!canvasRef.current || !imageRef.current) return;
-      
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+    let lastDraw = 0;
+    const interval = 1000 / 30; // Cap to 30 fps
 
+    const animate = (time: number) => {
+      if (document.hidden) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      if (time - lastDraw < interval) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      lastDraw = time;
+
+      if (!canvasRef.current || !imageRef.current) return;
       const width = canvas.offsetWidth;
       const height = canvas.offsetHeight;
       const img = imageRef.current;
-
-      timeRef.current = time;
       const t = time * 0.001; // seconds
 
-      // Clear
       ctx.clearRect(0, 0, width, height);
 
-      // Update and render each layer with organic noise-based motion
       layersRef.current.forEach((layer, i) => {
-        // Different noise seeds and frequencies per layer
-        const seedX = i === 0 ? 1000 : 2000;
-        const seedY = i === 0 ? 3000 : 4000;
-        const freq = i === 0 ? 0.0003 : 0.0005; // Layer 2 moves faster
-        const amp = i === 0 ? 80 : 120; // Layer 2 has larger movement range
+        const seedX = i === 0 ? 100 : 250;
+        const seedY = i === 0 ? 300 : 450;
+        const freq = i === 0 ? 0.05 : 0.08;
 
-        // Primary drift using Perlin noise
-        layer.x = noise(t * freq + seedX, 0, 0) * amp;
-        layer.y = noise(0, t * freq + seedY, 0) * amp;
-
-        // Slow breathing scale
-        layer.scale = (i === 0 ? 1.15 : 1.05) + noise(t * 0.0001 + 5000 + i * 100, 0, 0) * 0.02;
-
-        // Subtle rotation drift
-        layer.rotation = noise(0, 0, t * 0.00005 + 7000 + i * 100) * 0.015; // ~0.85 degrees max
-
-        // Opacity breathes slightly
-        layer.opacity = (i === 0 ? 0.28 : 0.22) + noise(t * 0.00008 + 9000 + i * 100, 0, 0) * 0.03;
-
-        // Calculate draw rect to cover viewport with scale
         const imgAspect = img.width / img.height;
         const viewAspect = width / height;
         let drawW = 0, drawH = 0;
-        let drawX = 0, drawY = 0;
 
         if (imgAspect > viewAspect) {
           drawH = height * layer.scale;
@@ -176,33 +188,30 @@ export function DragonflyDoubleOverlay({
           drawH = drawW / imgAspect;
         }
 
-        drawX = (width - drawW) * 0.5 + layer.x;
-        drawY = (height - drawH) * 0.5 + layer.y;
+        const maxShiftX = Math.max(0, (drawW - width) * 0.4);
+        const maxShiftY = Math.max(0, (drawH - height) * 0.4);
 
-        // Save context for this layer
+        layer.x = noise(t * freq + seedX, 0, 0) * maxShiftX;
+        layer.y = noise(0, t * freq + seedY, 0) * maxShiftY;
+        layer.scale = (i === 0 ? 1.15 : 1.08) + noise(t * 0.02 + 500 + i * 10, 0, 0) * 0.015;
+        layer.rotation = noise(0, 0, t * 0.01 + 700 + i * 10) * 0.01;
+        layer.opacity = (i === 0 ? 0.28 : 0.22) + noise(t * 0.02 + 900 + i * 10, 0, 0) * 0.02;
+
+        const drawX = (width - drawW) * 0.5 + layer.x;
+        const drawY = (height - drawH) * 0.5 + layer.y;
+
         ctx.save();
-        
-        // Move to center for rotation
         ctx.translate(width * 0.5, height * 0.5);
         ctx.rotate(layer.rotation);
         ctx.translate(-width * 0.5, -height * 0.5);
 
-        // Apply blur via filter (Layer 1 only)
-        if (layer.blur > 0) {
-          ctx.filter = `blur(${layer.blur}px)`;
-        }
-
-        // Blend mode for depth interaction
         ctx.globalCompositeOperation = i === 0 ? "source-over" : "soft-light";
         ctx.globalAlpha = Math.max(0.1, Math.min(0.4, layer.opacity));
-
-        // Draw image
         ctx.drawImage(img, drawX, drawY, drawW, drawH);
-
         ctx.restore();
       });
 
-      // Subtle vignette overlay to blend edges
+      // Subtle vignette overlay
       const vignette = ctx.createRadialGradient(
         width * 0.5, height * 0.5, Math.min(width, height) * 0.3,
         width * 0.5, height * 0.5, Math.max(width, height) * 0.7
@@ -215,21 +224,19 @@ export function DragonflyDoubleOverlay({
       animationRef.current = requestAnimationFrame(animate);
     };
 
-    timeRef.current = performance.now();
     animationRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener("resize", resize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldAnimate, imageSrc]);
+  }, [shouldAnimate, imageSrc, noise]);
 
-  if (!mounted) {
-    // SSR fallback - show static image
+  // If SSR or reduced-motion is requested, render static fallback
+  if (!mounted || reduceMotion) {
     return (
-      <div className={cn("relative min-h-screen bg-dragonfly-navy-950", className)}>
-        <div className="absolute inset-0 bg-wing-pattern opacity-30" aria-hidden="true" />
+      <div className={cn("relative isolate flex flex-col min-h-screen bg-dragonfly-navy-950", className)}>
+        <div className="absolute inset-0 bg-wing-pattern opacity-30 pointer-events-none" aria-hidden="true" />
         <div
           className="absolute inset-0 -z-10 pointer-events-none"
           style={{
@@ -248,17 +255,16 @@ export function DragonflyDoubleOverlay({
           }}
           aria-hidden="true"
         />
-        <main className="relative z-10">{children}</main>
+        <div className="relative z-10 flex flex-col flex-1">{children}</div>
       </div>
     );
   }
 
   return (
-    <div className={cn("relative min-h-screen bg-dragonfly-navy-950", className)}>
-      {/* Base background pattern */}
-      <div className="absolute inset-0 bg-wing-pattern opacity-30" aria-hidden="true" />
+    <div className={cn("relative isolate flex flex-col min-h-screen bg-dragonfly-navy-950", className)}>
+      <div className="absolute inset-0 bg-wing-pattern opacity-30 pointer-events-none" aria-hidden="true" />
 
-      {/* Generative canvas backdrop */}
+      {/* Dynamic canvas */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 -z-10 pointer-events-none"
@@ -266,7 +272,6 @@ export function DragonflyDoubleOverlay({
         style={{ width: "100%", height: "100%", display: "block" }}
       />
 
-      {/* Subtle gradient overlay to blend with app theme */}
       <div
         className="absolute inset-0 -z-10 pointer-events-none"
         style={{
@@ -275,11 +280,7 @@ export function DragonflyDoubleOverlay({
         aria-hidden="true"
       />
 
-      {mode === "ambient" && (
-        <div className="fixed top-8 right-8 pointer-events-none z-10" />
-      )}
-
-      <main className="relative z-10">{children}</main>
+      <div className="relative z-10 flex flex-col flex-1">{children}</div>
     </div>
   );
 }
