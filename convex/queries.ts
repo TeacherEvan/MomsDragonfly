@@ -2,6 +2,13 @@ import { v } from "convex/values";
 
 import { internalQuery, query } from "./_generated/server";
 import { validateDeviceId } from "./auth";
+import {
+  MAX_DUE_REMINDERS,
+  MAX_EXPENSES,
+  MAX_NOTES,
+  MAX_REMINDERS,
+  MAX_TICKETS,
+} from "./limits";
 
 export const poiQuery = query({
   args: { deviceId: v.string(), category: v.string() },
@@ -68,7 +75,7 @@ export const expensesQuery = query({
       .query("expenses")
       .withIndex("by_deviceId_date", (q) => q.eq("deviceId", deviceId))
       .order("desc")
-      .collect();
+      .take(MAX_EXPENSES);
   },
 });
 
@@ -91,7 +98,7 @@ export const remindersQuery = query({
       .query("reminders")
       .withIndex("by_deviceId_dueAt", (q) => q.eq("deviceId", deviceId))
       .order("asc")
-      .collect();
+      .take(MAX_REMINDERS);
   },
 });
 
@@ -107,7 +114,7 @@ export const upcomingRemindersQuery = internalQuery({
           q.eq(q.field("sentAt"), undefined)
         )
       )
-      .take(500);
+      .take(MAX_DUE_REMINDERS);
   },
 });
 
@@ -119,7 +126,7 @@ export const ticketsQuery = query({
       .query("tickets")
       .withIndex("by_deviceId_createdAt", (q) => q.eq("deviceId", deviceId))
       .order("desc")
-      .collect();
+      .take(MAX_TICKETS);
   },
 });
 
@@ -131,7 +138,7 @@ export const journalNotesQuery = query({
       .query("journalNotes")
       .withIndex("by_deviceId_createdAt", (q) => q.eq("deviceId", deviceId))
       .order("desc")
-      .collect();
+      .take(MAX_NOTES);
   },
 });
 

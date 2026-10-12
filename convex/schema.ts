@@ -33,6 +33,7 @@ export default defineSchema({
     tripStartDate: v.optional(v.number()),
     shareEnabled: v.optional(v.boolean()),
     shareToken: v.optional(v.string()),
+    shareTokenCreatedAt: v.optional(v.number()),
   })
     .index("by_deviceId", ["deviceId"])
     .index("by_shareToken", ["shareToken"]),

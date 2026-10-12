@@ -57,6 +57,8 @@ export function JournalClient() {
   const deleteNoteMut = useMutation(api.mutations.deleteJournalNote);
   const enableShareMut = useMutation(api.mutations.enableShare);
   const disableShareMut = useMutation(api.mutations.disableShare);
+  const rotateShareMut = useMutation(api.mutations.rotateShare);
+  const [showRotateConfirm, setShowRotateConfirm] = useState(false);
 
   const [noteText, setNoteText] = useState("");
   const [noteSaving, setNoteSaving] = useState(false);
@@ -263,7 +265,7 @@ export function JournalClient() {
         {prefs?.shareEnabled && shareUrl && (
           <div className="flex flex-col gap-2">
             <p className="text-caption text-dragonfly-navy-400 break-all">{shareUrl}</p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 items-center">
               <button onClick={handleCopyShareLink} className="rounded-full px-3 py-1 text-caption font-semibold bg-dragonfly-navy-800 text-dragonfly-navy-200">
                 {shareCopied ? "Copied!" : "Copy link"}
               </button>
@@ -272,12 +274,45 @@ export function JournalClient() {
                   Share...
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setShowRotateConfirm(true)}
+                disabled={shareBusy}
+                className="rounded-full px-3 py-1 text-caption font-semibold border border-dragonfly-navy-700 bg-transparent text-dragonfly-navy-300 hover:text-dragonfly-orange-400 disabled:opacity-50"
+              >
+                Create a new link
+              </button>
             </div>
+            {prefs?.shareTokenCreatedAt && (
+              <p className="text-caption text-dragonfly-navy-500">
+                Link created {new Date(prefs.shareTokenCreatedAt).toLocaleDateString()}
+              </p>
+            )}
             <p className="text-caption text-dragonfly-navy-500">
               Anyone with the link sees a live, read-only view of your trail.
             </p>
           </div>
         )}
+        <ConfirmDialog
+          open={showRotateConfirm}
+          title="Create a new share link?"
+          message="Anyone with your current share link will no longer be able to view your trip journal. You will need to send them the new link."
+          confirmLabel="Create new link"
+          cancelLabel="Cancel"
+          danger={true}
+          onConfirm={async () => {
+            setShowRotateConfirm(false);
+            setShareBusy(true);
+            try {
+              await rotateShareMut({ deviceId });
+            } catch (err) {
+              console.warn("Failed to rotate share token:", err);
+            } finally {
+              setShareBusy(false);
+            }
+          }}
+          onCancel={() => setShowRotateConfirm(false)}
+        />
         <div className="flex gap-2">
           <button
             onClick={() =>

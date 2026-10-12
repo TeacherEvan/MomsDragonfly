@@ -348,6 +348,34 @@ test("disableShare hides the trail from shareView", async (t) => {
   expect(view.shared).toBe(false);
 });
 
+test("rotateShare generates new token, invalidates old token, and isolates devices", async (t) => {
+  const deviceA = testDeviceId();
+  const deviceB = testDeviceId();
+
+  const tokenA1 = await t.mutation(api.mutations.enableShare, { deviceId: deviceA });
+  const tokenB1 = await t.mutation(api.mutations.enableShare, { deviceId: deviceB });
+
+  const prefsA1 = await t.query(api.queries.prefsQuery, { deviceId: deviceA });
+  expect(prefsA1?.shareTokenCreatedAt).toBeDefined();
+
+  // Rotate device A
+  const tokenA2 = await t.mutation(api.mutations.rotateShare, { deviceId: deviceA });
+  expect(typeof tokenA2).toBe("string");
+  expect(tokenA2).not.toBe(tokenA1);
+
+  // Device B remains unchanged
+  const prefsB = await t.query(api.queries.prefsQuery, { deviceId: deviceB });
+  expect(prefsB?.shareToken).toBe(tokenB1);
+
+  // Old token A1 is invalid in shareView
+  const viewA1 = await t.query(api.queries.shareView, { token: tokenA1 });
+  expect(viewA1.shared).toBe(false);
+
+  // New token A2 is active in shareView
+  const viewA2 = await t.query(api.queries.shareView, { token: tokenA2! });
+  expect(viewA2.shared).toBe(true);
+});
+
 test("shareView rejects unknown and malformed tokens", async (t) => {
   const bad = await t.query(api.queries.shareView, { token: "not-a-token" });
   expect(bad.shared).toBe(false);

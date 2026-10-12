@@ -131,8 +131,13 @@ export const enableShare = mutation({
       .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
       .unique();
     const shareToken = existing?.shareToken ?? crypto.randomUUID();
+    const now = Date.now();
     if (existing) {
-      await ctx.db.patch(existing._id, { shareEnabled: true, shareToken });
+      await ctx.db.patch(existing._id, {
+        shareEnabled: true,
+        shareToken,
+        shareTokenCreatedAt: existing.shareTokenCreatedAt ?? now,
+      });
     } else {
       await ctx.db.insert("userPrefs", {
         deviceId,
@@ -142,9 +147,31 @@ export const enableShare = mutation({
         onboardingComplete: false,
         shareEnabled: true,
         shareToken,
+        shareTokenCreatedAt: now,
       });
     }
     return shareToken;
+  },
+});
+
+export const rotateShare = mutation({
+  args: { deviceId: v.string() },
+  handler: async (ctx, { deviceId }) => {
+    validateDeviceId(deviceId);
+    const existing = await ctx.db
+      .query("userPrefs")
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
+      .unique();
+    if (!existing) {
+      return null;
+    }
+    const newShareToken = crypto.randomUUID();
+    const now = Date.now();
+    await ctx.db.patch(existing._id, {
+      shareToken: newShareToken,
+      shareTokenCreatedAt: now,
+    });
+    return newShareToken;
   },
 });
 
