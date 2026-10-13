@@ -6,30 +6,48 @@
 // next.config.js `headers()` applies in every environment, including
 // non-Vercel (`next start`).
 /**
- * Convex deployment origin to permit in `connect-src`, when the configured
- * URL is a plain http(s) origin (a local `npx convex dev` deployment on
- * http://127.0.0.1:<port>). Production deployments are *.convex.cloud and
- * already covered by the wildcard below — this exists for local dev, where
+ * Loopback hostnames only — a stray or tampered env value must never widen
+ * the CSP, so anything that is not 127.0.0.1/localhost/::1 is rejected.
+ */
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+
+/**
+ * http + ws origin pair for a plain-http, loopback deployment URL — e.g. a
+ * local `npx convex dev` deployment (cloud deployment on 3210, site
+ * deployment on 3211). Production deployments are https://*.convex.cloud
+ * and already covered by the wildcards below, so nothing is added for them.
  * CSP has no implicit localhost access and 'self' only matches the page
- * origin: without it the Convex WebSocket (query sync) and HTTP (actions)
+ * origin: without this the Convex WebSocket (query sync) and HTTP (actions)
  * are blocked and every Convex-backed card stays empty forever.
  */
-function convexConnectSources() {
-  const raw = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!raw) return [];
-  let host = "";
-  let isPlainHttp = false;
+function loopbackConvexOrigin(raw) {
+  if (!raw) return null;
   try {
     const parsed = new URL(raw);
-    isPlainHttp = parsed.protocol === "http:";
-    if (!isPlainHttp && parsed.protocol !== "https:") return [];
-    host = parsed.host;
+    if (parsed.protocol !== "http:") return null;
+    if (!LOOPBACK_HOSTS.has(parsed.hostname)) return null;
+    return { http: `http://${parsed.host}`, ws: `ws://${parsed.host}` };
   } catch {
-    return [];
+    return null;
   }
-  if (!isPlainHttp) return []; // https origins: already covered by *.convex.cloud + wss:
-  // The Convex client speaks HTTP and WebSocket to the same origin.
-  return [`http://${host}`, `ws://${host}`];
+}
+
+/** connect-src counterpart — the Convex client speaks HTTP + WebSocket. */
+function convexConnectSources() {
+  const origin = loopbackConvexOrigin(process.env.NEXT_PUBLIC_CONVEX_URL);
+  return origin ? [origin.http, origin.ws] : [];
+}
+
+/**
+ * img-src counterpart — place-details photos are proxied from the Convex
+ * SITE deployment (a different port: 3211 locally) by /place-photo.
+ * Without this every details-sheet photo is CSP-blocked in local dev,
+ * exactly like the WebSocket was before the connect-src fix. Images only:
+ * the browser never fetches /place-photo with XHR/fetch.
+ */
+function convexSiteImageSources() {
+  const origin = loopbackConvexOrigin(process.env.NEXT_PUBLIC_CONVEX_SITE_URL);
+  return origin ? [origin.http] : [];
 }
 
 const SECURITY_HEADERS = [
@@ -40,7 +58,20 @@ const SECURITY_HEADERS = [
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://generativelanguage.googleapis.com https://api.search.brave.com https://vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://unpkg.com https://*.googleapis.com https://*.googleusercontent.com https://upload.wikimedia.org https://thumb.wikimedia.org https://*.convex.site",
+      [
+        "img-src 'self'",
+        "data:",
+        "blob:",
+        "https://*.tile.openstreetmap.org",
+        "https://tile.openstreetmap.org",
+        "https://unpkg.com",
+        "https://*.googleapis.com",
+        "https://*.googleusercontent.com",
+        "https://upload.wikimedia.org",
+        "https://thumb.wikimedia.org",
+        "https://*.convex.site",
+        ...convexSiteImageSources(),
+      ].join(" "),
       [
         "connect-src 'self'",
         "https://*.convex.cloud",

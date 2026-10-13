@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "deploy:prod": "CONVEX_DEPLOYMENT=prod:rare-alpaca-711 convex deploy --yes",
     "lint": "next lint --dir src --dir convex --dir convex-test --dir tests",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
