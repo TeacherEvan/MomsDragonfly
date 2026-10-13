@@ -1,3 +1,17 @@
+# pnpm settings. `overrides` live here since pnpm 11: package.json's `pnpm`
+# field is inert under pnpm 11+ (pnpm 12 warns and ignores it) while pnpm 10
+# still reads it there — keeping the floors ONLY in package.json made the
+# frozen-lockfile check fail on pnpm 10 (Vercel builds) whenever the lockfile
+# was regenerated on pnpm 12. pnpm 10 and 11+ both read this file, so one
+# definition satisfies every environment.
+#
+# Security floors forced across the whole tree:
+#   - postcss >= 8.5.23
+#   - source-map-js >= 1.2.2
+overrides:
+  postcss: ">=8.5.23"
+  source-map-js: ">=1.2.2"
+
 allowBuilds:
   esbuild: true
   tesseract.js: true
