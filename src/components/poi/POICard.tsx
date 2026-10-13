@@ -1,6 +1,7 @@
 import React from "react";
 
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { Icon } from "@/components/ui/Icon";
+import { CATEGORY_ICONS, categoryLabel } from "@/lib/poi/categories";
 import { cn } from "@/lib/utils/cn";
 import { formatDistance } from "@/lib/utils/geo";
 import type { NormalizedPOI } from "@/types";
@@ -12,24 +13,6 @@ interface POICardProps {
   onShowOnMap?: (poi: NormalizedPOI) => void;
   onRequestRide?: (poi: NormalizedPOI) => void;
 }
-
-const CATEGORY_ICONS: Record<string, IconName> = {
-  restaurant: "restaurant",
-  park: "tree",
-  attraction: "landmark",
-  entertainment: "theater",
-  toilets: "toilet",
-  pharmacy: "pharmacy",
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  restaurant: "Food",
-  park: "Park",
-  attraction: "Attraction",
-  entertainment: "Events",
-  toilets: "Restroom",
-  pharmacy: "Pharmacy",
-};
 
 export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }: POICardProps) {
   return (
@@ -44,7 +27,13 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onSelect?.(poi);
+        // Only the card itself opens details. Enter/Space pressed on the inner
+        // Ride/Map/Verify buttons bubbles up here and must not select the place.
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect?.(poi);
+        }
       }}
       aria-label={`Details for ${poi.name}`}
     >
@@ -72,7 +61,7 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
         <div className="flex items-center gap-3 mt-2 text-caption flex-wrap">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-dragonfly-teal-500/15 text-dragonfly-teal-300 font-medium">
             <Icon name={CATEGORY_ICONS[poi.category] ?? "map-pin"} size={13} />
-            {CATEGORY_LABELS[poi.category] ?? poi.category}
+            {categoryLabel(poi.category)}
           </span>
           {poi.distanceMetres !== undefined && (
             <span className="inline-flex items-center gap-1 text-dragonfly-navy-400 font-medium">
@@ -121,7 +110,11 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
         )}
         <button
           type="button"
-          onClick={onVerify}
+          onClick={(e) => {
+            // Verifying must not bubble up to the card and open its details.
+            e.stopPropagation();
+            onVerify();
+          }}
           className={cn(
             "shrink-0 px-3 py-1.5 rounded-lg text-caption font-semibold border transition-all duration-fast",
             "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",

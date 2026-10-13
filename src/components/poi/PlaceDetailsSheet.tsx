@@ -1,11 +1,15 @@
-/* PlaceDetailsSheet — full with lazy getPlaceDetails + photos/actions */
+/* PlaceDetailsSheet — the bottom sheet opened by tapping a place. Shows what we
+ * already know straight away. Google places are then lazily enriched with photos,
+ * phone and hours. Fetched details belong to one place: a previous place's
+ * details can never appear under a newly selected one. */
 "use client";
 import { useAction } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { api } from "@/app/providers";
 import { Icon } from "@/components/ui/Icon";
+import { CATEGORY_ICONS, categoryLabel, sourceLabel } from "@/lib/poi/categories";
 import { cn } from "@/lib/utils/cn";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import type { NormalizedPOI } from "@/types";
@@ -21,47 +25,102 @@ interface PlaceDetailsResponse {
   photos?: string[];
   phone?: string;
   hours?: string[];
-  ratingCount?: number;
+}
+
+/** Lookup result for one place. `key` records which place it belongs to. */
+interface Enrichment {
+  key: string;
+  photos: string[];
+  phone?: string;
+  hours: string[];
+}
+
+/** Everything the lookup needs, captured from the selected place. */
+interface EnrichTarget {
+  key: string;
+  placeId: string;
+  source: NormalizedPOI["source"];
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+function placeKey(poi: NormalizedPOI): string {
+  return `${poi.source}|${poi.placeId}|${poi.lat}|${poi.lng}`;
+}
+
+/**
+ * Only photos served by our own Google proxy (`/place-photo?ref=…`) are shown.
+ * Anything else, such as a Wikipedia thumbnail the server guessed by name, is
+ * dropped: a wrong picture of the wrong place is worse than no picture.
+ */
+function isProxiedPhoto(url: string): boolean {
+  return url.includes("/place-photo?");
+}
+
+/**
+ * Only Google rows have a lookup. The server's fallback for other sources
+ * searches Wikipedia by name, and that returns unrelated articles: "Clicks"
+ * (the pharmacy) matched a photo of the Clicks Communicator phone. OSM and Brave
+ * rows therefore show what they carry and nothing more.
+ */
+function toEnrichTarget(poi: NormalizedPOI | null): EnrichTarget | null {
+  if (!poi || poi.source !== "google" || !poi.placeId) return null;
+  return {
+    key: placeKey(poi),
+    placeId: poi.placeId,
+    source: poi.source,
+    name: poi.name,
+    lat: poi.lat,
+    lng: poi.lng,
+  };
 }
 
 export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: Props) {
-  const [loading, setLoading] = useState(false);
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [enriched, setEnriched] = useState<PlaceDetailsResponse>({});
   const getPlaceDetails = useAction(api.actions.getPlaceDetails);
+  const [enrichment, setEnrichment] = useState<Enrichment | null>(null);
+  const target = useMemo(() => toEnrichTarget(poi), [poi]);
 
   useEffect(() => {
-    if (!poi) {
-      setPhotos([]);
-      setEnriched({});
-      return;
-    }
-    if (poi.source !== "google" || !poi.placeId) {
-      setPhotos([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    if (!target) return;
+    // If the sheet has moved on to another place (or closed) before this answer
+    // arrives, drop it rather than let it overwrite the current place's details.
+    let stillCurrent = true;
     getPlaceDetails({
       deviceId: getDeviceId(),
-      placeId: poi.placeId,
-      source: poi.source,
-      name: poi.name,
-      lat: poi.lat,
-      lng: poi.lng,
+      placeId: target.placeId,
+      source: target.source,
+      name: target.name,
+      lat: target.lat,
+      lng: target.lng,
     })
       .then((res) => {
-        const details = res as PlaceDetailsResponse;
-        setPhotos(details?.photos || []);
-        setEnriched({
-          phone: details?.phone,
-          hours: details?.hours,
-          ratingCount: details?.ratingCount,
+        if (!stillCurrent) return;
+        const details = (res ?? {}) as PlaceDetailsResponse;
+        setEnrichment({
+          key: target.key,
+          photos: (details.photos ?? []).filter(isProxiedPhoto),
+          phone: details.phone,
+          hours: details.hours ?? [],
         });
       })
-      .catch(() => console.warn("place details failed"))
-      .finally(() => setLoading(false));
-  }, [poi, getPlaceDetails]);
+      .catch(() => {
+        if (!stillCurrent) return;
+        console.warn("place details failed");
+        setEnrichment({ key: target.key, photos: [], hours: [] });
+      });
+    return () => {
+      stillCurrent = false;
+    };
+  }, [target, getPlaceDetails]);
+
+  // Only details that belong to the place on screen are ever used.
+  const details = target && enrichment?.key === target.key ? enrichment : null;
+  const loading = target !== null && details === null;
+  const photos = details?.photos ?? [];
+  const hours = details?.hours ?? [];
+  const phone = poi?.phone ?? details?.phone;
+  const sourceName = poi ? sourceLabel(poi.source) : null;
 
   return (
     <AnimatePresence>
@@ -96,11 +155,13 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
                 <Icon name="close" size={20} />
               </button>
             </div>
-            <p className="text-caption text-dragonfly-navy-400 mb-3">{poi.address}</p>
+            {poi.address && (
+              <p className="text-caption text-dragonfly-navy-400 mb-3">{poi.address}</p>
+            )}
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-dragonfly-teal-500/15 text-dragonfly-teal-300 font-medium text-caption">
-                <Icon name="map-pin" size={13} />
-                {poi.category ?? "Place"}
+                <Icon name={CATEGORY_ICONS[poi.category] ?? "map-pin"} size={13} />
+                {categoryLabel(poi.category)}
               </span>
               {poi.openNow !== undefined && (
                 <span
@@ -114,14 +175,14 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
                   {poi.openNow ? "Open" : "Closed"}
                 </span>
               )}
-              {poi.source && (
+              {sourceName && (
                 <span className="text-caption px-1.5 py-0.5 rounded-full bg-dragonfly-navy-800 text-dragonfly-navy-300 font-medium">
-                  {poi.source}
+                  {sourceName}
                 </span>
               )}
             </div>
             <div className="grid grid-cols-3 gap-2 mb-4 text-caption">
-              {poi.rating && (
+              {poi.rating !== undefined && poi.rating > 0 && (
                 <div className="rounded-lg bg-dragonfly-navy-900/80 p-2 border border-dragonfly-navy-800 text-center">
                   <span className="flex items-center justify-center gap-1 text-dragonfly-gold-400 font-semibold">
                     <Icon name="star" size={14} /> {poi.rating.toFixed(1)}
@@ -135,9 +196,9 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
                   </span>
                 </div>
               )}
-              {poi.phone && (
+              {phone && (
                 <a
-                  href={`tel:${poi.phone}`}
+                  href={`tel:${phone}`}
                   className="rounded-lg bg-dragonfly-teal-500/10 p-2 border border-dragonfly-teal-500/20 text-center block transition-colors hover:bg-dragonfly-teal-500/20"
                 >
                   <span className="inline-flex items-center gap-1 text-dragonfly-teal-300 font-medium">
@@ -146,15 +207,20 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
                 </a>
               )}
             </div>
-            {enriched.hours && Array.isArray(enriched.hours) && enriched.hours.length > 0 && (
+            {hours.length > 0 && (
               <div className="rounded-xl bg-dragonfly-navy-900/60 border border-dragonfly-navy-800 p-3 mb-3">
                 <p className="text-caption font-medium text-dragonfly-navy-300 mb-1">Hours</p>
                 <ul className="text-xs text-dragonfly-navy-400 space-y-0.5">
-                  {enriched.hours.map((h: string) => (
-                    <li key={h}>{h}</li>
+                  {hours.map((h, i) => (
+                    <li key={`${i}-${h}`}>{h}</li>
                   ))}
                 </ul>
               </div>
+            )}
+            {!loading && photos.length === 0 && hours.length === 0 && !poi.address && !phone && (
+              <p className="text-caption text-dragonfly-navy-400 mb-3">
+                No extra details yet for this place.
+              </p>
             )}
             <div className="flex gap-2 mb-4 overflow-x-auto snap-x">
               {(loading ? [1, 2, 3] : photos.length ? photos : ["placeholder"]).map((p) => (
@@ -175,7 +241,11 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
                       className="w-full h-full object-cover rounded-xl"
                     />
                   ) : (
-                    <Icon name="image" size={28} className="text-dragonfly-navy-500" />
+                    <Icon
+                      name={CATEGORY_ICONS[poi.category] ?? "image"}
+                      size={28}
+                      className="text-dragonfly-navy-500"
+                    />
                   )}
                 </div>
               ))}
