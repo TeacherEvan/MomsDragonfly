@@ -94,6 +94,13 @@ function overpassFallbackQuery(
     attraction: ['node["tourism"~"attraction|museum|viewpoint"]'],
     entertainment: ['node["amenity"~"theatre|cinema|nightclub"]'],
     toilets: ['node["amenity"="toilets"]'],
+    // Food must degrade too: with the Google key dead (403) restaurants had
+    // no fallback at all and the primary category loaded nothing.
+    restaurant: [
+      'node["amenity"="restaurant"]',
+      'node["amenity"="fast_food"]',
+      'node["amenity"="cafe"]',
+    ],
   };
   const sels = selectors[category];
   if (!sels) return null;

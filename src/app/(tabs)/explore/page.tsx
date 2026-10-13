@@ -181,7 +181,18 @@ export default function ExplorePage() {
   }, [poisQuery, lat, lng, category]);
 
   const mapCenter = lat && lng ? [lat, lng] : null;
-  const activePhase: FetchPhase = fetchPhases[category] ?? "idle";
+  // The "All" view never tracks its own phase (fetches are keyed by specific
+  // category), so during the initial parallel load the list used to show the
+  // empty state — "No places found nearby" — for the whole time the first
+  // sources were still resolving. Derive a combined phase instead.
+  const activePhase = useMemo<FetchPhase>(() => {
+    if (category !== "all") return fetchPhases[category] ?? "idle";
+    const phases = CORE_CATEGORIES.map((c) => fetchPhases[c]);
+    if (phases.some((p) => p === "loading")) return "loading";
+    if (phases.some((p) => p === "error")) return "error";
+    if (phases.every((p) => p === "empty")) return "empty";
+    return phases.some((p) => p === "ready") ? "ready" : "idle";
+  }, [category, fetchPhases]);
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-xl mx-auto">
