@@ -20,6 +20,8 @@ import { expect, test } from '@playwright/test';
  
    const pages = [
      { url: '/explore', heading: 'Explore', isHeading: true },
+     { url: '/local', heading: 'Local', isHeading: true },
+     { url: '/journal', heading: 'Trip Journal', isHeading: true },
      { url: '/budget', heading: 'Trip Budget Tracker', isHeading: false },
      { url: '/reminders', heading: 'Reminders', isHeading: true },
      { url: '/tickets', heading: 'Tickets', isHeading: true },

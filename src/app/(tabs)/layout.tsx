@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { TripRecorder } from "@/components/journal/TripRecorder";
 import { BottomNav } from "@/components/shell/BottomNav";
@@ -16,7 +16,6 @@ import { useDisplayPrefs } from "@/hooks/useDisplayPrefs";
 import { cn } from "@/lib/utils/cn";
 
 export default function TabsLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   useDisplayPrefs();
   return (
     <DragonflyDoubleOverlay>
@@ -50,20 +49,16 @@ export default function TabsLayout({ children }: { children: React.ReactNode }) 
           </motion.span>
         </div>
         <div className="flex items-center gap-2">
-          <motion.div
-            onClick={() => router.push("/settings")}
+          <Link
+            href="/settings"
             className={cn(
-              "p-2 rounded-xl text-dragonfly-navy-400 hover:text-dragonfly-orange-400 hover:bg-dragonfly-navy-800 transition-all duration-fast cursor-pointer",
-              "min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center"
+              "p-2 rounded-xl text-dragonfly-navy-400 hover:text-dragonfly-orange-400 hover:bg-dragonfly-navy-800 transition-all duration-fast",
+              "min-h-[var(--touch-target)] min-w-[var(--touch-target)] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500 rounded-xl"
             )}
             aria-label="Settings"
-            whileTap={{ scale: 0.9 }}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") router.push("/settings"); }}
           >
             <Icon name="settings" size={20} />
-          </motion.div>
+          </Link>
         </div>
       </header>
 

@@ -27,6 +27,17 @@ test("savePrefs updates existing prefs (real function)", async (t) => {
   expect(prefs?.defaultRadius).toBe(500); // unchanged
 });
 
+test("savePrefs can clear tripStartDate with null", async (t) => {
+  const deviceId = testDeviceId();
+  await t.mutation(api.mutations.savePrefs, { deviceId, tripStartDate: 1789862400000 });
+  let prefs = await t.query(api.queries.prefsQuery, { deviceId });
+  expect(prefs?.tripStartDate).toBe(1789862400000);
+
+  await t.mutation(api.mutations.savePrefs, { deviceId, tripStartDate: null });
+  prefs = await t.query(api.queries.prefsQuery, { deviceId });
+  expect(prefs?.tripStartDate).toBeUndefined();
+});
+
 test("upsertPOIs inserts new POIs", async (t) => {
   const deviceId = testDeviceId();
   const pois = [
@@ -477,6 +488,22 @@ test("rekeyDevice migrates all user records, revokes share link, and isolates ol
     parsedAmount: 450,
   });
 
+  await t.mutation(api.mutations.upsertPOIs, {
+    deviceId: deviceA,
+    pois: [
+      {
+        placeId: "osm:101",
+        source: "osm",
+        name: "Bangkok Street Cafe",
+        category: "restaurant",
+        lat: 13.75,
+        lng: 100.5,
+        verifiedCount: 1,
+        fetchedAt: now,
+      },
+    ],
+  });
+
   // Verify shareView is active under deviceA
   const viewBefore = await t.query(api.queries.shareView, { token: shareToken });
   expect(viewBefore.shared).toBe(true);
@@ -487,7 +514,7 @@ test("rekeyDevice migrates all user records, revokes share link, and isolates ol
     newDeviceId: deviceB,
   });
   expect(result.success).toBe(true);
-  expect(result.migrated).toBeGreaterThanOrEqual(7);
+  expect(result.migrated).toBeGreaterThanOrEqual(8);
 
   // 3. Verify deviceA has NOTHING left
   const prefsA = await t.query(api.queries.prefsQuery, { deviceId: deviceA });
@@ -507,6 +534,9 @@ test("rekeyDevice migrates all user records, revokes share link, and isolates ol
 
   const historyA = await t.query(api.queries.historyQuery, { deviceId: deviceA, limit: 100 });
   expect(historyA).toHaveLength(0);
+
+  const poisA = await t.query(api.queries.poiQuery, { deviceId: deviceA, category: "restaurant" });
+  expect(poisA).toHaveLength(0);
 
   // 4. Verify all records migrated cleanly to deviceB
   const prefsB = await t.query(api.queries.prefsQuery, { deviceId: deviceB });
@@ -533,6 +563,10 @@ test("rekeyDevice migrates all user records, revokes share link, and isolates ol
 
   const historyB = await t.query(api.queries.historyQuery, { deviceId: deviceB, limit: 100 });
   expect(historyB).toHaveLength(2);
+
+  const poisB = await t.query(api.queries.poiQuery, { deviceId: deviceB, category: "restaurant" });
+  expect(poisB).toHaveLength(1);
+  expect(poisB[0].name).toBe("Bangkok Street Cafe");
 
   // 5. Verify old share token is revoked
   const viewAfter = await t.query(api.queries.shareView, { token: shareToken });

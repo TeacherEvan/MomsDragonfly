@@ -1,5 +1,5 @@
 // Service worker for Mom's Dragonfly PWA
-const CACHE_NAME = 'moms-dragonfly-v4';
+const CACHE_NAME = 'moms-dragonfly-v5';
 const MEDIA_CACHE = 'moms-dragonfly-media-v1';
 const OFFLINE_URL = '/offline.html';
 
@@ -8,9 +8,11 @@ const PRECACHE_URLS = [
   '/',
   '/explore',
   '/local',
+  '/journal',
   '/budget',
   '/reminders',
   '/tickets',
+  '/settings',
   OFFLINE_URL,
   '/intro.jpg',
   '/dragonfly-backdrop.jpg',
@@ -85,9 +87,24 @@ self.addEventListener('fetch', (event) => {
   // Handle navigation requests (HTML pages)
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() =>
-        caches.match(OFFLINE_URL).then((cached) => cached || Response.error())
-      )
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200 && response.type === 'basic') {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const appShell = await caches.match('/');
+          if (appShell) return appShell;
+          const fallback = await caches.match(OFFLINE_URL);
+          return fallback || Response.error();
+        })
     );
     return;
   }

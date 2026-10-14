@@ -61,7 +61,36 @@ export function HighlightsCard({ lat, lng }: HighlightsCardProps) {
     };
   }, [fetchHighlights, rLat, rLng]);
 
-  if (!data && failed) return null;
+  if (!data && failed) {
+    return (
+      <section
+        className="rounded-xl border border-dragonfly-navy-800 bg-surface-900/70 backdrop-blur-sm p-4 text-center shadow-soft"
+        aria-label="Local weather and news"
+      >
+        <div className="flex flex-col items-center justify-center gap-2">
+          <Icon name="alert" size={24} className="text-dragonfly-gold-400" />
+          <p className="text-body font-semibold text-dragonfly-navy-200">
+            Local weather &amp; news unavailable
+          </p>
+          <p className="text-caption text-dragonfly-navy-400 max-w-xs">
+            Connect to the internet to see current conditions and updates for this area.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setFailed(false);
+              fetchHighlights({ deviceId: getDeviceId(), lat: rLat, lng: rLng })
+                .then((res) => setData(res as Highlights))
+                .catch(() => setFailed(true));
+            }}
+            className="mt-1 px-3 py-1.5 bg-dragonfly-teal-500/20 text-dragonfly-teal-300 hover:bg-dragonfly-teal-500/30 rounded-lg text-caption font-semibold transition-colors min-h-[var(--touch-target)]"
+          >
+            Retry
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   if (!data) {
     return (

@@ -76,7 +76,7 @@ export const savePrefs = mutation({
     notificationsEnabled: v.optional(v.boolean()),
     vapidSubscription: v.optional(v.string()),
     onboardingComplete: v.optional(v.boolean()),
-    tripStartDate: v.optional(v.number()),
+    tripStartDate: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (ctx, { deviceId, ...updates }) => {
     validateDeviceId(deviceId);
@@ -84,8 +84,12 @@ export const savePrefs = mutation({
       .query("userPrefs")
       .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
       .unique();
+    const patchData: Record<string, unknown> = { ...updates };
+    if (updates.tripStartDate === null) {
+      patchData.tripStartDate = undefined;
+    }
     if (existing) {
-      await ctx.db.patch(existing._id, updates);
+      await ctx.db.patch(existing._id, patchData);
     } else {
       await ctx.db.insert("userPrefs", {
         deviceId,
@@ -93,7 +97,7 @@ export const savePrefs = mutation({
         currency: updates.currency ?? "USD",
         notificationsEnabled: updates.notificationsEnabled ?? false,
         onboardingComplete: updates.onboardingComplete ?? false,
-        ...updates,
+        ...patchData,
       });
     }
   },
@@ -286,6 +290,16 @@ export const rekeyDevice = mutation({
       await ctx.db.patch(b._id, { deviceId: newDeviceId });
     }
     migrated += budgets.length;
+
+    // 8. Discovered POIs — preserve cached places under the new device ID
+    const userPois = await ctx.db
+      .query("pois")
+      .withIndex("by_deviceIds_category", (q) => q.eq("deviceIds", [oldDeviceId]))
+      .take(500);
+    for (const poi of userPois) {
+      await ctx.db.patch(poi._id, { deviceIds: [newDeviceId] });
+    }
+    migrated += userPois.length;
 
     return { success: true, migrated };
   },

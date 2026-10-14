@@ -70,14 +70,17 @@ export default function SettingsClient() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const updates: Record<string, unknown> = {
+      const updates: {
+        defaultRadius: number;
+        currency: string;
+        notificationsEnabled: boolean;
+        tripStartDate: number | null;
+      } = {
         defaultRadius,
         currency,
         notificationsEnabled,
+        tripStartDate: tripStartDate ? new Date(tripStartDate).getTime() : null,
       };
-      if (tripStartDate) {
-        updates.tripStartDate = new Date(tripStartDate).getTime();
-      }
       await savePrefsMut({ deviceId, ...updates });
 
       // Keep the stored push subscription in sync with the toggle:
@@ -204,7 +207,18 @@ export default function SettingsClient() {
 
         {/* Trip Start Date */}
         <div className="bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-xl border border-dragonfly-navy-700 p-4">
-          <h3 className="font-semibold text-dragonfly-navy-50 mb-3">Trip Start Date</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-dragonfly-navy-50">Trip Start Date</h3>
+            {tripStartDate && (
+              <button
+                type="button"
+                onClick={() => setTripStartDate("")}
+                className="text-caption text-dragonfly-orange-400 hover:underline font-semibold"
+              >
+                Clear date
+              </button>
+            )}
+          </div>
           <p className="text-caption text-dragonfly-navy-400 mb-3">Used for the Days Counter on the Reminders page</p>
           <input
             type="date"

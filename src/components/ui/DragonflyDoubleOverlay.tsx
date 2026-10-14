@@ -152,10 +152,29 @@ export function DragonflyDoubleOverlay({
 
     let lastDraw = 0;
     const interval = 1000 / 30; // Cap to 30 fps
+    let lastActiveTime = performance.now();
+    let isRunning = false;
+
+    const onUserActivity = () => {
+      lastActiveTime = performance.now();
+      if (!isRunning && !document.hidden) {
+        startLoop();
+      }
+    };
+
+    window.addEventListener("pointerdown", onUserActivity, { passive: true });
+    window.addEventListener("touchstart", onUserActivity, { passive: true });
+    window.addEventListener("scroll", onUserActivity, { passive: true });
 
     const animate = (time: number) => {
       if (document.hidden) {
-        animationRef.current = requestAnimationFrame(animate);
+        isRunning = false;
+        return;
+      }
+
+      // If idle for more than 10 seconds, pause the RAF loop to save battery
+      if (time - lastActiveTime > 10000) {
+        isRunning = false;
         return;
       }
 
@@ -226,11 +245,34 @@ export function DragonflyDoubleOverlay({
       animationRef.current = requestAnimationFrame(animate);
     };
 
-    animationRef.current = requestAnimationFrame(animate);
+    const startLoop = () => {
+      if (!isRunning && !document.hidden) {
+        isRunning = true;
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (!document.hidden) {
+        lastActiveTime = performance.now();
+        startLoop();
+      } else if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        isRunning = false;
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    startLoop();
 
     return () => {
       window.removeEventListener("resize", resize);
+      window.removeEventListener("pointerdown", onUserActivity);
+      window.removeEventListener("touchstart", onUserActivity);
+      window.removeEventListener("scroll", onUserActivity);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      isRunning = false;
     };
   }, [shouldAnimate, imageSrc, noise]);
 

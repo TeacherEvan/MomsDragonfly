@@ -486,3 +486,21 @@ git commit -m "Add README screenshots"
 ```
 
 Recommended dimensions: 390×844 (iPhone 12/13/14) or 360×800 (Android). Keep file sizes under 200KB each.
+
+## Deployment Note (2026-10-14)
+
+Due to a duplicate Convex project created on 2026-10-11, the default `pnpm convex deploy` targets the empty project (`tidy-hornet-430`) instead of the data-containing project (`rare-alpaca-711`).
+
+To deploy to the correct production deployment (where the live app reads data), use:
+
+```bash
+CONVEX_DEPLOYMENT=dev:different-squid-155 pnpm convex deploy --prod
+```
+
+Alternatively, create a `.env.deploy` file with `CONVEX_DEPLOYMENT=dev:different-squid-155` and run:
+
+```bash
+pnpm convex deploy --prod --env-file .env.deploy
+```
+
+See the OpenViking memory `hermes-remember-5de588ea808b` for full provenance.
