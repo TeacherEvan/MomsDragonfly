@@ -21,12 +21,16 @@ import {
   streetViewMetadataUrl,
 } from "../../convex/placeHelpers";
 import {
+  geosearchEntries,
   isRelevantArticle,
   searchResultTitles,
   summaryMeta,
   summaryThumbnail,
+  titleCoreMatches,
+  wikiGeosearchUrl,
   wikipediaImages,
   wikipediaPlaceImages,
+  wikipediaPlacePhotosAt,
   wikipediaThumbnail,
   wikiSearchUrl,
   wikiSummaryUrl,
@@ -583,6 +587,103 @@ describe("wiki helpers (shared with the dishes flow)", () => {
       })
     );
     expect(await wikipediaPlaceImages("Clicks", "pharmacy", 2)).toEqual([]);
+  });
+
+  it("geosearchEntries parses titles and distances", () => {
+    expect(
+      geosearchEntries({
+        query: {
+          geosearch: [
+            { title: "Old Arts Building (University of Pretoria)", dist: 704.2 },
+            { title: "Embassy of Indonesia, Pretoria", dist: 238.1 },
+          ],
+        },
+      })
+    ).toEqual([
+      { title: "Old Arts Building (University of Pretoria)", dist: 704.2 },
+      { title: "Embassy of Indonesia, Pretoria", dist: 238.1 },
+    ]);
+    expect(geosearchEntries({})).toEqual([]);
+    expect(geosearchEntries(null)).toEqual([]);
+  });
+
+  it("titleCoreMatches relates article titles to place names", () => {
+    expect(titleCoreMatches("Old Arts Building (University of Pretoria)", "old arts")).toBe(true);
+    expect(titleCoreMatches("KFC", "KFC")).toBe(true);
+    expect(titleCoreMatches("Embassy of Indonesia, Pretoria", "old arts")).toBe(false);
+  });
+
+  it("wikipediaPlacePhotosAt anchors photos to the place's coordinates", async () => {
+    // The real 2026-10-14 Pretoria case: an OSM row named "old arts" whose
+    // matching article stands 704 m away.
+    const fetchMock = vi.fn(async (url: string | URL | Request) => {
+      const href = String(url);
+      if (href.includes("list=geosearch")) {
+        return {
+          ok: true,
+          json: async () => ({
+            query: {
+              geosearch: [
+                { title: "Embassy of Indonesia, Pretoria", dist: 238 },
+                { title: "Old Arts Building (University of Pretoria)", dist: 704 },
+              ],
+            },
+          }),
+        };
+      }
+      if (href.includes("/summary/Old_Arts_Building")) {
+        return {
+          ok: true,
+          json: async () => ({
+            title: "Old Arts Building (University of Pretoria)",
+            description: "Historic building of the University of Pretoria",
+            extract: "The Old Arts Building is a historic building…",
+            thumbnail: { source: "https://thumb.wikimedia.org/oldarts.jpg" },
+          }),
+        };
+      }
+      return { ok: false, json: async () => ({}) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await wikipediaPlacePhotosAt(-25.7479, 28.2293, "old arts", 2)).toEqual([
+      "https://thumb.wikimedia.org/oldarts.jpg",
+    ]);
+    // The nearby-but-unrelated article was skipped without a summary fetch…
+    expect(
+      fetchMock.mock.calls.some((c) => String(c[0]).includes("/summary/Embassy_of_Indonesia"))
+    ).toBe(false);
+    // …and the coordinate anchor is what the geosearch URL carries.
+    expect(
+      fetchMock.mock.calls.some((c) => String(c[0]).includes("gscoord=-25.7479%7C28.2293"))
+    ).toBe(true);
+  });
+
+  it("wikipediaPlacePhotosAt returns [] for a place with no nearby matching article", async () => {
+    const fetchMock = vi.fn(async (url: string | URL | Request) => {
+      const href = String(url);
+      if (href.includes("list=geosearch")) {
+        return {
+          ok: true,
+          json: async () => ({
+            query: { geosearch: [{ title: "Embassy of Indonesia, Pretoria", dist: 238 }] },
+          }),
+        };
+      }
+      return { ok: false, json: async () => ({}) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    // "KFC" is nearby only as a name match elsewhere — nothing at these
+    // coordinates relates to it, so no photo (never a wrong one).
+    expect(await wikipediaPlacePhotosAt(-25.7479, 28.2293, "KFC", 2)).toEqual([]);
+  });
+
+  it("wikiGeosearchUrl carries the coordinates and a bounded radius", () => {
+    const url = wikiGeosearchUrl(-25.7479, 28.2293, 5);
+    expect(url).toContain("list=geosearch");
+    expect(url).toContain("gscoord=-25.7479%7C28.2293");
+    expect(url).toContain("gslimit=5");
   });
 
   it("wikipediaPlaceImages keeps the KFC-style direct hit and guards empty input", async () => {

@@ -15,7 +15,11 @@ import {
   placeCacheKey,
   streetViewMetadataUrl,
 } from "./placeHelpers";
-import { wikipediaPlaceImages, wikipediaThumbnail } from "./wikiHelpers";
+import {
+  wikipediaPlaceImages,
+  wikipediaPlacePhotosAt,
+  wikipediaThumbnail,
+} from "./wikiHelpers";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Overpass (OSM) helpers
@@ -35,6 +39,35 @@ interface OverpassElement {
   lat: number;
   lon: number;
   tags?: Record<string, string>;
+}
+
+/**
+ * Address line from an OSM element's addr:* tags — "12 Burnett Street,
+ * Hatfield". Verified live 2026-10-14 near Pretoria: Ocean Basket carries
+ * addr:street=Burnett Street and phone=+27 12 362 6626 — real place info
+ * the app used to fetch and discard. Returns undefined when the mapper
+ * added no address tags.
+ */
+function osmAddress(tags?: Record<string, string>): string | undefined {
+  if (!tags) return undefined;
+  const house = tags["addr:housenumber"]?.trim();
+  const street = tags["addr:street"]?.trim();
+  const area =
+    tags["addr:suburb"]?.trim() ||
+    tags["addr:neighbourhood"]?.trim() ||
+    tags["addr:quarter"]?.trim() ||
+    tags["addr:city"]?.trim() ||
+    tags["addr:town"]?.trim() ||
+    tags["addr:village"]?.trim();
+  const line1 = [house, street].filter(Boolean).join(" ");
+  const parts = [line1 || undefined, area || undefined].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : undefined;
+}
+
+/** Phone from an OSM element's phone / contact:phone tags. */
+function osmPhone(tags?: Record<string, string>): string | undefined {
+  const phone = tags?.phone?.trim() || tags?.["contact:phone"]?.trim();
+  return phone || undefined;
 }
 
 async function fetchOverpass(query: string): Promise<OverpassElement[]> {
@@ -146,6 +179,8 @@ export const fetchOverpassNearby = action({
           category: el.tags?.amenity ?? el.tags?.leisure ?? "other",
           lat: el.lat,
           lng: el.lon,
+          address: osmAddress(el.tags),
+          phone: osmPhone(el.tags),
           verifiedCount: 0,
           fetchedAt: Date.now(),
         })),
@@ -306,6 +341,8 @@ export const fetchNearby = action({
             category,
             lat: el.lat,
             lng: el.lon,
+            address: osmAddress(el.tags),
+            phone: osmPhone(el.tags),
             verifiedCount: 0,
             fetchedAt: Date.now(),
           })),
@@ -946,10 +983,27 @@ export const getPlaceDetails = action({
       }
     }
 
-    // 3) Wikipedia fallback — last resort, only for locations with no Street
-    // View imagery. Category-aware + gated (wikiHelpers.wikipediaPlaceImages):
-    // a wrong picture of the wrong place ("Clicks" → the Clicks Communicator
-    // phone, "La Fiamma" → the Respighi opera portrait) is worse than none.
+    // 3) Wikipedia geosearch — keyless and coordinate-anchored: an article
+    // whose SUBJECT stands within ~1.5 km of the place AND whose title
+    // matches the name describes this exact spot (the same guarantee Street
+    // View gives, without an API key). Verified live: the OSM row "old arts"
+    // near Pretoria matches "Old Arts Building (University of Pretoria)" at
+    // 704 m. Runs before the name-only search because the anchor makes it
+    // strictly safer; both pass the same relevance gates.
+    if (photos.length === 0) {
+      try {
+        photos = await wikipediaPlacePhotosAt(lat, lng, name, 2);
+      } catch (err) {
+        console.warn("PlaceDetails: Wikipedia geosearch failed:", String(err).slice(0, 160));
+        photos = [];
+      }
+    }
+
+    // 4) Wikipedia name-search fallback — last resort, only for locations
+    // with no geosearch match. Category-aware + gated (wikiHelpers
+    // .wikipediaPlaceImages): a wrong picture of the wrong place ("Clicks" →
+    // the Clicks Communicator phone, "La Fiamma" → the Respighi opera
+    // portrait) is worse than none.
     if (photos.length === 0) {
       try {
         photos = await wikipediaPlaceImages(name, category, 2);

@@ -175,6 +175,23 @@ function normCore(s: string): string {
 }
 
 /**
+ * True when an article title relates to the place name: the title contains
+ * the place name (parentheses stripped — "Old Arts Building (University of
+ * Pretoria)" ⊃ "old arts"), or the place name contains a substantial part of
+ * the title. Used both by the relevance gate and as the cheap pre-filter in
+ * the geosearch path (title check costs no fetch).
+ */
+export function titleCoreMatches(title: string, name: string): boolean {
+  const titleCore = normCore(title.replace(/\([^)]*\)/g, ""));
+  const placeCore = normCore(name);
+  if (!titleCore || !placeCore) return false;
+  return (
+    titleCore.includes(placeCore) ||
+    (placeCore.length >= 4 && placeCore.includes(titleCore) && titleCore.length >= 4)
+  );
+}
+
+/**
  * True when the article is plausibly about the place: it has a thumbnail, it
  * is not a disambiguation page, not a product/media/person article, and its
  * title relates to the place name ("Clicks (South Africa)" ⊃ "Clicks").
@@ -191,13 +208,7 @@ export function isRelevantArticle(
   const label = `${meta.title} ${meta.description}`;
   if (CREATIVE_BY_RE.test(label)) return false;
   if (NOT_A_PLACE_RE.test(label)) return false;
-  const titleCore = normCore(meta.title.replace(/\([^)]*\)/g, ""));
-  const placeCore = normCore(name);
-  if (!titleCore || !placeCore) return false;
-  return (
-    titleCore.includes(placeCore) ||
-    (placeCore.length >= 4 && placeCore.includes(titleCore) && titleCore.length >= 4)
-  );
+  return titleCoreMatches(meta.title, name);
 }
 
 /**
@@ -255,5 +266,77 @@ export async function wikipediaPlaceImages(
     }
   }
 
+  return urls.slice(0, max);
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Geosearch-anchored place images
+ *
+ * Name search can never be certain an article is about THIS place. Geosearch
+ * returns articles whose SUBJECT is located at (or within metres of) the
+ * place's coordinates, so an article that also matches the name describes
+ * that exact spot — the same guarantee Street View gives, without an API key.
+ * Verified live 2026-10-14: near Pretoria centre, geosearch returns "Old Arts
+ * Building (University of Pretoria)" at 704 m — the building an OSM row named
+ * "old arts" points at.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** Articles with a subject near lat,lng (radius in metres). */
+const GEOSEARCH_RADIUS_M = 1500;
+
+export function wikiGeosearchUrl(lat: number, lng: number, limit: number = 12): string {
+  return (
+    "https://en.wikipedia.org/w/api.php?action=query&list=geosearch" +
+    `&gscoord=${encodeURIComponent(`${lat}|${lng}`)}&gsradius=${GEOSEARCH_RADIUS_M}` +
+    `&gslimit=${limit}&format=json`
+  );
+}
+
+/** {title, dist} entries out of a geosearch payload. */
+export function geosearchEntries(geo: unknown): Array<{ title: string; dist: number }> {
+  if (!geo || typeof geo !== "object") return [];
+  const query = (geo as { query?: unknown }).query;
+  if (!query || typeof query !== "object") return [];
+  const list = (query as { geosearch?: unknown }).geosearch;
+  if (!Array.isArray(list)) return [];
+  const out: Array<{ title: string; dist: number }> = [];
+  for (const entry of list) {
+    const title =
+      entry && typeof entry === "object" ? (entry as { title?: unknown }).title : undefined;
+    const dist = entry && typeof entry === "object" ? (entry as { dist?: unknown }).dist : undefined;
+    if (typeof title === "string" && title.length > 0) {
+      out.push({ title, dist: typeof dist === "number" ? dist : Number.POSITIVE_INFINITY });
+    }
+  }
+  return out;
+}
+
+/**
+ * Photos for a place anchored to its coordinates: geosearch articles near the
+ * place whose title matches the name, still passing the relevance gates. The
+ * coordinate anchor is what makes this safe — the article's subject stands at
+ * the place, so a name match cannot describe a different entity. The title is
+ * pre-checked before each summary fetch so unrelated nearby articles cost
+ * nothing.
+ */
+export async function wikipediaPlacePhotosAt(
+  lat: number,
+  lng: number,
+  name: string,
+  max: number = 2
+): Promise<string[]> {
+  const term = String(name ?? "").trim();
+  if (!term || max <= 0 || !Number.isFinite(lat) || !Number.isFinite(lng)) return [];
+
+  const entries = geosearchEntries(await fetchWikiJson(wikiGeosearchUrl(lat, lng, max + 8)));
+  const urls: string[] = [];
+  for (const entry of entries) {
+    if (urls.length >= max) break;
+    if (!titleCoreMatches(entry.title, term)) continue; // cheap pre-filter, no fetch
+    const meta = summaryMeta(await fetchWikiJson(wikiSummaryUrl(entry.title)));
+    if (meta.thumbnail && isRelevantArticle(meta, term) && !urls.includes(meta.thumbnail)) {
+      urls.push(meta.thumbnail);
+    }
+  }
   return urls.slice(0, max);
 }
