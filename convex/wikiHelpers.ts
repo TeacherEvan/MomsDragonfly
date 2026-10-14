@@ -150,9 +150,25 @@ export function summaryMeta(summary: unknown): {
 
 const DISAMBIGUATION_RE = /may refer to|topics referred to by the same term/i;
 
-/** Articles that can never be a picture of the place itself. */
+/**
+ * "X by Y" — a creative work described as created by someone ("Opera by
+ * Ottorino Respighi", "song by Adele", "painting by Monet"). Never a
+ * picture of a place.
+ */
+const CREATIVE_BY_RE =
+  /\b(song|songs|album|single|film|movie|opera|operetta|musical|ballet|symphony|concerto|sonata|oratorio|cantata|novel|novella|poem|play|painting|sculpture|work|composition|piece)\s+by\b/i;
+
+/**
+ * Articles that can never be a picture of the place itself — people,
+ * creative works, products, events, concepts. Checked against the article's
+ * title + description (the short type label: "Italian actor", "Opera by
+ * Ottorino Respighi", "2026 upcoming Android smartphone"), NOT the prose
+ * extract, so a place article that merely mentions one of these words is not
+ * falsely rejected. Verified live 2026-10-14: "La fiamma" (an opera) slipped
+ * through the previous extract-scoped list with a portrait of the composer.
+ */
 const NOT_A_PLACE_RE =
-  /\b(smartphone|mobile phone|feature phone|communicator|cell ?phone|telephone|laptop|notebook computer|tablet computer|handheld game console|video ?game|board game|album|song|film|movie|television series|tv series|software|operating system|web browser|microprocessor|smartwatch|e-reader|robot|aircraft|motorcycle|sports car|projectile|ammunition|warship|missile|musical group|music group|band|singer|rapper|politician|footballer|cricketer|novel|painting|sculpture)\b/i;
+  /\b(actor|actress|director|producer|screenwriter|playwright|composer|conductor|musician|singer|songwriter|rapper|painter|sculptor|architect|photographer|designer|artist|author|writer|novelist|poet|journalist|editor|chef|restaurateur|businessman|businesswoman|entrepreneur|executive|scientist|inventor|mathematician|philosopher|historian|economist|politician|president|prime minister|king|queen|emperor|empress|pope|saint|archangel|cardinal|bishop|monk|nun|criminal|murderer|gangster|pirate|spy|general|soldier|footballer|cricketer|athlete|boxer|wrestler|cyclist|swimmer|golfer|dancer|lawyer|judge|physician|surgeon|nurse|teacher|professor|engineer|pilot|astronaut|youtuber|influencer|streamer|blogger|television presenter|news presenter|broadcaster|model|socialite|aristocrat|explorer|outlaw|opera|operetta|ballet|symphony|concerto|sonata|oratorio|cantata|song|album|film|movie|documentary|television series|tv series|miniseries|sitcom|web series|anime|manga|comic|graphic novel|novel|novella|short story|poem|play|video game|board game|card game|toy|software|operating system|web browser|website|mobile app|smartphone|mobile phone|feature phone|tablet|laptop|notebook|smartwatch|e-reader|robot|drone|automobile|motorcycle|aircraft|warship|submarine|spacecraft|rocket|locomotive|radio station|television channel|television network|newspaper|magazine|record label|fictional character|superhero|supervillain|deity|god|goddess|mythological figure|fairy tale|urban legend|conspiracy theory|virus|disease|drug|medication|vaccine|chemical element|mineral|species|gene|protein|dish|recipe|beverage|cocktail|beer|sport|martial art|genre|art movement|fashion|hairstyle|tattoo|festival|holiday|tournament|award|concert|war|battle|treaty|election|political party|military unit|scandal|incident|disaster|crime|trial|language|dialect|acronym|slang|meme|hashtag|search engine|social network|programming language|file format|protocol|font|typeface|color|prototype|concept car)\b/i;
 
 function normCore(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -170,7 +186,11 @@ export function isRelevantArticle(
   if (!meta.thumbnail) return false;
   const blob = `${meta.title} ${meta.description} ${meta.extract.slice(0, 400)}`;
   if (DISAMBIGUATION_RE.test(blob)) return false;
-  if (NOT_A_PLACE_RE.test(blob)) return false;
+  // Product/media/person terms are only checked on the type label
+  // (title + description) — the extract is prose and false-rejects.
+  const label = `${meta.title} ${meta.description}`;
+  if (CREATIVE_BY_RE.test(label)) return false;
+  if (NOT_A_PLACE_RE.test(label)) return false;
   const titleCore = normCore(meta.title.replace(/\([^)]*\)/g, ""));
   const placeCore = normCore(name);
   if (!titleCore || !placeCore) return false;

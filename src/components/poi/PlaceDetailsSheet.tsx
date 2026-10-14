@@ -51,18 +51,15 @@ function placeKey(poi: NormalizedPOI): string {
 }
 
 /**
- * Photos we are willing to show: our own Google proxy (`/place-photo?ref=…`,
- * guaranteed to belong to the place) and Wikipedia thumbnails (the OSM/Brave
- * fallback). The proxy is preferred and always correct; a Wikipedia thumbnail
- * is a best-effort name match, but while the Google Places key is
- * unavailable it is the only imagery there is — and a plausible picture
- * beats a permanently empty sheet. (A stricter proxied-only filter is what
- * the sheet used before the key died, which is why every OSM place showed
- * "No extra details yet".)
+ * Photos we are willing to show, in order of trust:
+ * 1. our own Google proxy (`/place-photo?ref=…`) — real Places photos, guaranteed to belong to the place;
+ * 2. our Street View proxy (`/streetview?lat=…&lng=…`) — a photo of the place's actual coordinates, so it cannot be the wrong place;
+ * 3. Wikipedia thumbnails — a gated best-effort name match, only used when Street View has no imagery (a plausible picture beats an empty sheet, and the server's gates keep it plausible).
  */
 function isShowablePhoto(url: string): boolean {
   return (
     url.includes("/place-photo?") ||
+    url.includes("/streetview?") ||
     url.includes("thumb.wikimedia.org") ||
     url.includes("upload.wikimedia.org")
   );

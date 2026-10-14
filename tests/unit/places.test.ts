@@ -3,9 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import * as dishHelpers from "../../convex/dishHelpers";
 import {
   buildPhotoProxyUrl,
+  buildStreetViewProxyUrl,
   clampPhotoWidth,
   deriveConvexSiteUrl,
   googlePhotoMediaUrl,
+  isValidLatLng,
   isValidPhotoRef,
   mapGoogleDetails,
   PHOTO_REF_RE,
@@ -15,6 +17,8 @@ import {
   PLACE_ENRICH_TTL_MS,
   placeCacheKey,
   slugifyPlaceName,
+  streetViewImageUrl,
+  streetViewMetadataUrl,
 } from "../../convex/placeHelpers";
 import {
   isRelevantArticle,
@@ -396,6 +400,45 @@ describe("wiki helpers (shared with the dishes flow)", () => {
     ).toBe(false);
   });
 
+  it("isRelevantArticle rejects the Respighi opera — the La Fiamma leak", () => {
+    expect(
+      isRelevantArticle(
+        {
+          title: "La fiamma",
+          description: "Opera by Ottorino Respighi",
+          extract:
+            "La fiamma is an opera in three acts by Ottorino Respighi to a libretto by Claudio Guastalla…",
+          thumbnail: "https://thumb.wikimedia.org/Respighi_1934.jpg",
+        },
+        "La Fiamma"
+      )
+    ).toBe(false);
+  });
+
+  it("isRelevantArticle rejects people articles whose description is a profession", () => {
+    expect(
+      isRelevantArticle(
+        { title: "Fabio Trabocchi", description: "Italian chef", extract: "…", thumbnail: "https://img/x.jpg" },
+        "La Fiamma"
+      )
+    ).toBe(false);
+  });
+
+  it("isRelevantArticle does not false-reject a place article that merely mentions a blacklisted word", () => {
+    // The extract mentions "film" (a movie was shot there) — the label is clean.
+    expect(
+      isRelevantArticle(
+        {
+          title: "KFC (South Africa)",
+          description: "fast food restaurant chain",
+          extract: "Several film crews have visited this KFC over the years…",
+          thumbnail: "https://img/kfc.jpg",
+        },
+        "KFC"
+      )
+    ).toBe(true);
+  });
+
   it("isRelevantArticle rejects disambiguation pages, unrelated titles and missing thumbnails", () => {
     expect(
       isRelevantArticle(
@@ -566,5 +609,33 @@ describe("wiki helpers (shared with the dishes flow)", () => {
     ]);
     expect(await wikipediaPlaceImages("", "pharmacy", 2)).toEqual([]);
     expect(await wikipediaPlaceImages("Clicks", "pharmacy", 0)).toEqual([]);
+  });
+});
+
+describe("street view helpers", () => {
+  it("isValidLatLng accepts real coordinates and rejects junk", () => {
+    expect(isValidLatLng(-25.7479, 28.2293)).toBe(true);
+    expect(isValidLatLng(0, 0)).toBe(true);
+    expect(isValidLatLng(NaN, 28)).toBe(false);
+    expect(isValidLatLng(-25, "abc")).toBe(false);
+    expect(isValidLatLng(91, 28)).toBe(false);
+    expect(isValidLatLng(-25, 181)).toBe(false);
+  });
+
+  it("buildStreetViewProxyUrl points at the site proxy and never carries the key", () => {
+    const url = buildStreetViewProxyUrl("https://x.convex.site/", -25.7479, 28.2293);
+    expect(url).toBe("https://x.convex.site/streetview?lat=-25.7479&lng=28.2293");
+    expect(url).not.toContain("key");
+    expect(url).not.toContain("AIza");
+  });
+
+  it("street view URL builders target Google with the encoded key", () => {
+    expect(streetViewMetadataUrl(-25.7, 28.2, "AIzaKey")).toBe(
+      "https://maps.googleapis.com/maps/api/streetview/metadata?location=-25.7,28.2&key=AIzaKey"
+    );
+    const img = streetViewImageUrl(-25.7, 28.2, "AIza Key");
+    expect(img).toContain("size=800x500");
+    expect(img).toContain("location=-25.7,28.2");
+    expect(img).toContain("key=AIza%20Key");
   });
 });

@@ -150,6 +150,49 @@ export function buildPhotoProxyUrl(
   return `${base}/place-photo?ref=${encodeURIComponent(ref)}&w=${w}`;
 }
 
+/** Coordinate sanity check for Street View params (blocks open-proxy abuse). */
+export function isValidLatLng(lat: unknown, lng: unknown): lat is number {
+  const a = Number(lat);
+  const b = Number(lng);
+  return (
+    Number.isFinite(a) &&
+    Number.isFinite(b) &&
+    a >= -90 &&
+    a <= 90 &&
+    b >= -180 &&
+    b <= 180
+  );
+}
+
+/** `${site}/streetview?lat=…&lng=…` — proxied, never contains the API key. */
+export function buildStreetViewProxyUrl(
+  siteUrl: string,
+  lat: number,
+  lng: number
+): string {
+  const base = stripTrailingSlash(String(siteUrl ?? "").trim());
+  return `${base}/streetview?lat=${lat}&lng=${lng}`;
+}
+
+/**
+ * Street View Metadata endpoint — the free coverage check. Status "OK" means
+ * Google has imagery for the coordinate; metadata requests are not billed.
+ */
+export function streetViewMetadataUrl(lat: number, lng: number, key: string): string {
+  return (
+    "https://maps.googleapis.com/maps/api/streetview/metadata" +
+    `?location=${lat},${lng}&key=${encodeURIComponent(key)}`
+  );
+}
+
+/** Street View Static image endpoint (the photo itself). */
+export function streetViewImageUrl(lat: number, lng: number, key: string): string {
+  return (
+    "https://maps.googleapis.com/maps/api/streetview" +
+    `?size=800x500&location=${lat},${lng}&key=${encodeURIComponent(key)}`
+  );
+}
+
 /** Upstream Places (New) photo media endpoint for a validated ref. */
 export function googlePhotoMediaUrl(
   ref: string,

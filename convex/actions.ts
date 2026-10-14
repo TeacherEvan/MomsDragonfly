@@ -7,11 +7,13 @@ import { validateDeviceId } from "./auth";
 import { type DishItem, fallbackDishes, parseDishResponse } from "./dishHelpers";
 import {
   buildPhotoProxyUrl,
+  buildStreetViewProxyUrl,
   deriveConvexSiteUrl,
   type GooglePlaceDetails,
   mapGoogleDetails,
   PLACE_ENRICH_TTL_MS,
   placeCacheKey,
+  streetViewMetadataUrl,
 } from "./placeHelpers";
 import { wikipediaPlaceImages, wikipediaThumbnail } from "./wikiHelpers";
 
@@ -793,11 +795,13 @@ export const getLocalDishes = action({
 
 /* ────────────────────────────────────────────────────────────────────────────
  * getPlaceDetails — lazy enrichment for one selected place. Google Places
- * Details (New) when the place came from Google, Wikipedia images otherwise
- * (OSM/brave rows, and Google rows with no usable photos). Cached 30 days per
- * place key in placeEnrichCache. Never throws: degrades to whatever is known.
- * Photo bytes are proxied by /place-photo (convex/http.ts) so the API key
- * never reaches the client — only `*.convex.site` refs are returned.
+ * Details (New) when the place came from Google; otherwise Street View of the
+ * place's coordinates (a photo of the actual location — cannot be the wrong
+ * place), and Wikipedia only when Street View has no imagery. Cached 30 days
+ * per place key in placeEnrichCache. Never throws: degrades to whatever is
+ * known. Photo bytes are proxied by /place-photo and /streetview
+ * (convex/http.ts) so the API key never reaches the client — only
+ * `*.convex.site` refs are returned.
  * ──────────────────────────────────────────────────────────────────────────── */
 
 interface PlaceDetailsPayload {
@@ -845,6 +849,40 @@ async function fetchGooglePlaceDetails(
 /** Max photos the sheet will show. */
 const PLACE_PHOTO_LIMIT = 3;
 
+/**
+ * Street View coverage check (metadata API — free, unbilled). Returns true
+ * only when Google has imagery for the coordinate (status "OK"); false on
+ * ZERO_RESULTS, key restrictions, or any failure. Used to decide whether to
+ * hand the sheet a Street View photo instead of a Wikipedia guess.
+ */
+async function streetViewHasImagery(
+  lat: number,
+  lng: number,
+  key: string
+): Promise<boolean> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8_000);
+  try {
+    const res = await fetch(streetViewMetadataUrl(lat, lng, key), {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      console.warn(`PlaceDetails: StreetView metadata ${res.status}`);
+      return false;
+    }
+    const json = (await res.json()) as { status?: unknown };
+    return json?.status === "OK";
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.warn(
+      "PlaceDetails: StreetView metadata failed:",
+      String(err).slice(0, 160)
+    );
+    return false;
+  }
+}
+
 export const getPlaceDetails = action({
   args: {
     deviceId: v.string(),
@@ -889,10 +927,29 @@ export const getPlaceDetails = action({
       console.warn("PlaceDetails: GOOGLE_PLACES_API_KEY not set — Wikipedia fallback only");
     }
 
-    // 2) Wikipedia fallback (0–2 images) — no photos is fine, never an error.
-    // Category-aware + gated (wikiHelpers.wikipediaPlaceImages): a wrong
-    // picture of the wrong place ("Clicks" → the Clicks Communicator phone)
-    // is worse than no picture at all.
+    // 2) Street View fallback — a photo of the actual coordinates, proxied
+    // through the site URL so the key stays server-side. Keyed off lat/lng
+    // (never the name), it structurally cannot show a picture of the wrong
+    // place. Skipped silently when the key lacks Street View access or the
+    // location has no imagery (metadata status !== OK) — the metadata check
+    // itself is free and unbilled.
+    if (photos.length === 0 && siteUrl && apiKey) {
+      try {
+        if (await streetViewHasImagery(lat, lng, apiKey)) {
+          photos = [buildStreetViewProxyUrl(siteUrl, lat, lng)];
+        }
+      } catch (err) {
+        console.warn(
+          "PlaceDetails: Street View fallback failed:",
+          String(err).slice(0, 160)
+        );
+      }
+    }
+
+    // 3) Wikipedia fallback — last resort, only for locations with no Street
+    // View imagery. Category-aware + gated (wikiHelpers.wikipediaPlaceImages):
+    // a wrong picture of the wrong place ("Clicks" → the Clicks Communicator
+    // phone, "La Fiamma" → the Respighi opera portrait) is worse than none.
     if (photos.length === 0) {
       try {
         photos = await wikipediaPlaceImages(name, category, 2);
