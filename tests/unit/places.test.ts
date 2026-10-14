@@ -17,9 +17,12 @@ import {
   slugifyPlaceName,
 } from "../../convex/placeHelpers";
 import {
+  isRelevantArticle,
   searchResultTitles,
+  summaryMeta,
   summaryThumbnail,
   wikipediaImages,
+  wikipediaPlaceImages,
   wikipediaThumbnail,
   wikiSearchUrl,
   wikiSummaryUrl,
@@ -188,7 +191,7 @@ describe("placeCacheKey / slugifyPlaceName", () => {
     ).toBe("g:ChIJN1t_tDeu");
   });
 
-  it("falls back to w:{slug}:{lat},{lng} at 0.1° resolution", () => {
+  it("falls back to w2:{slug}:{lat},{lng} at 0.1° resolution", () => {
     expect(
       placeCacheKey({
         source: "osm",
@@ -197,10 +200,10 @@ describe("placeCacheKey / slugifyPlaceName", () => {
         lat: -25.7463,
         lng: 28.1884,
       })
-    ).toBe("w:the-blue-crane-caf-deli:-25.7,28.2");
+    ).toBe("w2:the-blue-crane-caf-deli:-25.7,28.2");
     expect(
       placeCacheKey({ source: "google", placeId: "", name: "X", lat: 1.04, lng: -0.96 })
-    ).toBe("w:x:1.0,-1.0");
+    ).toBe("w2:x:1.0,-1.0");
   });
 
   it("slugifies: lowercase, runs of non-alphanumerics → '-', trimmed, 60 max", () => {
@@ -212,7 +215,7 @@ describe("placeCacheKey / slugifyPlaceName", () => {
 
   it("uses 'place' when the name slug is empty", () => {
     expect(placeCacheKey({ source: null, placeId: null, name: "!!!", lat: 2, lng: 3 })).toBe(
-      "w:place:2.0,3.0"
+      "w2:place:2.0,3.0"
     );
   });
 });
@@ -339,5 +342,229 @@ describe("wiki helpers (shared with the dishes flow)", () => {
     expect(dishHelpers.wikipediaImages).toBe(wikipediaImages);
     expect(dishHelpers.summaryThumbnail).toBe(summaryThumbnail);
     expect(dishHelpers.searchResultTitles).toBe(searchResultTitles);
+  });
+
+  it("summaryMeta parses title/description/extract/thumbnail", () => {
+    expect(
+      summaryMeta({
+        title: "Clicks (South Africa)",
+        description: "South African health and beauty retailer",
+        extract: "Clicks is a South African healthcare, personal care, and beauty retail chain.",
+        thumbnail: { source: "https://thumb.wikimedia.org/store.jpg" },
+      })
+    ).toEqual({
+      title: "Clicks (South Africa)",
+      description: "South African health and beauty retailer",
+      extract: "Clicks is a South African healthcare, personal care, and beauty retail chain.",
+      thumbnail: "https://thumb.wikimedia.org/store.jpg",
+    });
+    expect(summaryMeta(null)).toEqual({
+      title: "",
+      description: "",
+      extract: "",
+      thumbnail: null,
+    });
+  });
+
+  it("isRelevantArticle accepts a real place article (the Clicks retailer)", () => {
+    expect(
+      isRelevantArticle(
+        {
+          title: "Clicks (South Africa)",
+          description: "South African health and beauty retailer",
+          extract:
+            "Clicks is a South African healthcare, personal care, and beauty retail chain. Headquartered in Cape Town…",
+          thumbnail: "https://thumb.wikimedia.org/store.jpg",
+        },
+        "Clicks"
+      )
+    ).toBe(true);
+  });
+
+  it("isRelevantArticle rejects the Clicks Communicator phone — the reported bug", () => {
+    expect(
+      isRelevantArticle(
+        {
+          title: "Clicks Communicator",
+          description: "2026 upcoming Android smartphone",
+          extract:
+            "The Clicks Communicator is an upcoming compact Android smartphone developed by Clicks Technology…",
+          thumbnail: "https://upload.wikimedia.org/en/9/9e/Clicks_Communicator.png",
+        },
+        "Clicks"
+      )
+    ).toBe(false);
+  });
+
+  it("isRelevantArticle rejects disambiguation pages, unrelated titles and missing thumbnails", () => {
+    expect(
+      isRelevantArticle(
+        {
+          title: "Click",
+          description: "Topics referred to by the same term",
+          extract: "Click or Klick may refer to:",
+          thumbnail: "https://img.example/x.jpg",
+        },
+        "Clicks"
+      )
+    ).toBe(false);
+    expect(
+      isRelevantArticle(
+        {
+          title: "Alveolar click",
+          description: "type of click consonant",
+          extract: "…",
+          thumbnail: "https://img.example/y.jpg",
+        },
+        "Clicks"
+      )
+    ).toBe(false);
+    expect(
+      isRelevantArticle(
+        {
+          title: "Something Else",
+          description: "a place",
+          extract: "…",
+          thumbnail: "https://img.example/z.jpg",
+        },
+        "Clicks"
+      )
+    ).toBe(false);
+    expect(
+      isRelevantArticle(
+        { title: "Clicks", description: "retailer", extract: "…", thumbnail: null },
+        "Clicks"
+      )
+    ).toBe(false);
+  });
+
+  it("wikipediaPlaceImages prefers the category-aware hit over the name-only hit", async () => {
+    const fetchMock = vi.fn(async (url: string | URL | Request) => {
+      const href = String(url);
+      // The two article summaries first — "/summary/Clicks" is a substring of
+      // "/summary/Clicks_(South_Africa)", so the specific URLs must match
+      // before the bare one. (Note: encodeURIComponent leaves parentheses
+      // unescaped, so the URL carries literal parens.)
+      if (href.includes("/summary/Clicks_(South_Africa)")) {
+        return {
+          ok: true,
+          json: async () => ({
+            title: "Clicks (South Africa)",
+            description: "South African health and beauty retailer",
+            extract: "Clicks is a South African healthcare retail chain.",
+            thumbnail: { source: "https://thumb.wikimedia.org/store.jpg" },
+          }),
+        };
+      }
+      if (href.includes("/summary/Clicks_Communicator")) {
+        return {
+          ok: true,
+          json: async () => ({
+            title: "Clicks Communicator",
+            description: "2026 upcoming Android smartphone",
+            extract: "The Clicks Communicator is an upcoming compact Android smartphone…",
+            thumbnail: { source: "https://upload.wikimedia.org/phone.png" },
+          }),
+        };
+      }
+      // Direct summary for the bare "Clicks" → disambiguation page, no thumbnail.
+      if (href.endsWith("/summary/Clicks")) {
+        return {
+          ok: true,
+          json: async () => ({
+            title: "Click",
+            description: "Topics referred to by the same term",
+            extract: "Click or Klick may refer to:",
+          }),
+        };
+      }
+      // Category-aware search → the retailer first, the phone second.
+      if (href.includes("srsearch=Clicks%20pharmacy")) {
+        return {
+          ok: true,
+          json: async () => ({
+            query: { search: [{ title: "Clicks (South Africa)" }, { title: "Clicks Communicator" }] },
+          }),
+        };
+      }
+      return { ok: false, json: async () => ({}) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await wikipediaPlaceImages("Clicks", "pharmacy", 2)).toEqual([
+      "https://thumb.wikimedia.org/store.jpg",
+    ]);
+    // The category-aware search was actually used…
+    expect(
+      fetchMock.mock.calls.some((c) => String(c[0]).includes("srsearch=Clicks%20pharmacy"))
+    ).toBe(true);
+    // …and the phone article was consulted yet still gated out.
+    expect(
+      fetchMock.mock.calls.some((c) => String(c[0]).includes("/summary/Clicks_Communicator"))
+    ).toBe(true);
+  });
+
+  it("wikipediaPlaceImages returns [] when every candidate is gated out", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string | URL | Request) => {
+        const href = String(url);
+        if (href.includes("/summary/Clicks")) {
+          return {
+            ok: true,
+            json: async () => ({
+              title: "Click",
+              description: "Topics referred to by the same term",
+              extract: "may refer to",
+            }),
+          };
+        }
+        if (href.includes("list=search")) {
+          return {
+            ok: true,
+            json: async () => ({ query: { search: [{ title: "Clicks Communicator" }] } }),
+          };
+        }
+        if (href.includes("/summary/Clicks_Communicator")) {
+          return {
+            ok: true,
+            json: async () => ({
+              title: "Clicks Communicator",
+              description: "2026 upcoming Android smartphone",
+              extract: "smartphone…",
+              thumbnail: { source: "https://upload.wikimedia.org/phone.png" },
+            }),
+          };
+        }
+        return { ok: false, json: async () => ({}) };
+      })
+    );
+    expect(await wikipediaPlaceImages("Clicks", "pharmacy", 2)).toEqual([]);
+  });
+
+  it("wikipediaPlaceImages keeps the KFC-style direct hit and guards empty input", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string | URL | Request) => {
+        const href = String(url);
+        if (href.includes("/summary/KFC")) {
+          return {
+            ok: true,
+            json: async () => ({
+              title: "KFC",
+              description: "American fast food restaurant chain",
+              extract: "KFC is an American fast food restaurant chain…",
+              thumbnail: { source: "https://thumb.wikimedia.org/kfc.jpg" },
+            }),
+          };
+        }
+        return { ok: false, json: async () => ({}) };
+      })
+    );
+    expect(await wikipediaPlaceImages("KFC", "restaurant", 2)).toEqual([
+      "https://thumb.wikimedia.org/kfc.jpg",
+    ]);
+    expect(await wikipediaPlaceImages("", "pharmacy", 2)).toEqual([]);
+    expect(await wikipediaPlaceImages("Clicks", "pharmacy", 0)).toEqual([]);
   });
 });

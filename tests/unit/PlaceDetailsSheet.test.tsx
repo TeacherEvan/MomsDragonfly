@@ -124,7 +124,7 @@ describe("PlaceDetailsSheet enrichment", () => {
   it("asks for details for OSM places too (Wikipedia fallback while the Google key is down)", () => {
     renderSheet(place({ source: "osm", placeId: "osm:42", name: "Clicks", category: "pharmacy" }));
     expect(getPlaceDetailsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ placeId: "osm:42", source: "osm", name: "Clicks" })
+      expect.objectContaining({ placeId: "osm:42", source: "osm", name: "Clicks", category: "pharmacy" })
     );
   });
 

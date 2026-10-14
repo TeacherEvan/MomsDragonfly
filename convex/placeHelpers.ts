@@ -112,7 +112,11 @@ export function placeCacheKey(input: {
   if (source === "google" && placeId) return `g:${placeId}`;
 
   const slug = slugifyPlaceName(input.name ?? "") || "place";
-  return `w:${slug}:${input.lat.toFixed(1)},${input.lng.toFixed(1)}`;
+  // `w2:` — the gated Wikipedia lookup (category-aware search + relevance
+  // gates, 2026-10-14). Bumped from `w:` so payloads cached by the old,
+  // ungated lookup (wrong pictures, e.g. Clicks → the Communicator phone)
+  // are ignored instead of served for the rest of the 30-day TTL.
+  return `w2:${slug}:${input.lat.toFixed(1)},${input.lng.toFixed(1)}`;
 }
 
 /** How long a cached place-enrichment payload is served before refetching. */

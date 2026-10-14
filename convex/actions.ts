@@ -13,7 +13,7 @@ import {
   PLACE_ENRICH_TTL_MS,
   placeCacheKey,
 } from "./placeHelpers";
-import { wikipediaImages, wikipediaThumbnail } from "./wikiHelpers";
+import { wikipediaPlaceImages, wikipediaThumbnail } from "./wikiHelpers";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Overpass (OSM) helpers
@@ -851,12 +851,13 @@ export const getPlaceDetails = action({
     placeId: v.string(),
     source: v.string(),
     name: v.string(),
+    category: v.optional(v.string()),
     lat: v.number(),
     lng: v.number(),
   },
   handler: async (
     ctx,
-    { deviceId, placeId, source, name, lat, lng }
+    { deviceId, placeId, source, name, category, lat, lng }
   ): Promise<PlaceDetailsPayload> => {
     validateDeviceId(deviceId);
     const key = placeCacheKey({ source, placeId, name, lat, lng });
@@ -888,10 +889,13 @@ export const getPlaceDetails = action({
       console.warn("PlaceDetails: GOOGLE_PLACES_API_KEY not set — Wikipedia fallback only");
     }
 
-    // 2) Wikipedia fallback (0–2 images) — no photos is fine, never an error
+    // 2) Wikipedia fallback (0–2 images) — no photos is fine, never an error.
+    // Category-aware + gated (wikiHelpers.wikipediaPlaceImages): a wrong
+    // picture of the wrong place ("Clicks" → the Clicks Communicator phone)
+    // is worse than no picture at all.
     if (photos.length === 0) {
       try {
-        photos = await wikipediaImages(name, 2);
+        photos = await wikipediaPlaceImages(name, category, 2);
       } catch (err) {
         console.warn("PlaceDetails: Wikipedia fallback failed:", String(err).slice(0, 160));
         photos = [];

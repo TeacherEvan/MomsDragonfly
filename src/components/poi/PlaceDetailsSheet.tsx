@@ -41,6 +41,7 @@ interface EnrichTarget {
   placeId: string;
   source: NormalizedPOI["source"];
   name: string;
+  category: string;
   lat: number;
   lng: number;
 }
@@ -70,8 +71,10 @@ function isShowablePhoto(url: string): boolean {
 /**
  * Every source with a place id gets a lookup. Google rows get Places
  * Details (photos/phone/hours); OSM and Brave rows fall back to the
- * server's Wikipedia thumbnails, which exist precisely for sources
- * without their own photos.
+ * server's Wikipedia thumbnails, which are now gated: the server searches
+ * with the place's category and drops disambiguation/product/media articles,
+ * so a thumbnail it returns is at least plausibly the place (KFC → the
+ * restaurant, not a phone named "Clicks").
  */
 function toEnrichTarget(poi: NormalizedPOI | null): EnrichTarget | null {
   if (!poi || !poi.placeId) return null;
@@ -80,6 +83,7 @@ function toEnrichTarget(poi: NormalizedPOI | null): EnrichTarget | null {
     placeId: poi.placeId,
     source: poi.source,
     name: poi.name,
+    category: poi.category,
     lat: poi.lat,
     lng: poi.lng,
   };
@@ -100,6 +104,7 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
       placeId: target.placeId,
       source: target.source,
       name: target.name,
+      category: target.category,
       lat: target.lat,
       lng: target.lng,
     })
