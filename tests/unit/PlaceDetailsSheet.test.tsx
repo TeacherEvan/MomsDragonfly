@@ -145,6 +145,14 @@ describe("PlaceDetailsSheet enrichment", () => {
     expect(img).toHaveAttribute("src", proxied);
   });
 
+  it("shows a photo served by our Street View proxy", async () => {
+    const streetview = "https://example.convex.site/streetview?lat=-25.7479&lng=28.2293";
+    getPlaceDetailsMock.mockResolvedValueOnce({ photos: [streetview] } satisfies Details);
+    renderSheet(googleCafe);
+    const img = await screen.findByRole("img", { name: "Corner Cafe" });
+    expect(img).toHaveAttribute("src", streetview);
+  });
+
   it("uses the enriched phone number when the place has none of its own", async () => {
     getPlaceDetailsMock.mockResolvedValueOnce({
       photos: [],
