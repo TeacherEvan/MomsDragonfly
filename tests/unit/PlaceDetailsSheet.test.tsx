@@ -121,18 +121,20 @@ describe("PlaceDetailsSheet enrichment", () => {
     expect(screen.getByText("Tue: 10:00–22:00")).toBeInTheDocument();
   });
 
-  it("does not ask for Wikipedia guesses for OSM places", () => {
+  it("asks for details for OSM places too (Wikipedia fallback while the Google key is down)", () => {
     renderSheet(place({ source: "osm", placeId: "osm:42", name: "Clicks", category: "pharmacy" }));
-    expect(getPlaceDetailsMock).not.toHaveBeenCalled();
+    expect(getPlaceDetailsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ placeId: "osm:42", source: "osm", name: "Clicks" })
+    );
   });
 
-  it("drops a Wikipedia photo guessed by name and shows nothing in its place", async () => {
+  it("shows a Wikipedia photo as the fallback for a place without its own photos", async () => {
     getPlaceDetailsMock.mockResolvedValueOnce({
       photos: ["https://upload.wikimedia.org/wikipedia/en/9/9e/Clicks_Communicator.png"],
     } satisfies Details);
     renderSheet(googleCafe);
-    expect(await screen.findByText(/no extra details yet/i)).toBeInTheDocument();
-    expect(document.querySelector("img")).toBeNull();
+    const img = await screen.findByRole("img", { name: "Corner Cafe" });
+    expect(img).toHaveAttribute("src", expect.stringContaining("wikimedia.org"));
   });
 
   it("shows a photo served by our Google proxy", async () => {
@@ -163,9 +165,9 @@ describe("PlaceDetailsSheet content", () => {
     expect(screen.queryByText("pharmacy")).not.toBeInTheDocument();
   });
 
-  it("says so plainly when there is nothing more to show", () => {
+  it("says so plainly when there is nothing more to show", async () => {
     renderSheet(place({ source: "osm", name: "pharmacy", category: "pharmacy" }));
-    expect(screen.getByText(/no extra details yet/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no extra details yet/i)).toBeInTheDocument();
   });
 
   it("Ride and Map still act on the selected place", () => {

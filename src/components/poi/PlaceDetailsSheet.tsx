@@ -50,22 +50,31 @@ function placeKey(poi: NormalizedPOI): string {
 }
 
 /**
- * Only photos served by our own Google proxy (`/place-photo?ref=…`) are shown.
- * Anything else, such as a Wikipedia thumbnail the server guessed by name, is
- * dropped: a wrong picture of the wrong place is worse than no picture.
+ * Photos we are willing to show: our own Google proxy (`/place-photo?ref=…`,
+ * guaranteed to belong to the place) and Wikipedia thumbnails (the OSM/Brave
+ * fallback). The proxy is preferred and always correct; a Wikipedia thumbnail
+ * is a best-effort name match, but while the Google Places key is
+ * unavailable it is the only imagery there is — and a plausible picture
+ * beats a permanently empty sheet. (A stricter proxied-only filter is what
+ * the sheet used before the key died, which is why every OSM place showed
+ * "No extra details yet".)
  */
-function isProxiedPhoto(url: string): boolean {
-  return url.includes("/place-photo?");
+function isShowablePhoto(url: string): boolean {
+  return (
+    url.includes("/place-photo?") ||
+    url.includes("thumb.wikimedia.org") ||
+    url.includes("upload.wikimedia.org")
+  );
 }
 
 /**
- * Only Google rows have a lookup. The server's fallback for other sources
- * searches Wikipedia by name, and that returns unrelated articles: "Clicks"
- * (the pharmacy) matched a photo of the Clicks Communicator phone. OSM and Brave
- * rows therefore show what they carry and nothing more.
+ * Every source with a place id gets a lookup. Google rows get Places
+ * Details (photos/phone/hours); OSM and Brave rows fall back to the
+ * server's Wikipedia thumbnails, which exist precisely for sources
+ * without their own photos.
  */
 function toEnrichTarget(poi: NormalizedPOI | null): EnrichTarget | null {
-  if (!poi || poi.source !== "google" || !poi.placeId) return null;
+  if (!poi || !poi.placeId) return null;
   return {
     key: placeKey(poi),
     placeId: poi.placeId,
@@ -99,7 +108,7 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
         const details = (res ?? {}) as PlaceDetailsResponse;
         setEnrichment({
           key: target.key,
-          photos: (details.photos ?? []).filter(isProxiedPhoto),
+          photos: (details.photos ?? []).filter(isShowablePhoto),
           phone: details.phone,
           hours: details.hours ?? [],
         });
