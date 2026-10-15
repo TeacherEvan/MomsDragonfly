@@ -59,6 +59,15 @@ export function buildMapsUrl(dest: RideDestination, pickup?: RidePickup | null):
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
+/** Google Maps search link (e.g. for a dish, venue, or address search). */
+export function buildMapsSearchUrl(query: string): string {
+  const params = new URLSearchParams({
+    api: "1",
+    query,
+  });
+  return `https://www.google.com/maps/search/?${params.toString()}`;
+}
+
 /** Text copied to the clipboard so the destination can be pasted into Bolt. */
 export function buildDestinationText(dest: RideDestination): string {
   const parts = [

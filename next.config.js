@@ -69,6 +69,7 @@ const SECURITY_HEADERS = [
         "https://*.googleusercontent.com",
         "https://upload.wikimedia.org",
         "https://thumb.wikimedia.org",
+        "https://commons.wikimedia.org",
         "https://*.convex.site",
         ...convexSiteImageSources(),
       ].join(" "),

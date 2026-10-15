@@ -10,6 +10,7 @@ import { api } from "@/app/providers";
 import { Icon } from "@/components/ui/Icon";
 import { useActionData } from "@/hooks/useActionData";
 import { CATEGORY_ICONS, categoryLabel, sourceLabel } from "@/lib/poi/categories";
+import { buildMapsUrl } from "@/lib/ride/links";
 import { cn } from "@/lib/utils/cn";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import type { NormalizedPOI } from "@/types";
@@ -47,14 +48,15 @@ function placeKey(poi: NormalizedPOI): string {
  * Photos we are willing to show, in order of trust:
  * 1. our own Google proxy (`/place-photo?ref=…`) — real Places photos, guaranteed to belong to the place;
  * 2. our Street View proxy (`/streetview?lat=…&lng=…`) — a photo of the place's actual coordinates, so it cannot be the wrong place;
- * 3. Wikipedia thumbnails — a gated best-effort name match, only used when Street View has no imagery (a plausible picture beats an empty sheet, and the server's gates keep it plausible).
+ * 3. Wikipedia / Wikimedia Commons photos — gated best-effort matches.
  */
 function isShowablePhoto(url: string): boolean {
   return (
     url.includes("/place-photo?") ||
     url.includes("/streetview?") ||
     url.includes("thumb.wikimedia.org") ||
-    url.includes("upload.wikimedia.org")
+    url.includes("upload.wikimedia.org") ||
+    url.includes("commons.wikimedia.org")
   );
 }
 
@@ -267,7 +269,7 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
               <button
                 type="button"
                 onClick={() => onRequestRide?.(poi)}
-                className="flex-1 rounded-xl bg-dragonfly-orange-500 hover:bg-dragonfly-orange-400 text-dragonfly-navy-950 font-semibold py-2.5 flex items-center justify-center gap-2 transition-colors active:scale-[0.98]"
+                className="flex-1 rounded-xl bg-dragonfly-orange-500 hover:bg-dragonfly-orange-400 text-dragonfly-navy-950 font-semibold py-2.5 flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
               >
                 <Icon name="car" size={16} /> Ride
               </button>
@@ -277,10 +279,18 @@ export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: 
                   onShowOnMap?.(poi);
                   onClose();
                 }}
-                className="flex-1 rounded-xl border border-dragonfly-navy-700 hover:bg-dragonfly-navy-800 text-dragonfly-navy-200 font-semibold py-2.5 flex items-center justify-center gap-2 transition-colors active:scale-[0.98]"
+                className="flex-1 rounded-xl border border-dragonfly-navy-700 hover:bg-dragonfly-navy-800 text-dragonfly-navy-200 font-semibold py-2.5 flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
               >
                 <Icon name="map-pin" size={16} /> Map
               </button>
+              <a
+                href={buildMapsUrl(poi)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 rounded-xl border border-dragonfly-navy-700 hover:bg-dragonfly-navy-800 text-dragonfly-navy-200 font-semibold py-2.5 flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98] text-center"
+              >
+                <Icon name="compass" size={16} /> Google Maps
+              </a>
             </div>
           </motion.div>
         </>

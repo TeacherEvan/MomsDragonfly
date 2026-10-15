@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildBoltLaunch,
   buildDestinationText,
+  buildMapsSearchUrl,
   buildMapsUrl,
 } from "@/lib/ride/links";
 
@@ -61,6 +62,13 @@ describe("buildMapsUrl", () => {
   it("includes pickup when provided", () => {
     const url = buildMapsUrl(dest, { lat: -25.75, lng: 28.24 });
     expect(url).toContain("origin=-25.75%2C28.24");
+  });
+});
+
+describe("buildMapsSearchUrl", () => {
+  it("encodes query parameter for search", () => {
+    const url = buildMapsSearchUrl("Bobotie Pretoria");
+    expect(url).toBe("https://www.google.com/maps/search/?api=1&query=Bobotie+Pretoria");
   });
 });
 

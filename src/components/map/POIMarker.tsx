@@ -2,6 +2,7 @@
 import React from "react";
 
 import { Icon } from "@/components/ui/Icon";
+import { buildMapsUrl } from "@/lib/ride/links";
 import { formatDistance } from "@/lib/utils/geo";
 import type { NormalizedPOI } from "@/types";
 
@@ -46,6 +47,14 @@ export function POIMarker({ poi, onVerify, onRequestRide }: POIMarkerProps) {
           <Icon name="car" size={13} /> Request a ride
         </button>
       )}
+      <a
+        href={buildMapsUrl(poi)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 w-full bg-dragonfly-navy-100 hover:bg-dragonfly-navy-200 text-dragonfly-navy-800 font-medium rounded py-1.5 text-xs transition-colors min-h-[var(--touch-target)] flex items-center justify-center gap-1"
+      >
+        <Icon name="compass" size={13} /> Open in Google Maps
+      </a>
     </div>
   );
 }

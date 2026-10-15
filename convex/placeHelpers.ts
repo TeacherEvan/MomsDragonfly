@@ -200,3 +200,22 @@ export function googlePhotoMediaUrl(
 ): string {
   return `https://places.googleapis.com/v1/${ref}/media?maxWidthPx=${maxWidthPx}`;
 }
+
+/**
+ * Extract an image URL from OpenStreetMap tags if available.
+ * Handles direct `image` tag as well as `wikimedia_commons` / `wikimedia:commons`.
+ */
+export function osmPhotoUrl(tags?: Record<string, string>): string | undefined {
+  if (!tags) return undefined;
+  const image = tags.image?.trim();
+  if (image && /^https?:\/\//i.test(image)) return image;
+
+  const commons = tags.wikimedia_commons?.trim() || tags["wikimedia:commons"]?.trim();
+  if (commons) {
+    const filename = commons.replace(/^File:/i, "").trim().replace(/ /g, "_");
+    if (filename) {
+      return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=800`;
+    }
+  }
+  return undefined;
+}

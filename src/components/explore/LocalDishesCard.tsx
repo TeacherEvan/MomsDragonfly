@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "@/app/providers";
 import { Icon } from "@/components/ui/Icon";
 import { useActionData } from "@/hooks/useActionData";
+import { buildMapsSearchUrl } from "@/lib/ride/links";
 import { getDeviceId } from "@/lib/utils/deviceId";
 
 interface LocalDishesCardProps {
@@ -124,9 +125,17 @@ export function LocalDishesCard({ lat, lng }: LocalDishesCardProps) {
         {data.dishes.map((dish) => (
           <li key={dish.name} className="flex items-start gap-3">
             <DishThumb dish={dish} />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-body font-semibold text-dragonfly-navy-100">{dish.name}</p>
               <p className="mt-0.5 text-caption text-dragonfly-navy-400">{dish.description}</p>
+              <a
+                href={buildMapsSearchUrl(`${dish.name} ${data.areaName ?? ""}`.trim())}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-flex items-center gap-1 text-caption font-medium text-dragonfly-teal-300 hover:text-dragonfly-teal-200 transition-colors"
+              >
+                <Icon name="compass" size={12} /> Find places serving this
+              </a>
             </div>
           </li>
         ))}

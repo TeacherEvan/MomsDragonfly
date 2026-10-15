@@ -10,6 +10,7 @@ import {
   isValidLatLng,
   isValidPhotoRef,
   mapGoogleDetails,
+  osmPhotoUrl,
   PHOTO_REF_RE,
   PHOTO_WIDTH_DEFAULT,
   PHOTO_WIDTH_MAX,
@@ -738,5 +739,31 @@ describe("street view helpers", () => {
     expect(img).toContain("size=800x500");
     expect(img).toContain("location=-25.7,28.2");
     expect(img).toContain("key=AIza%20Key");
+  });
+});
+
+describe("osmPhotoUrl", () => {
+  it("returns direct image URL when present", () => {
+    expect(osmPhotoUrl({ image: "https://example.com/photo.jpg" })).toBe(
+      "https://example.com/photo.jpg"
+    );
+  });
+
+  it("resolves Wikimedia Commons file name to Special:FilePath URL", () => {
+    expect(osmPhotoUrl({ wikimedia_commons: "File:Old Arts Building Pretoria.jpg" })).toBe(
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Old_Arts_Building_Pretoria.jpg?width=800"
+    );
+  });
+
+  it("handles wikimedia:commons alias key", () => {
+    expect(osmPhotoUrl({ "wikimedia:commons": "Union_Buildings.jpg" })).toBe(
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Union_Buildings.jpg?width=800"
+    );
+  });
+
+  it("returns undefined when no valid image tag exists", () => {
+    expect(osmPhotoUrl(undefined)).toBeUndefined();
+    expect(osmPhotoUrl({})).toBeUndefined();
+    expect(osmPhotoUrl({ image: "ftp://example.com" })).toBeUndefined();
   });
 });

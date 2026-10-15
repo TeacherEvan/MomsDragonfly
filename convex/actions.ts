@@ -19,14 +19,17 @@ import {
   deriveConvexSiteUrl,
   type GooglePlaceDetails,
   mapGoogleDetails,
+  osmPhotoUrl,
   PLACE_ENRICH_TTL_MS,
   placeCacheKey,
   streetViewMetadataUrl,
 } from "./placeHelpers";
 import {
+  summaryThumbnail,
   wikipediaPlaceImages,
   wikipediaPlacePhotosAt,
   wikipediaThumbnail,
+  wikiSummaryUrl,
 } from "./wikiHelpers";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -1009,7 +1012,50 @@ export const getPlaceDetails = action({
               .map((ref) => buildPhotoProxyUrl(siteUrl, ref, 800));
           }
         } else if (!apiKey) {
-          console.warn("PlaceDetails: GOOGLE_PLACES_API_KEY not set — Wikipedia fallback only");
+          console.warn("PlaceDetails: GOOGLE_PLACES_API_KEY not set — fallback only");
+        }
+
+        // 2) OpenStreetMap node details (for OSM-sourced places)
+        if (String(source).toLowerCase() === "osm" && placeId) {
+          try {
+            const osmId = placeId.replace(/^osm:/, "").trim();
+            if (/^\d+$/.test(osmId)) {
+              const nodeData = await fetchJson<{
+                elements?: Array<{ tags?: Record<string, string> }>;
+              }>(
+                `https://api.openstreetmap.org/api/0.6/node/${osmId}.json`,
+                { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" },
+                6000
+              );
+              const tags = nodeData?.elements?.[0]?.tags;
+              if (tags) {
+                const osmImg = osmPhotoUrl(tags);
+                if (osmImg && !photos.includes(osmImg)) {
+                  photos.push(osmImg);
+                }
+                if (tags.wikipedia && photos.length === 0) {
+                  const wikiTitle = tags.wikipedia.replace(/^[a-z]+:/i, "").trim();
+                  if (wikiTitle) {
+                    const wikiSummary = await fetchJson<unknown>(
+                      wikiSummaryUrl(wikiTitle),
+                      { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" },
+                      6000
+                    );
+                    const thumb = summaryThumbnail(wikiSummary);
+                    if (thumb && !photos.includes(thumb)) photos.push(thumb);
+                  }
+                }
+                if (!details.phone && (tags.phone || tags["contact:phone"])) {
+                  details.phone = tags.phone || tags["contact:phone"];
+                }
+                if (!details.hours && tags.opening_hours) {
+                  details.hours = [tags.opening_hours];
+                }
+              }
+            }
+          } catch (err) {
+            console.warn("PlaceDetails: OSM node lookup failed:", String(err).slice(0, 160));
+          }
         }
 
         // 2) Street View fallback

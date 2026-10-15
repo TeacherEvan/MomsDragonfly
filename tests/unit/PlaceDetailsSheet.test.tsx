@@ -153,6 +153,14 @@ describe("PlaceDetailsSheet enrichment", () => {
     expect(img).toHaveAttribute("src", streetview);
   });
 
+  it("shows a photo served by Wikimedia Commons", async () => {
+    const commons = "https://commons.wikimedia.org/wiki/Special:FilePath/Union_Buildings.jpg?width=800";
+    getPlaceDetailsMock.mockResolvedValueOnce({ photos: [commons] } satisfies Details);
+    renderSheet(googleCafe);
+    const img = await screen.findByRole("img", { name: "Corner Cafe" });
+    expect(img).toHaveAttribute("src", commons);
+  });
+
   it("uses the enriched phone number when the place has none of its own", async () => {
     getPlaceDetailsMock.mockResolvedValueOnce({
       photos: [],
@@ -171,6 +179,15 @@ describe("PlaceDetailsSheet content", () => {
     expect(screen.getByText("OpenStreetMap")).toBeInTheDocument();
     expect(screen.queryByText("osm")).not.toBeInTheDocument();
     expect(screen.queryByText("pharmacy")).not.toBeInTheDocument();
+  });
+
+  it("provides an Open in Google Maps action link with destination coordinates", () => {
+    renderSheet(place({ lat: -25.75, lng: 28.23 }));
+    const mapsLink = screen.getByRole("link", { name: /google maps/i });
+    expect(mapsLink).toHaveAttribute(
+      "href",
+      "https://www.google.com/maps/dir/?api=1&destination=-25.75%2C28.23&travelmode=driving"
+    );
   });
 
   it("says so plainly when there is nothing more to show", async () => {
