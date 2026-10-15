@@ -1,9 +1,9 @@
 "use client";
-import { useAction } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 import { api } from "@/app/providers";
 import { Icon } from "@/components/ui/Icon";
+import { useActionData } from "@/hooks/useActionData";
 import { getDeviceId } from "@/lib/utils/deviceId";
 
 interface LocalDishesCardProps {
@@ -50,41 +50,14 @@ function DishThumb({ dish }: { dish: Dish }) {
 
 /** "Taste of the area" — popular local dishes (cached ~7 days per city cell). */
 export function LocalDishesCard({ lat, lng }: LocalDishesCardProps) {
-  const fetchDishes = useAction(api.actions.getLocalDishes);
-  const [data, setData] = useState<Dishes | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
-
-  const rLat = Math.round(lat * 10) / 10;
-  const rLng = Math.round(lng * 10) / 10;
-
-  const loadDishes = useCallback(() => {
-    let cancelled = false;
-    setLoading(true);
-    setFailed(false);
-    fetchDishes({ deviceId: getDeviceId(), lat: rLat, lng: rLng })
-      .then((res) => {
-        if (!cancelled) {
-          setData(res as Dishes);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        console.warn("Local dishes fetch failed:", err);
-        if (!cancelled) {
-          setFailed(true);
-          setLoading(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchDishes, rLat, rLng]);
-
-  useEffect(() => {
-    const cleanup = loadDishes();
-    return cleanup;
-  }, [loadDishes]);
+  const { data, loading, failed, reload } = useActionData<
+    { deviceId: string; lat: number; lng: number },
+    Dishes
+  >(
+    api.actions.getLocalDishes,
+    { deviceId: getDeviceId(), lat, lng },
+    { roundCoords: 1 }
+  );
 
   if (loading && !data) {
     return (
@@ -121,7 +94,7 @@ export function LocalDishesCard({ lat, lng }: LocalDishesCardProps) {
           </p>
           <button
             type="button"
-            onClick={loadDishes}
+            onClick={reload}
             className="mt-1 px-3 py-1.5 bg-dragonfly-orange-500/20 text-dragonfly-orange-300 hover:bg-dragonfly-orange-500/30 rounded-lg text-caption font-semibold transition-colors min-h-[var(--touch-target)]"
           >
             Retry

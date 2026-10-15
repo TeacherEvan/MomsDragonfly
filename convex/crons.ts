@@ -25,4 +25,11 @@ crons.interval(
   internal.mutations.purgeExpiredTickets
 );
 
+// Purge stale area and enrichment cache daily
+crons.interval(
+  "purge-cache",
+  { hours: 24 },
+  internal.mutations.purgeExpiredCaches
+);
+
 export default crons;

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 
 import { Icon } from "@/components/ui/Icon";
 import { formatAmount } from "@/lib/utils/currency";
@@ -18,6 +18,15 @@ export function TicketDetailSheet({
   onClose,
   onDelete,
 }: TicketDetailSheetProps) {
+  useEffect(() => {
+    if (!ticket) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [ticket, onClose]);
+
   if (!ticket) return null;
 
   return (

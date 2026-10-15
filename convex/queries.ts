@@ -15,7 +15,7 @@ export const poiQuery = query({
   handler: async (ctx, { deviceId, category }) => {
     validateDeviceId(deviceId);
     const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-    return ctx.db
+    const pois = await ctx.db
       .query("pois")
       .withIndex("by_deviceIds_category", (q) =>
         category === "all"
@@ -24,6 +24,23 @@ export const poiQuery = query({
       )
       .filter((q) => q.gt(q.field("fetchedAt"), cutoff))
       .take(150);
+
+    // Allow-list fields: never return deviceIds to client
+    return pois.map((p) => ({
+      _id: p._id,
+      placeId: p.placeId,
+      source: p.source,
+      name: p.name,
+      category: p.category,
+      lat: p.lat,
+      lng: p.lng,
+      address: p.address,
+      rating: p.rating,
+      phone: p.phone,
+      openNow: p.openNow,
+      verifiedCount: p.verifiedCount,
+      fetchedAt: p.fetchedAt,
+    }));
   },
 });
 
@@ -42,11 +59,12 @@ export const historyQuery = query({
   args: { deviceId: v.string(), limit: v.number() },
   handler: async (ctx, { deviceId, limit }) => {
     validateDeviceId(deviceId);
+    const clampedLimit = Math.min(Math.max(1, limit), 1000);
     return ctx.db
       .query("locationHistory")
       .withIndex("by_deviceId_timestamp", (q) => q.eq("deviceId", deviceId))
       .order("desc")
-      .take(limit);
+      .take(clampedLimit);
   },
 });
 
@@ -198,10 +216,12 @@ export const shareView = query({
 export const getHighlightsCache = internalQuery({
   args: { locKey: v.string() },
   handler: async (ctx, { locKey }) => {
-    return ctx.db
+    const rows = await ctx.db
       .query("highlightsCache")
       .withIndex("by_locKey", (q) => q.eq("locKey", locKey))
-      .unique();
+      .order("desc")
+      .take(1);
+    return rows[0] ?? null;
   },
 });
 
@@ -209,10 +229,12 @@ export const getHighlightsCache = internalQuery({
 export const getDishesCache = internalQuery({
   args: { locKey: v.string() },
   handler: async (ctx, { locKey }) => {
-    return ctx.db
+    const rows = await ctx.db
       .query("dishesCache")
       .withIndex("by_locKey", (q) => q.eq("locKey", locKey))
-      .unique();
+      .order("desc")
+      .take(1);
+    return rows[0] ?? null;
   },
 });
 
@@ -220,9 +242,11 @@ export const getDishesCache = internalQuery({
 export const getPlaceEnrichCache = internalQuery({
   args: { key: v.string() },
   handler: async (ctx, { key }) => {
-    return ctx.db
+    const rows = await ctx.db
       .query("placeEnrichCache")
       .withIndex("by_key", (q) => q.eq("key", key))
-      .unique();
+      .order("desc")
+      .take(1);
+    return rows[0] ?? null;
   },
 });

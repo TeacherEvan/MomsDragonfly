@@ -8,22 +8,14 @@
  * fetch wrappers are testable with a stubbed global fetch.
  */
 
+import { fetchJson } from "./fetchWithTimeout";
+
 const WIKI_TIMEOUT_MS = 8_000;
 const WIKI_HEADERS = { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" };
 
 /** Neutral fetch: returns parsed JSON or null (never throws). */
 async function fetchWikiJson(url: string): Promise<unknown> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), WIKI_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, { headers: WIKI_HEADERS, signal: controller.signal });
-    if (!res.ok) return null;
-    return (await res.json()) as unknown;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  return fetchJson<unknown>(url, WIKI_HEADERS, WIKI_TIMEOUT_MS);
 }
 
 /** Thumbnail source out of a REST summary payload (null when absent). */

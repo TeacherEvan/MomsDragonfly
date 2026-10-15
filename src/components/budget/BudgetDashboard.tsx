@@ -83,6 +83,8 @@ export function BudgetDashboard() {
 
   return (
     <div className="flex flex-col gap-5 max-w-xl mx-auto p-4">
+      <h1 className="text-h1 font-bold text-dragonfly-navy-50">Budget</h1>
+
       {/* Header Summary with Animated Ring */}
       <div className="p-5 bg-dragonfly-navy-800/80 backdrop-blur-sm rounded-2xl border border-dragonfly-navy-700 shadow-soft flex flex-col items-center">
         <div className="w-full flex justify-between items-center mb-2">

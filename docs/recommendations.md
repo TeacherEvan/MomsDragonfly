@@ -33,3 +33,50 @@ When a `deviceId` has been leaked, travellers need a clean mechanism to generate
 3. **Emergency Disconnect / Hard Reset**:
    - Optional future enhancement to purge local IDB blobs, unregister push subscriptions, and generate an unlinked `deviceId` without migrating historical data.
 
+## Phase 6: Codebase Excellence & Feature Completion — ✅ Implemented & Tested
+Completed full-sweep audit, hardening, and feature completion:
+1. **Security (`sanitiseHttpsUrl`)**:
+   - Centralized URL sanitizer in `src/lib/utils/url.ts` blocking `javascript:` and other non-HTTPS schemes from external APIs/AI results.
+   - Verified with unit tests (`tests/unit/url.test.ts`) and integrated into `HighlightsCard.tsx`.
+2. **Accessibility & WCAG AA**:
+   - Resolved `nested-interactive` axe violations in `POICard.tsx`.
+   - Added `h1` landmark to Budget dashboard.
+   - Added `Escape` key listeners to modals and bottom sheets.
+   - Expanded E2E axe a11y testing to all 7 tabs (`tests/e2e/a11y.spec.ts`).
+3. **Unified Backend Caching**:
+   - Added unified `cache` table in `convex/schema.ts` with `readThroughCache` helper in `convex/cache.ts`.
+   - Centralized timeout handling in `convex/fetchWithTimeout.ts`.
+   - Automated cache cleanup cron (`purgeExpiredCaches`).
+4. **Backend Hardening**:
+   - Bounded `validateDeviceId` checks.
+   - Stripped internal `deviceIds` from `poiQuery` projections.
+   - Clamped unbounded list queries (`historyQuery`).
+   - Hardened POI upserts and recurring reminder recurrence advancement.
+5. **Local Phrases Feature**:
+   - Gemini prompt + curated fallbacks in `convex/phraseHelpers.ts`.
+   - Action `getLocalPhrases` in `convex/actions.ts` with 30-day cache.
+   - Built `PhrasebookCard.tsx` with clipboard copy and toast feedback.
+   - Integrated as third segmented tab (`"phrases"`) in `LocalClient.tsx`.
+   - Verified with `tests/unit/phrases.test.ts` and `tests/unit/PhrasebookCard.test.tsx`.
+6. **Canonical Hook (`useActionData`)**:
+   - Standardized Convex action execution with coordinate memoization, race condition elimination, and synchronous state resets on argument changes.
+7. **Dead Code Cleanup & Resilience**:
+   - Fixed ParticleCanvas DPR scaling and screen wrapping.
+   - Wrapped background OCR in try-catch in `TicketsClient.tsx`.
+   - Removed orphaned `IntroVideo.tsx`, `DragonflyBackground.tsx`, and `debug.spec.ts`.
+8. **Unified Fetch Boundary & AbortController Consolidation**:
+   - Consolidated 11 manual `AbortController` + timer sites in `convex/actions.ts`, `convex/wikiHelpers.ts`, and `convex/http.ts` into `convex/fetchWithTimeout.ts` with `isRetryable` helper and unit tests.
+   - Parallelized `sendDueReminders` preferences lookups via `Promise.all`.
+9. **Legacy Cache Drainage**:
+   - Added `purgeLegacyCaches` internal mutation to batch-delete all rows from `highlightsCache`, `dishesCache`, and `placeEnrichCache` to prepare for schema retirement.
+   - Extended `purgeExpiredCaches` to clean `dishesCache` (>7d) and `placeEnrichCache` (>30d).
+10. **Explore Movement Invalidation & Strict Coordinate Checks**:
+   - Replaced boolean coordinate checks with nullish guards in `src/app/(tabs)/explore/page.tsx` to handle equator coordinates (`lat === 0`).
+   - Automatically invalidates category fetch cache when user moves > 1km (~0.01°).
+11. **Service Worker Web Push Handlers & CSS Optimization**:
+   - Implemented `self.addEventListener('push', ...)` and `self.addEventListener('notificationclick', ...)` in `public/sw.js` with vibration, icon, and URL routing.
+   - Included `/manifest.json` and `/icons/icon-192x192.png` in precache assets and bumped cache version to `moms-dragonfly-v6`.
+   - Explicitly attached destination URL (`url: "/reminders"`) to reminder push payloads in `convex/actions.ts`.
+   - Removed duplicate `@keyframes` animation utility classes in `src/app/globals.css`.
+   - Added unit test coverage in `tests/unit/swPush.test.ts` (100% passing).
+

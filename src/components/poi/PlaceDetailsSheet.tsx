@@ -3,12 +3,12 @@
  * phone and hours. Fetched details belong to one place: a previous place's
  * details can never appear under a newly selected one. */
 "use client";
-import { useAction } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 
 import { api } from "@/app/providers";
 import { Icon } from "@/components/ui/Icon";
+import { useActionData } from "@/hooks/useActionData";
 import { CATEGORY_ICONS, categoryLabel, sourceLabel } from "@/lib/poi/categories";
 import { cn } from "@/lib/utils/cn";
 import { getDeviceId } from "@/lib/utils/deviceId";
@@ -27,13 +27,6 @@ interface PlaceDetailsResponse {
   hours?: string[];
 }
 
-/** Lookup result for one place. `key` records which place it belongs to. */
-interface Enrichment {
-  key: string;
-  photos: string[];
-  phone?: string;
-  hours: string[];
-}
 
 /** Everything the lookup needs, captured from the selected place. */
 interface EnrichTarget {
@@ -87,47 +80,56 @@ function toEnrichTarget(poi: NormalizedPOI | null): EnrichTarget | null {
 }
 
 export function PlaceDetailsSheet({ poi, onClose, onRequestRide, onShowOnMap }: Props) {
-  const getPlaceDetails = useAction(api.actions.getPlaceDetails);
-  const [enrichment, setEnrichment] = useState<Enrichment | null>(null);
   const target = useMemo(() => toEnrichTarget(poi), [poi]);
 
+  const args = useMemo(
+    () =>
+      target
+        ? {
+            deviceId: getDeviceId(),
+            placeId: target.placeId,
+            source: target.source,
+            name: target.name,
+            category: target.category,
+            lat: target.lat,
+            lng: target.lng,
+          }
+        : null,
+    [target]
+  );
+
+  const { data, loading: loadingAction } = useActionData<
+    {
+      deviceId: string;
+      placeId: string;
+      source: string;
+      name: string;
+      category?: string;
+      lat: number;
+      lng: number;
+    },
+    PlaceDetailsResponse
+  >(api.actions.getPlaceDetails, args);
+
   useEffect(() => {
-    if (!target) return;
-    // If the sheet has moved on to another place (or closed) before this answer
-    // arrives, drop it rather than let it overwrite the current place's details.
-    let stillCurrent = true;
-    getPlaceDetails({
-      deviceId: getDeviceId(),
-      placeId: target.placeId,
-      source: target.source,
-      name: target.name,
-      category: target.category,
-      lat: target.lat,
-      lng: target.lng,
-    })
-      .then((res) => {
-        if (!stillCurrent) return;
-        const details = (res ?? {}) as PlaceDetailsResponse;
-        setEnrichment({
-          key: target.key,
-          photos: (details.photos ?? []).filter(isShowablePhoto),
-          phone: details.phone,
-          hours: details.hours ?? [],
-        });
-      })
-      .catch(() => {
-        if (!stillCurrent) return;
-        console.warn("place details failed");
-        setEnrichment({ key: target.key, photos: [], hours: [] });
-      });
-    return () => {
-      stillCurrent = false;
+    if (!poi) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
     };
-  }, [target, getPlaceDetails]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [poi, onClose]);
 
   // Only details that belong to the place on screen are ever used.
-  const details = target && enrichment?.key === target.key ? enrichment : null;
-  const loading = target !== null && details === null;
+  const details = data
+    ? {
+        photos: (data.photos ?? []).filter(isShowablePhoto),
+        phone: data.phone,
+        hours: data.hours ?? [],
+      }
+    : null;
+
+  const loading = target !== null && loadingAction;
   const photos = details?.photos ?? [];
   const hours = details?.hours ?? [];
   const phone = poi?.phone ?? details?.phone;

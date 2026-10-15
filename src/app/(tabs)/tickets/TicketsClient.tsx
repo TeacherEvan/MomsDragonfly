@@ -180,19 +180,25 @@ export default function TicketsClient() {
 
         // 2) Enrichment + sync in the background
         void (async () => {
-          const { text } = await runTesseract(blob);
-          const parsed = parseTicket(text);
-          const hasData = Boolean(parsed.date || parsed.amount || parsed.venue);
-          await updateLocalTicket(localId, {
-            ocrText: text || undefined,
-            parsedDate: parsed.date,
-            parsedAmount: parsed.amount,
-            parsedVenue: parsed.venue,
-            enrichment: hasData ? "done" : "failed",
-          });
-          await refreshLocal();
-          await trySync(localId);
-          await refreshLocal();
+          try {
+            const { text } = await runTesseract(blob);
+            const parsed = parseTicket(text);
+            const hasData = Boolean(parsed.date || parsed.amount || parsed.venue);
+            await updateLocalTicket(localId, {
+              ocrText: text || undefined,
+              parsedDate: parsed.date,
+              parsedAmount: parsed.amount,
+              parsedVenue: parsed.venue,
+              enrichment: hasData ? "done" : "failed",
+            });
+            await refreshLocal();
+            await trySync(localId);
+            await refreshLocal();
+          } catch (ocrErr) {
+            console.warn("Background OCR failed:", ocrErr);
+            await updateLocalTicket(localId, { enrichment: "failed" });
+            await refreshLocal();
+          }
         })();
       } catch (err) {
         console.warn("Ticket save failed", err);

@@ -1,10 +1,9 @@
 "use client";
-import { useAction } from "convex/react";
-import { useEffect, useState } from "react";
-
 import { api } from "@/app/providers";
 import { Icon } from "@/components/ui/Icon";
+import { useActionData } from "@/hooks/useActionData";
 import { getDeviceId } from "@/lib/utils/deviceId";
+import { sanitiseHttpsUrl } from "@/lib/utils/url";
 import { weatherInfo } from "@/lib/utils/weather";
 
 interface HighlightsCardProps {
@@ -38,28 +37,14 @@ interface Highlights {
 
 /** Location-triggered weather + news highlights (cached ~30 min per area). */
 export function HighlightsCard({ lat, lng }: HighlightsCardProps) {
-  const fetchHighlights = useAction(api.actions.getHighlights);
-  const [data, setData] = useState<Highlights | null>(null);
-  const [failed, setFailed] = useState(false);
-
-  const rLat = Math.round(lat * 100) / 100;
-  const rLng = Math.round(lng * 100) / 100;
-
-  useEffect(() => {
-    let cancelled = false;
-    setFailed(false);
-    fetchHighlights({ deviceId: getDeviceId(), lat: rLat, lng: rLng })
-      .then((res) => {
-        if (!cancelled) setData(res as Highlights);
-      })
-      .catch((err) => {
-        console.warn("Highlights fetch failed:", err);
-        if (!cancelled) setFailed(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchHighlights, rLat, rLng]);
+  const { data, loading, failed, reload } = useActionData<
+    { deviceId: string; lat: number; lng: number },
+    Highlights
+  >(
+    api.actions.getHighlights,
+    { deviceId: getDeviceId(), lat, lng },
+    { roundCoords: 2 }
+  );
 
   if (!data && failed) {
     return (
@@ -77,12 +62,7 @@ export function HighlightsCard({ lat, lng }: HighlightsCardProps) {
           </p>
           <button
             type="button"
-            onClick={() => {
-              setFailed(false);
-              fetchHighlights({ deviceId: getDeviceId(), lat: rLat, lng: rLng })
-                .then((res) => setData(res as Highlights))
-                .catch(() => setFailed(true));
-            }}
+            onClick={reload}
             className="mt-1 px-3 py-1.5 bg-dragonfly-teal-500/20 text-dragonfly-teal-300 hover:bg-dragonfly-teal-500/30 rounded-lg text-caption font-semibold transition-colors min-h-[var(--touch-target)]"
           >
             Retry
@@ -92,7 +72,7 @@ export function HighlightsCard({ lat, lng }: HighlightsCardProps) {
     );
   }
 
-  if (!data) {
+  if (loading && !data) {
     return (
       <div
         className="rounded-xl border border-dragonfly-navy-800 bg-surface-900/70 p-4"
@@ -104,6 +84,8 @@ export function HighlightsCard({ lat, lng }: HighlightsCardProps) {
       </div>
     );
   }
+
+  if (!data) return null;
 
   const w = data.weather;
   const wInfo = w ? weatherInfo(w.code) : null;
@@ -158,24 +140,28 @@ export function HighlightsCard({ lat, lng }: HighlightsCardProps) {
             Near {data.locationName ?? "you"}
           </p>
           <ul className="space-y-1.5">
-            {data.news.slice(0, 3).map((n) => (
-              <li key={n.url}>
-                <a
-                  href={n.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block"
-                >
-                  <span className="line-clamp-2 text-body text-dragonfly-navy-200 group-hover:text-dragonfly-orange-400 transition-colors">
-                    {n.title}
-                  </span>
-                  <span className="text-caption text-dragonfly-navy-500">
-                    {n.source ?? "News"}
-                    {n.age ? ` · ${n.age}` : ""}
-                  </span>
-                </a>
-              </li>
-            ))}
+            {data.news.slice(0, 3).map((n) => {
+              const safeUrl = sanitiseHttpsUrl(n.url);
+              if (!safeUrl) return null;
+              return (
+                <li key={n.url}>
+                  <a
+                    href={safeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group block"
+                  >
+                    <span className="line-clamp-2 text-body text-dragonfly-navy-200 group-hover:text-dragonfly-orange-400 transition-colors">
+                      {n.title}
+                    </span>
+                    <span className="text-caption text-dragonfly-navy-500">
+                      {n.source ?? "News"}
+                      {n.age ? ` · ${n.age}` : ""}
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

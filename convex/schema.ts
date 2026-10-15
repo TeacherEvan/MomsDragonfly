@@ -77,6 +77,15 @@ export default defineSchema({
     fetchedAt: v.number(),
   }).index("by_key", ["key"]),
 
+  // ── Unified area & enrichment cache ──────────────────────────────────────────
+  cache: defineTable({
+    key: v.string(), // "<kind>:<locKey|placeKey>"
+    payload: v.string(), // JSON stringified payload
+    fetchedAt: v.number(),
+  })
+    .index("by_key", ["key"])
+    .index("by_fetchedAt", ["fetchedAt"]),
+
   // ── Expenses (plan B) ────────────────────────────────────────────────────────
   expenses: defineTable({
     deviceId: v.string(),

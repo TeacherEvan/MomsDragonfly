@@ -17,27 +17,24 @@ interface POICardProps {
 export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }: POICardProps) {
   return (
     <div
-      onClick={() => onSelect?.(poi)}
       className={cn(
         "flex items-center gap-3 p-3.5 rounded-xl border border-dragonfly-navy-800",
-        "bg-dragonfly-navy-900/80 backdrop-blur-sm shadow-soft",
-        "cursor-pointer transition-all duration-fast",
-        "hover:border-dragonfly-teal-500/40 hover:shadow-medium active:scale-[0.99]"
+        "bg-dragonfly-navy-900/80 backdrop-blur-sm shadow-soft transition-all duration-fast",
+        "hover:border-dragonfly-teal-500/40 hover:shadow-medium"
       )}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        // Only the card itself opens details. Enter/Space pressed on the inner
-        // Ride/Map/Verify buttons bubbles up here and must not select the place.
-        if (e.target !== e.currentTarget) return;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect?.(poi);
-        }
-      }}
-      aria-label={`Details for ${poi.name}`}
     >
-      <div className="flex-1 min-w-0">
+      <button
+        type="button"
+        onClick={() => onSelect?.(poi)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect?.(poi);
+          }
+        }}
+        className="flex-1 min-w-0 text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500/50 rounded-lg p-0.5"
+        aria-label={`Details for ${poi.name}`}
+      >
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-dragonfly-navy-50 line-clamp-2 text-body">
             {poi.name}
@@ -78,12 +75,13 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
             Details <Icon name="chevron-right" size={12} />
           </span>
         </div>
-      </div>
+      </button>
+
       <div className="flex items-center gap-1.5 shrink-0">
         {onRequestRide && (
           <button
             type="button"
-            onClick={(e)=>{e.stopPropagation(); onRequestRide?.(poi);}}
+            onClick={() => onRequestRide?.(poi)}
             className={cn(
               "shrink-0 px-3 py-1.5 rounded-lg text-caption font-semibold border transition-all duration-fast",
               "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",
@@ -97,7 +95,7 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
         {onShowOnMap && (
           <button
             type="button"
-            onClick={(e)=>{e.stopPropagation(); onShowOnMap?.(poi);}}
+            onClick={() => onShowOnMap?.(poi)}
             className={cn(
               "shrink-0 px-3 py-1.5 rounded-lg text-caption font-semibold border transition-all duration-fast",
               "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",
@@ -110,11 +108,7 @@ export function POICard({ poi, onVerify, onSelect, onShowOnMap, onRequestRide }:
         )}
         <button
           type="button"
-          onClick={(e) => {
-            // Verifying must not bubble up to the card and open its details.
-            e.stopPropagation();
-            onVerify();
-          }}
+          onClick={onVerify}
           className={cn(
             "shrink-0 px-3 py-1.5 rounded-lg text-caption font-semibold border transition-all duration-fast",
             "min-h-[var(--touch-target)] min-w-[var(--touch-target)]",

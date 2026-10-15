@@ -1,5 +1,5 @@
 // Service worker for Mom's Dragonfly PWA
-const CACHE_NAME = 'moms-dragonfly-v5';
+const CACHE_NAME = 'moms-dragonfly-v6';
 const MEDIA_CACHE = 'moms-dragonfly-media-v1';
 const OFFLINE_URL = '/offline.html';
 
@@ -14,6 +14,8 @@ const PRECACHE_URLS = [
   '/tickets',
   '/settings',
   OFFLINE_URL,
+  '/manifest.json',
+  '/icons/icon-192x192.png',
   '/intro.jpg',
   '/dragonfly-backdrop.jpg',
 ];
@@ -148,5 +150,62 @@ self.addEventListener('fetch', (event) => {
       const cached = await caches.match(request);
       return cached || Response.error();
     })
+  );
+});
+
+// Push notifications - handle incoming push payload and display notification
+self.addEventListener('push', (event) => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch {
+      data = { title: event.data.text() };
+    }
+  }
+
+  const title = data.title || "Mom's Dragonfly Reminder";
+  const options = {
+    body: data.body || 'You have an upcoming travel reminder.',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-192x192.png',
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/reminders',
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Notification click - focus existing tab or navigate to destination
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/reminders';
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if ('focus' in client) {
+            const clientUrl = new URL(client.url);
+            if (clientUrl.origin === self.location.origin) {
+              if (clientUrl.pathname === targetUrl || clientUrl.pathname.startsWith(targetUrl)) {
+                return client.focus();
+              }
+              if ('navigate' in client) {
+                return client.navigate(targetUrl).then((navigatedClient) => {
+                  return navigatedClient ? navigatedClient.focus() : client.focus();
+                });
+              }
+              return client.focus();
+            }
+          }
+        }
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl);
+        }
+      })
   );
 });

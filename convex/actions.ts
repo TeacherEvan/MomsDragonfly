@@ -4,7 +4,15 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { action } from "./_generated/server";
 import { validateDeviceId } from "./auth";
+import { cellKey, readThroughCache } from "./cache";
 import { type DishItem, fallbackDishes, parseDishResponse } from "./dishHelpers";
+import { fetchJson, fetchWithTimeout } from "./fetchWithTimeout";
+import {
+  fallbackPhrases,
+  parsePhraseResponse,
+  type PhraseItem,
+  type PhrasesPayload,
+} from "./phraseHelpers";
 import {
   buildPhotoProxyUrl,
   buildStreetViewProxyUrl,
@@ -74,10 +82,8 @@ async function fetchOverpass(query: string): Promise<OverpassElement[]> {
   let lastError: unknown = null;
 
   for (const endpoint of OVERPASS_ENDPOINTS) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25_000);
     try {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         endpoint.method === "GET"
           ? `${endpoint.url}?data=${encodeURIComponent(query)}`
           : endpoint.url,
@@ -93,10 +99,9 @@ async function fetchOverpass(query: string): Promise<OverpassElement[]> {
             endpoint.method === "POST"
               ? `data=${encodeURIComponent(query)}`
               : undefined,
-          signal: controller.signal,
+          timeoutMs: 25_000,
         }
       );
-      clearTimeout(timeoutId);
 
       if (!res.ok) {
         lastError = new Error(`Overpass ${res.status} from ${endpoint.url}`);
@@ -107,7 +112,6 @@ async function fetchOverpass(query: string): Promise<OverpassElement[]> {
       const data = await res.json();
       return (data.elements ?? []) as OverpassElement[];
     } catch (err) {
-      clearTimeout(timeoutId);
       lastError = err;
       console.warn("Overpass endpoint error:", endpoint.url, String(err).slice(0, 200));
     }
@@ -157,6 +161,7 @@ export const fetchOverpassNearby = action({
     radius: v.number(),
   },
   handler: async (ctx, { deviceId, lat, lng, radius }) => {
+    validateDeviceId(deviceId);
     const query = `
       [out:json][timeout:25];
       (
@@ -233,42 +238,34 @@ async function fetchGooglePlaces(
   const types = GOOGLE_TYPES[category];
   if (!types) return [];
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 12_000);
-  try {
-    const res = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": key,
-        "X-Goog-FieldMask":
-          "places.id,places.displayName,places.location,places.rating,places.currentOpeningHours,places.formattedAddress,places.internationalPhoneNumber",
-      },
-      body: JSON.stringify({
-        includedTypes: types,
-        maxResultCount: 20,
-        locationRestriction: {
-          circle: {
-            center: { latitude: lat, longitude: lng },
-            radius,
-          },
+  const res = await fetchWithTimeout("https://places.googleapis.com/v1/places:searchNearby", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": key,
+      "X-Goog-FieldMask":
+        "places.id,places.displayName,places.location,places.rating,places.currentOpeningHours,places.formattedAddress,places.internationalPhoneNumber",
+    },
+    body: JSON.stringify({
+      includedTypes: types,
+      maxResultCount: 20,
+      locationRestriction: {
+        circle: {
+          center: { latitude: lat, longitude: lng },
+          radius,
         },
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
+      },
+    }),
+    timeoutMs: 12_000,
+  });
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      throw new Error(`Google Places ${res.status}: ${body.slice(0, 160)}`);
-    }
-
-    const data = await res.json();
-    return (data.places ?? []) as GooglePlace[];
-  } catch (err) {
-    clearTimeout(timeoutId);
-    throw err;
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Google Places ${res.status}: ${body.slice(0, 160)}`);
   }
+
+  const data = await res.json();
+  return (data.places ?? []) as GooglePlace[];
 }
 
 export const fetchNearby = action({
@@ -280,6 +277,7 @@ export const fetchNearby = action({
     category: v.string(),
   },
   handler: async (ctx, { deviceId, lat, lng, radius, category }) => {
+    validateDeviceId(deviceId);
     const recent = await ctx.runQuery(api.queries.recentFetchCheck, {
       deviceId,
       category,
@@ -376,21 +374,18 @@ export const fetchEntertainment = action({
     radius: v.number(),
   },
   handler: async (ctx, { deviceId, lat, lng, radius }) => {
+    validateDeviceId(deviceId);
     // 1) Brave Search (free tier) — optional
     const braveKey = process.env.BRAVE_SEARCH_API_KEY;
     if (braveKey) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10_000);
-
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `https://api.search.brave.com/res/v1/local/pois?q=entertainment+events&latitude=${lat}&longitude=${lng}&count=20`,
           {
             headers: { "Accept-Encoding": "gzip", "X-Subscription-Token": braveKey },
-            signal: controller.signal,
+            timeoutMs: 10_000,
           }
         );
-        clearTimeout(timeoutId);
 
         if (res.ok) {
           const data = await res.json();
@@ -497,11 +492,9 @@ export const geminiOCR = action({
     }
 
     const model = process.env.GEMINI_MODEL ?? "gemini-flash-latest";
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
     try {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
         {
           method: "POST",
@@ -518,10 +511,9 @@ export const geminiOCR = action({
               },
             ],
           }),
-          signal: controller.signal,
+          timeoutMs: 30_000,
         }
       );
-      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const body = await res.text().catch(() => "");
@@ -537,7 +529,6 @@ export const geminiOCR = action({
       const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
       return { ok: true as const, text };
     } catch (err) {
-      clearTimeout(timeoutId);
       console.error("Gemini request failed:", String(err).slice(0, 200));
       return { ok: false as const, text: "", reason: "AI analysis unavailable" };
     }
@@ -576,133 +567,108 @@ interface HighlightsPayload {
   fetchedAt: number;
 }
 
-async function fetchJson(
-  url: string,
-  headers: Record<string, string>,
-  timeoutMs: number
-): Promise<unknown> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { headers, signal: controller.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
 export const getHighlights = action({
   args: { deviceId: v.string(), lat: v.number(), lng: v.number() },
   handler: async (ctx, { deviceId, lat, lng }): Promise<HighlightsPayload> => {
     validateDeviceId(deviceId);
-    const locKey = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+    const locKey = cellKey(lat, lng, 2);
 
-    const cached = await ctx.runQuery(internal.queries.getHighlightsCache, { locKey });
-    if (cached && Date.now() - cached.fetchedAt < HIGHLIGHTS_TTL_MS) {
-      try {
-        return JSON.parse(cached.payload) as HighlightsPayload;
-      } catch {
-        // fall through and refetch
-      }
-    }
+    return readThroughCache<HighlightsPayload>(ctx, {
+      kind: "highlights",
+      key: locKey,
+      ttlMs: HIGHLIGHTS_TTL_MS,
+      shouldCache: (payload) => Boolean(payload.weather || payload.news.length > 0),
+      load: async () => {
+        let locationName: string | null = null;
+        let country: string | null = null;
+        let weather: WeatherPayload | null = null;
+        let news: HighlightNews[] = [];
 
-    let locationName: string | null = null;
-    let country: string | null = null;
-    let weather: WeatherPayload | null = null;
-    let news: HighlightNews[] = [];
-
-    // 1) Weather + today's range (Open-Meteo, keyless)
-    try {
-      const w = (await fetchJson(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
-          `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day` +
-          `&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`,
-        {},
-        10_000
-      )) as {
-        current?: Record<string, number>;
-        daily?: { temperature_2m_max?: number[]; temperature_2m_min?: number[] };
-      };
-      if (w?.current) {
-        weather = {
-          tempC: w.current.temperature_2m,
-          feelsC: w.current.apparent_temperature,
-          windKmh: w.current.wind_speed_10m,
-          code: w.current.weather_code,
-          isDay: w.current.is_day === 1,
-          maxC: w.daily?.temperature_2m_max?.[0] ?? null,
-          minC: w.daily?.temperature_2m_min?.[0] ?? null,
-        };
-      }
-    } catch (err) {
-      console.warn("Highlights: weather fetch failed:", String(err).slice(0, 160));
-    }
-
-    // 2) Place name (Nominatim reverse geocode, polite UA)
-    try {
-      const n = (await fetchJson(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&accept-language=en`,
-        { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" },
-        10_000
-      )) as {
-        name?: string;
-        address?: Record<string, string>;
-      };
-      const a = n?.address ?? {};
-      locationName = a.city ?? a.town ?? a.suburb ?? a.village ?? a.county ?? n?.name ?? null;
-      country = a.country ?? null;
-    } catch (err) {
-      console.warn("Highlights: geocode failed:", String(err).slice(0, 160));
-    }
-
-    // 3) Area news (Brave; key optional)
-    const braveKey = process.env.BRAVE_SEARCH_API_KEY;
-    if (braveKey && locationName) {
-      try {
-        const q = encodeURIComponent(
-          [locationName, country].filter(Boolean).join(" ")
-        );
-        const b = (await fetchJson(
-          `https://api.search.brave.com/res/v1/news/search?q=${q}&count=6&freshness=pw`,
-          { "Accept-Encoding": "gzip", "X-Subscription-Token": braveKey },
-          10_000
-        )) as { results?: Array<Record<string, unknown>> };
-        news = (b?.results ?? [])
-          .slice(0, 5)
-          .map((r) => {
-            const source = r.source as { name?: string } | undefined;
-            const metaUrl = r.meta_url as { hostname?: string } | undefined;
-            return {
-              title: (r.title as string) ?? "Untitled",
-              url: (r.url as string) ?? "",
-              source: source?.name ?? metaUrl?.hostname ?? undefined,
-              age: (r.age as string) ?? undefined,
+        // 1) Weather + today's range (Open-Meteo, keyless)
+        try {
+          const w = await fetchJson<{
+            current?: Record<string, number>;
+            daily?: { temperature_2m_max?: number[]; temperature_2m_min?: number[] };
+          }>(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
+              `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day` +
+              `&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`,
+            {},
+            10_000
+          );
+          if (w?.current) {
+            weather = {
+              tempC: w.current.temperature_2m,
+              feelsC: w.current.apparent_temperature,
+              windKmh: w.current.wind_speed_10m,
+              code: w.current.weather_code,
+              isDay: w.current.is_day === 1,
+              maxC: w.daily?.temperature_2m_max?.[0] ?? null,
+              minC: w.daily?.temperature_2m_min?.[0] ?? null,
             };
-          })
-          .filter((n) => n.url);
-      } catch (err) {
-        console.warn("Highlights: news fetch failed:", String(err).slice(0, 160));
-      }
-    }
+          }
+        } catch (err) {
+          console.warn("Highlights: weather fetch failed:", String(err).slice(0, 160));
+        }
 
-    const payload: HighlightsPayload = {
-      locationName,
-      weather,
-      news,
-      fetchedAt: Date.now(),
-    };
+        // 2) Place name (Nominatim reverse geocode, polite UA)
+        try {
+          const n = await fetchJson<{
+            name?: string;
+            address?: Record<string, string>;
+          }>(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&accept-language=en`,
+            { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" },
+            10_000
+          );
+          const a = n?.address ?? {};
+          locationName = a.city ?? a.town ?? a.suburb ?? a.village ?? a.county ?? n?.name ?? null;
+          country = a.country ?? null;
+        } catch (err) {
+          console.warn("Highlights: geocode failed:", String(err).slice(0, 160));
+        }
 
-    if (weather || news.length > 0) {
-      await ctx.runMutation(internal.mutations.setHighlightsCache, {
-        locKey,
-        payload: JSON.stringify(payload),
-      });
-    }
+        // 3) Area news (Brave; key optional)
+        const braveKey = process.env.BRAVE_SEARCH_API_KEY;
+        if (braveKey && locationName) {
+          try {
+            const q = encodeURIComponent(
+              [locationName, country].filter(Boolean).join(" ")
+            );
+            const b = await fetchJson<{ results?: Array<Record<string, unknown>> }>(
+              `https://api.search.brave.com/res/v1/news/search?q=${q}&count=6&freshness=pw`,
+              { "Accept-Encoding": "gzip", "X-Subscription-Token": braveKey },
+              10_000
+            );
+            news = (b?.results ?? [])
+              .slice(0, 5)
+              .map((r) => {
+                const source = r.source as { name?: string } | undefined;
+                const metaUrl = r.meta_url as { hostname?: string } | undefined;
+                return {
+                  title: (r.title as string) ?? "Untitled",
+                  url: (r.url as string) ?? "",
+                  source: source?.name ?? metaUrl?.hostname ?? undefined,
+                  age: (r.age as string) ?? undefined,
+                };
+              })
+              .filter((n) => n.url);
+          } catch (err) {
+            console.warn("Highlights: news fetch failed:", String(err).slice(0, 160));
+          }
+        }
 
-    return payload;
+        return {
+          locationName,
+          weather,
+          news,
+          fetchedAt: Date.now(),
+        };
+      },
+    });
   },
 });
+
 
 /* ────────────────────────────────────────────────────────────────────────────
  * getLocalDishes — popular local dishes for the area, cached ~7 days per
@@ -727,11 +693,9 @@ async function generateDishesWithGemini(
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || !areaName) return null;
   const model = process.env.GEMINI_MODEL ?? "gemini-flash-latest";
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25_000);
 
   try {
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         method: "POST",
@@ -753,10 +717,9 @@ async function generateDishesWithGemini(
             },
           ],
         }),
-        signal: controller.signal,
+        timeoutMs: 25_000,
       }
     );
-    clearTimeout(timeoutId);
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
@@ -767,7 +730,6 @@ async function generateDishesWithGemini(
     const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     return parseDishResponse(text);
   } catch (err) {
-    clearTimeout(timeoutId);
     console.warn("Dishes: Gemini request failed:", String(err).slice(0, 160));
     return null;
   }
@@ -777,58 +739,151 @@ export const getLocalDishes = action({
   args: { deviceId: v.string(), lat: v.number(), lng: v.number() },
   handler: async (ctx, { deviceId, lat, lng }): Promise<DishesPayload> => {
     validateDeviceId(deviceId);
-    const locKey = `${lat.toFixed(1)},${lng.toFixed(1)}`;
+    const locKey = cellKey(lat, lng, 1);
 
-    const cached = await ctx.runQuery(internal.queries.getDishesCache, { locKey });
-    if (cached && Date.now() - cached.fetchedAt < DISHES_TTL_MS) {
-      try {
-        return JSON.parse(cached.payload) as DishesPayload;
-      } catch {
-        // fall through and refetch
-      }
-    }
+    return readThroughCache<DishesPayload>(ctx, {
+      kind: "dishes",
+      key: locKey,
+      ttlMs: DISHES_TTL_MS,
+      shouldCache: (payload) => payload.dishes.length > 0,
+      load: async () => {
+        let areaName: string | null = null;
+        let country: string | null = null;
 
-    let areaName: string | null = null;
-    let country: string | null = null;
+        // 1) Area name (Nominatim reverse geocode, polite UA, city-level zoom)
+        try {
+          const n = await fetchJson<{ name?: string; address?: Record<string, string> }>(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&accept-language=en`,
+            { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" },
+            10_000
+          );
+          const a = n?.address ?? {};
+          areaName = a.city ?? a.town ?? a.village ?? a.county ?? a.state ?? n?.name ?? null;
+          country = a.country ?? null;
+        } catch (err) {
+          console.warn("Dishes: geocode failed:", String(err).slice(0, 160));
+        }
 
-    // 1) Area name (Nominatim reverse geocode, polite UA, city-level zoom)
-    try {
-      const n = (await fetchJson(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&accept-language=en`,
-        { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" },
-        10_000
-      )) as { name?: string; address?: Record<string, string> };
-      const a = n?.address ?? {};
-      areaName = a.city ?? a.town ?? a.village ?? a.county ?? a.state ?? n?.name ?? null;
-      country = a.country ?? null;
-    } catch (err) {
-      console.warn("Dishes: geocode failed:", String(err).slice(0, 160));
-    }
+        // 2) Dish list — Gemini first, curated fallback second (AI optional)
+        const generated = await generateDishesWithGemini(areaName, country);
+        const dishes: DishItem[] = generated ?? fallbackDishes(areaName, country);
 
-    // 2) Dish list — Gemini first, curated fallback second (AI optional)
-    const generated = await generateDishesWithGemini(areaName, country);
-    const dishes: DishItem[] = generated ?? fallbackDishes(areaName, country);
+        // 3) Pictures — Wikipedia summary thumbnails (keyless), in parallel
+        const enriched = await Promise.all(
+          dishes.map(async (dish) => ({
+            ...dish,
+            imageUrl: await wikipediaThumbnail(dish.name),
+          }))
+        );
 
-    // 3) Pictures — Wikipedia summary thumbnails (keyless), in parallel
-    const enriched = await Promise.all(
-      dishes.map(async (dish) => ({
-        ...dish,
-        imageUrl: await wikipediaThumbnail(dish.name),
-      }))
-    );
-
-    const payload: DishesPayload = { areaName, dishes: enriched, fetchedAt: Date.now() };
-
-    if (enriched.length > 0) {
-      await ctx.runMutation(internal.mutations.setDishesCache, {
-        locKey,
-        payload: JSON.stringify(payload),
-      });
-    }
-
-    return payload;
+        return { areaName, dishes: enriched, fetchedAt: Date.now() };
+      },
+    });
   },
 });
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * getLocalPhrases — 10 essential everyday local phrases, cached 30 days per
+ * city-level cell. Gemini AI with curated fallbacks for offline/test reliability.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+const PHRASES_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+async function generatePhrasesWithGemini(
+  areaName: string | null,
+  country: string | null
+): Promise<{ language: string | null; phrases: PhraseItem[] } | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || !areaName) return null;
+  const model = process.env.GEMINI_MODEL ?? "gemini-flash-latest";
+
+  try {
+    const res = await fetchWithTimeout(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text:
+                    `You are a warm, helpful local travel guide. Identify the primary local language ` +
+                    `spoken by locals in ${areaName}${country ? `, ${country}` : ""}. If English is the main ` +
+                    `language or lingua franca (e.g. UK, USA, Australia), pick the most notable local dialect ` +
+                    `or informal everyday slang phrases travelers encounter. Otherwise pick the local language. ` +
+                    `List exactly 10 essential everyday travel phrases (e.g. Hello, Thank you, Please, Excuse me, ` +
+                    `How much is this?, Where is the bathroom?, Yes, No, Delicious, Do you speak English?). ` +
+                    `Reply with ONLY a JSON object (no markdown, no prose) shaped: ` +
+                    `{"language": "Name of Language", "phrases": [{"local": "Native script/text", "roman": "phonetic pronunciation", "english": "English translation", "note": "brief usage tip max 8 words"}]}`,
+                },
+              ],
+            },
+          ],
+        }),
+        timeoutMs: 25_000,
+      }
+    );
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.warn(`Phrases: Gemini error ${res.status} — ${body.slice(0, 300)}`);
+      return null;
+    }
+    const data = await res.json();
+    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    return parsePhraseResponse(text);
+  } catch (err) {
+    console.warn("Phrases: Gemini request failed:", String(err).slice(0, 160));
+    return null;
+  }
+}
+
+export const getLocalPhrases = action({
+  args: { deviceId: v.string(), lat: v.number(), lng: v.number() },
+  handler: async (ctx, { deviceId, lat, lng }): Promise<PhrasesPayload> => {
+    validateDeviceId(deviceId);
+    const locKey = cellKey(lat, lng, 1);
+
+    return readThroughCache<PhrasesPayload>(ctx, {
+      kind: "phrases",
+      key: locKey,
+      ttlMs: PHRASES_TTL_MS,
+      shouldCache: (payload) => payload.phrases.length > 0,
+      load: async () => {
+        let areaName: string | null = null;
+        let country: string | null = null;
+
+        // 1) Area name (Nominatim reverse geocode, polite UA, city-level zoom)
+        try {
+          const n = await fetchJson<{ name?: string; address?: Record<string, string> }>(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&accept-language=en`,
+            { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" },
+            10_000
+          );
+          const a = n?.address ?? {};
+          areaName = a.city ?? a.town ?? a.village ?? a.county ?? a.state ?? n?.name ?? null;
+          country = a.country ?? null;
+        } catch (err) {
+          console.warn("Phrases: geocode failed:", String(err).slice(0, 160));
+        }
+
+        // 2) Phrases — Gemini first, curated fallback second
+        const generated = await generatePhrasesWithGemini(areaName, country);
+        const resolved = generated ?? fallbackPhrases(areaName, country);
+
+        return {
+          areaName,
+          language: resolved.language,
+          phrases: resolved.phrases,
+          fetchedAt: Date.now(),
+        };
+      },
+    });
+  },
+});
+
 
 /* ────────────────────────────────────────────────────────────────────────────
  * getPlaceDetails — lazy enrichment for one selected place. Google Places
@@ -854,10 +909,8 @@ async function fetchGooglePlaceDetails(
   placeId: string,
   key: string
 ): Promise<unknown | null> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 12_000);
   try {
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
       {
         headers: {
@@ -865,10 +918,9 @@ async function fetchGooglePlaceDetails(
           "X-Goog-FieldMask":
             "photos,nationalPhoneNumber,regularOpeningHours,userRatingCount",
         },
-        signal: controller.signal,
+        timeoutMs: 12_000,
       }
     );
-    clearTimeout(timeoutId);
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
@@ -877,7 +929,6 @@ async function fetchGooglePlaceDetails(
     }
     return await res.json();
   } catch (err) {
-    clearTimeout(timeoutId);
     console.warn("PlaceDetails: Google request failed:", String(err).slice(0, 200));
     return null;
   }
@@ -897,13 +948,10 @@ async function streetViewHasImagery(
   lng: number,
   key: string
 ): Promise<boolean> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8_000);
   try {
-    const res = await fetch(streetViewMetadataUrl(lat, lng, key), {
-      signal: controller.signal,
+    const res = await fetchWithTimeout(streetViewMetadataUrl(lat, lng, key), {
+      timeoutMs: 8_000,
     });
-    clearTimeout(timeoutId);
     if (!res.ok) {
       console.warn(`PlaceDetails: StreetView metadata ${res.status}`);
       return false;
@@ -911,7 +959,6 @@ async function streetViewHasImagery(
     const json = (await res.json()) as { status?: unknown };
     return json?.status === "OK";
   } catch (err) {
-    clearTimeout(timeoutId);
     console.warn(
       "PlaceDetails: StreetView metadata failed:",
       String(err).slice(0, 160)
@@ -937,112 +984,79 @@ export const getPlaceDetails = action({
     validateDeviceId(deviceId);
     const key = placeCacheKey({ source, placeId, name, lat, lng });
 
-    const cached = await ctx.runQuery(internal.queries.getPlaceEnrichCache, { key });
-    if (cached && Date.now() - cached.fetchedAt < PLACE_ENRICH_TTL_MS) {
-      try {
-        return JSON.parse(cached.payload) as PlaceDetailsPayload;
-      } catch {
-        // fall through and refetch
-      }
-    }
+    return readThroughCache<PlaceDetailsPayload>(ctx, {
+      kind: "placeEnrich",
+      key,
+      ttlMs: PLACE_ENRICH_TTL_MS,
+      shouldCache: (payload) =>
+        payload.photos.length > 0 ||
+        payload.phone !== undefined ||
+        payload.hours !== undefined ||
+        payload.ratingCount !== undefined,
+      load: async () => {
+        const siteUrl = deriveConvexSiteUrl(process.env);
+        const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+        let details: GooglePlaceDetails = { photos: [] };
+        let photos: string[] = [];
 
-    const siteUrl = deriveConvexSiteUrl(process.env);
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-    let details: GooglePlaceDetails = { photos: [] };
-    let photos: string[] = [];
-
-    // 1) Google Places Details (New) — only for Google-sourced rows with an id
-    if (String(source).toLowerCase() === "google" && placeId && apiKey && siteUrl) {
-      const json = await fetchGooglePlaceDetails(placeId, apiKey);
-      if (json) {
-        details = mapGoogleDetails(json);
-        photos = details.photos
-          .slice(0, PLACE_PHOTO_LIMIT)
-          .map((ref) => buildPhotoProxyUrl(siteUrl, ref, 800));
-      }
-    } else if (!apiKey) {
-      console.warn("PlaceDetails: GOOGLE_PLACES_API_KEY not set — Wikipedia fallback only");
-    }
-
-    // 2) Street View fallback — a photo of the actual coordinates, proxied
-    // through the site URL so the key stays server-side. Keyed off lat/lng
-    // (never the name), it structurally cannot show a picture of the wrong
-    // place. Skipped silently when the key lacks Street View access or the
-    // location has no imagery (metadata status !== OK) — the metadata check
-    // itself is free and unbilled.
-    if (photos.length === 0 && siteUrl && apiKey) {
-      try {
-        if (await streetViewHasImagery(lat, lng, apiKey)) {
-          photos = [buildStreetViewProxyUrl(siteUrl, lat, lng)];
+        // 1) Google Places Details (New) — only for Google-sourced rows with an id
+        if (String(source).toLowerCase() === "google" && placeId && apiKey && siteUrl) {
+          const json = await fetchGooglePlaceDetails(placeId, apiKey);
+          if (json) {
+            details = mapGoogleDetails(json);
+            photos = details.photos
+              .slice(0, PLACE_PHOTO_LIMIT)
+              .map((ref) => buildPhotoProxyUrl(siteUrl, ref, 800));
+          }
+        } else if (!apiKey) {
+          console.warn("PlaceDetails: GOOGLE_PLACES_API_KEY not set — Wikipedia fallback only");
         }
-      } catch (err) {
-        console.warn(
-          "PlaceDetails: Street View fallback failed:",
-          String(err).slice(0, 160)
-        );
-      }
-    }
 
-    // 3) Wikipedia geosearch — keyless and coordinate-anchored: an article
-    // whose SUBJECT stands within ~1.5 km of the place AND whose title
-    // matches the name describes this exact spot (the same guarantee Street
-    // View gives, without an API key). Verified live: the OSM row "old arts"
-    // near Pretoria matches "Old Arts Building (University of Pretoria)" at
-    // 704 m. Runs before the name-only search because the anchor makes it
-    // strictly safer; both pass the same relevance gates.
-    if (photos.length === 0) {
-      try {
-        photos = await wikipediaPlacePhotosAt(lat, lng, name, 2);
-      } catch (err) {
-        console.warn("PlaceDetails: Wikipedia geosearch failed:", String(err).slice(0, 160));
-        photos = [];
-      }
-    }
+        // 2) Street View fallback
+        if (photos.length === 0 && siteUrl && apiKey) {
+          try {
+            if (await streetViewHasImagery(lat, lng, apiKey)) {
+              photos = [buildStreetViewProxyUrl(siteUrl, lat, lng)];
+            }
+          } catch (err) {
+            console.warn(
+              "PlaceDetails: Street View fallback failed:",
+              String(err).slice(0, 160)
+            );
+          }
+        }
 
-    // 4) Wikipedia name-search fallback — last resort, only for locations
-    // with no geosearch match. Category-aware + gated (wikiHelpers
-    // .wikipediaPlaceImages): a wrong picture of the wrong place ("Clicks" →
-    // the Clicks Communicator phone, "La Fiamma" → the Respighi opera
-    // portrait) is worse than none.
-    if (photos.length === 0) {
-      try {
-        photos = await wikipediaPlaceImages(name, category, 2);
-      } catch (err) {
-        console.warn("PlaceDetails: Wikipedia fallback failed:", String(err).slice(0, 160));
-        photos = [];
-      }
-    }
+        // 3) Wikipedia geosearch
+        if (photos.length === 0) {
+          try {
+            photos = await wikipediaPlacePhotosAt(lat, lng, name, 2);
+          } catch (err) {
+            console.warn("PlaceDetails: Wikipedia geosearch failed:", String(err).slice(0, 160));
+            photos = [];
+          }
+        }
 
-    const payload: PlaceDetailsPayload = {
-      photos,
-      ...(details.phone ? { phone: details.phone } : {}),
-      ...(details.hours && details.hours.length > 0 ? { hours: details.hours } : {}),
-      ...(typeof details.ratingCount === "number"
-        ? { ratingCount: details.ratingCount }
-        : {}),
-      fetchedAt: Date.now(),
-    };
+        // 4) Wikipedia name-search fallback
+        if (photos.length === 0) {
+          try {
+            photos = await wikipediaPlaceImages(name, category, 2);
+          } catch (err) {
+            console.warn("PlaceDetails: Wikipedia fallback failed:", String(err).slice(0, 160));
+            photos = [];
+          }
+        }
 
-    // Only cache productive results so a transient outage doesn't pin an empty
-    // payload for the whole 30-day TTL (mirrors the dishes cache guard).
-    const worthCaching =
-      payload.photos.length > 0 ||
-      payload.phone !== undefined ||
-      payload.hours !== undefined ||
-      payload.ratingCount !== undefined;
-
-    if (worthCaching) {
-      try {
-        await ctx.runMutation(internal.mutations.setPlaceEnrichCache, {
-          key,
-          payload: JSON.stringify(payload),
-        });
-      } catch (err) {
-        console.warn("PlaceDetails: cache write failed:", String(err).slice(0, 160));
-      }
-    }
-
-    return payload;
+        return {
+          photos,
+          ...(details.phone ? { phone: details.phone } : {}),
+          ...(details.hours && details.hours.length > 0 ? { hours: details.hours } : {}),
+          ...(typeof details.ratingCount === "number"
+            ? { ratingCount: details.ratingCount }
+            : {}),
+          fetchedAt: Date.now(),
+        };
+      },
+    });
   },
 });
 
@@ -1095,14 +1109,17 @@ export const sendDueReminders = internalAction({
     const deviceIds = [...new Set(due.map((r) => r.deviceId))];
     const prefsMap = new Map<string, UserPrefs>();
 
-    for (const deviceId of deviceIds) {
-      const prefs = (await ctx.runQuery(api.queries.prefsQuery, {
-        deviceId,
-      })) as UserPrefs | null;
+    const prefsList = (await Promise.all(
+      deviceIds.map((deviceId) =>
+        ctx.runQuery(api.queries.prefsQuery, { deviceId })
+      )
+    )) as (UserPrefs | null)[];
+
+    prefsList.forEach((prefs, idx) => {
       if (prefs) {
-        prefsMap.set(deviceId, prefs);
+        prefsMap.set(deviceIds[idx], prefs);
       }
-    }
+    });
 
     // Devices whose push endpoint is permanently gone (404/410) — clear the
     // stored subscription after the loop so we stop hammering a dead endpoint
@@ -1146,6 +1163,7 @@ export const sendDueReminders = internalAction({
           JSON.stringify({
             title: reminder.title,
             body: reminder.body ?? "",
+            url: "/reminders",
           })
         );
         await ctx.runMutation(internal.mutations.markReminderSent, {

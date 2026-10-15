@@ -10,11 +10,14 @@
 
 import type * as actions from "../actions.js";
 import type * as auth from "../auth.js";
+import type * as cache from "../cache.js";
 import type * as crons from "../crons.js";
 import type * as dishHelpers from "../dishHelpers.js";
+import type * as fetchWithTimeout from "../fetchWithTimeout.js";
 import type * as http from "../http.js";
 import type * as limits from "../limits.js";
 import type * as mutations from "../mutations.js";
+import type * as phraseHelpers from "../phraseHelpers.js";
 import type * as placeHelpers from "../placeHelpers.js";
 import type * as queries from "../queries.js";
 import type * as wikiHelpers from "../wikiHelpers.js";
@@ -28,11 +31,14 @@ import type {
 declare const fullApi: ApiFromModules<{
   actions: typeof actions;
   auth: typeof auth;
+  cache: typeof cache;
   crons: typeof crons;
   dishHelpers: typeof dishHelpers;
+  fetchWithTimeout: typeof fetchWithTimeout;
   http: typeof http;
   limits: typeof limits;
   mutations: typeof mutations;
+  phraseHelpers: typeof phraseHelpers;
   placeHelpers: typeof placeHelpers;
   queries: typeof queries;
   wikiHelpers: typeof wikiHelpers;

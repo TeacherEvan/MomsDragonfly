@@ -155,8 +155,9 @@ export function ParticleCanvas({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const width = canvas.offsetWidth || (dpr ? canvas.width / dpr : canvas.width);
+    const height = canvas.offsetHeight || (dpr ? canvas.height / dpr : canvas.height);
 
     if (!lastTimeRef.current) lastTimeRef.current = time;
     const deltaTime = time - lastTimeRef.current;
@@ -237,11 +238,14 @@ export function ParticleCanvas({
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.round(rect.width || canvas.offsetWidth);
+      const h = Math.round(rect.height || canvas.offsetHeight);
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
       const ctx = canvas.getContext("2d");
-      if (ctx) ctx.scale(dpr, dpr);
-      initParticles(canvas.offsetWidth, canvas.offsetHeight);
+      if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      initParticles(w, h);
     };
 
     resize();

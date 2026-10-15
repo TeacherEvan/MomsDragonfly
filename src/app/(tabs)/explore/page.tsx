@@ -36,6 +36,7 @@ export default function ExplorePage() {
   const [fetchPhases, setFetchPhases] = useState<Record<string, FetchPhase>>({});
   const mapRef = useRef<LeafletMapRef>(null);
   const fetchedRef = useRef<Set<string>>(new Set());
+  const lastCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
   const deviceId = getDeviceId();
 
   const prefs = useQuery(api.queries.prefsQuery, { deviceId });
@@ -73,7 +74,7 @@ export default function ExplorePage() {
 
   const fetchPoisForCategory = useCallback(
     async (cat: string, force = false) => {
-      if (!lat || !lng || cat === "all") return;
+      if (lat == null || lng == null || cat === "all") return;
       if (!force && fetchedRef.current.has(cat)) return;
       setFetchPhases((s) => ({ ...s, [cat]: "loading" }));
       const radius = prefs?.defaultRadius ?? 1000;
@@ -105,9 +106,21 @@ export default function ExplorePage() {
     ]
   );
 
+  // Invalidate fetched cache when moving to a new area (> ~1km / 0.01 deg)
+  useEffect(() => {
+    if (lat == null || lng == null) return;
+    if (
+      !lastCoordsRef.current ||
+      Math.hypot(lat - lastCoordsRef.current.lat, lng - lastCoordsRef.current.lng) > 0.01
+    ) {
+      fetchedRef.current.clear();
+      lastCoordsRef.current = { lat, lng };
+    }
+  }, [lat, lng]);
+
   // Initial rich load: core categories in parallel
   useEffect(() => {
-    if (!lat || !lng) return;
+    if (lat == null || lng == null) return;
     CORE_CATEGORIES.forEach((c) => {
       void fetchPoisForCategory(c);
     });
@@ -115,7 +128,7 @@ export default function ExplorePage() {
 
   // Fetch when the user selects a category
   useEffect(() => {
-    if (category !== "all" && lat && lng) {
+    if (category !== "all" && lat != null && lng != null) {
       void fetchPoisForCategory(category);
     }
   }, [category, lat, lng, fetchPoisForCategory]);
@@ -163,7 +176,6 @@ export default function ExplorePage() {
       openNow?: boolean;
       verifiedCount: number;
       fetchedAt: number;
-      deviceIds: string[];
     }>;
     return rawPois
       .map((p): ComputedPOI => {

@@ -22,7 +22,7 @@ import { expect, test } from '@playwright/test';
      { url: '/explore', heading: 'Explore', isHeading: true },
      { url: '/local', heading: 'Local', isHeading: true },
      { url: '/journal', heading: 'Trip Journal', isHeading: true },
-     { url: '/budget', heading: 'Trip Budget Tracker', isHeading: false },
+     { url: '/budget', heading: 'Budget', isHeading: true },
      { url: '/reminders', heading: 'Reminders', isHeading: true },
      { url: '/tickets', heading: 'Tickets', isHeading: true },
      { url: '/settings', heading: 'Settings', isHeading: true },

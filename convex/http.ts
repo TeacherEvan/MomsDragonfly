@@ -1,6 +1,7 @@
 import { httpRouter } from "convex/server";
 
 import { httpAction } from "./_generated/server";
+import { fetchWithTimeout } from "./fetchWithTimeout";
 import {
   clampPhotoWidth,
   googlePhotoMediaUrl,
@@ -37,18 +38,10 @@ http.route({
 
     const width = clampPhotoWidth(url.searchParams.get("w"));
 
-    // Timers are not guaranteed in every Convex runtime; only arm the abort
-    // when the runtime actually provides setTimeout.
-    const controller = new AbortController();
-    const timeoutId =
-      typeof setTimeout === "function"
-        ? setTimeout(() => controller.abort(), 12_000)
-        : undefined;
-
     try {
-      const upstream = await fetch(googlePhotoMediaUrl(ref, width), {
+      const upstream = await fetchWithTimeout(googlePhotoMediaUrl(ref, width), {
         headers: { "X-Goog-Api-Key": key },
-        signal: controller.signal,
+        timeoutMs: 12_000,
       });
 
       if (!upstream.ok) {
@@ -69,8 +62,6 @@ http.route({
     } catch (err) {
       console.warn("PlacePhoto: upstream request failed:", String(err).slice(0, 160));
       return new Response("Photo unavailable", { status: 404 });
-    } finally {
-      if (timeoutId !== undefined) clearTimeout(timeoutId);
     }
   }),
 });
@@ -101,15 +92,9 @@ http.route({
       return new Response("Street View proxy not configured", { status: 404 });
     }
 
-    const controller = new AbortController();
-    const timeoutId =
-      typeof setTimeout === "function"
-        ? setTimeout(() => controller.abort(), 12_000)
-        : undefined;
-
     try {
-      const upstream = await fetch(streetViewImageUrl(lat, lng, key), {
-        signal: controller.signal,
+      const upstream = await fetchWithTimeout(streetViewImageUrl(lat, lng, key), {
+        timeoutMs: 12_000,
       });
 
       if (!upstream.ok) {
@@ -130,8 +115,6 @@ http.route({
         String(err).slice(0, 160)
       );
       return new Response("Street View unavailable", { status: 404 });
-    } finally {
-      if (timeoutId !== undefined) clearTimeout(timeoutId);
     }
   }),
 });

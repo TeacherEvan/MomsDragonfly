@@ -1,6 +1,6 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Icon } from "@/components/ui/Icon";
 import {
@@ -20,6 +20,15 @@ interface RideSheetProps {
 
 export function RideSheet({ poi, pickup, onClose }: RideSheetProps) {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!poi) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [poi, onClose]);
 
   const destination: RideDestination | null = poi
     ? {

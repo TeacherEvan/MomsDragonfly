@@ -166,14 +166,6 @@ html.reduce-motion *::after {
   animation: slide-up 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-.animate-fade-in {
-  animation: fade-in 0.4s ease-out both;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

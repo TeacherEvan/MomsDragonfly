@@ -3,12 +3,13 @@ import { useCallback, useEffect, useState } from "react";
 
 import { HighlightsCard } from "@/components/explore/HighlightsCard";
 import { LocalDishesCard } from "@/components/explore/LocalDishesCard";
+import { PhrasebookCard } from "@/components/local/PhrasebookCard";
 import { useToast } from "@/components/shell/Toast";
 import { Icon } from "@/components/ui/Icon";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { cn } from "@/lib/utils/cn";
 
-type LocalSegment = "news" | "taste";
+type LocalSegment = "news" | "taste" | "phrases";
 
 /** Remembers which window the user last looked at. */
 const SEGMENT_STORAGE_KEY = "mdf_local_segment";
@@ -16,10 +17,11 @@ const SEGMENT_STORAGE_KEY = "mdf_local_segment";
 const SEGMENTS: ReadonlyArray<{ id: LocalSegment; label: string }> = [
   { id: "news", label: "News & weather" },
   { id: "taste", label: "Taste of the area" },
+  { id: "phrases", label: "Local phrases" },
 ];
 
 function isSegment(value: string | null): value is LocalSegment {
-  return value === "news" || value === "taste";
+  return value === "news" || value === "taste" || value === "phrases";
 }
 
 /** Local tab — "what's around you" in two segmented windows. */
@@ -108,8 +110,10 @@ export default function LocalClient() {
           >
             {segment === "news" ? (
               <HighlightsCard lat={lat} lng={lng} />
-            ) : (
+            ) : segment === "taste" ? (
               <LocalDishesCard lat={lat} lng={lng} />
+            ) : (
+              <PhrasebookCard lat={lat} lng={lng} />
             )}
           </div>
         </>

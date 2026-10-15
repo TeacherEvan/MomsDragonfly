@@ -49,11 +49,11 @@ export const upsertPOIs = mutation({
       const existing = await ctx.db
         .query("pois")
         .withIndex("by_placeId", (q) => q.eq("placeId", poi.placeId))
-        .unique();
+        .filter((q) => q.eq(q.field("deviceIds"), [deviceId]))
+        .first();
 
       const data: PoiInput = { ...poi, fetchedAt: now };
       if (existing) {
-        // Replace deviceIds with current device to match query index
         await ctx.db.patch(existing._id, {
           ...data,
           deviceIds: [deviceId],
@@ -231,75 +231,103 @@ export const rekeyDevice = mutation({
       migrated++;
     }
 
-    // 2. Location history
-    const locations = await ctx.db
-      .query("locationHistory")
-      .withIndex("by_deviceId_timestamp", (q) => q.eq("deviceId", oldDeviceId))
-      .take(1000);
-    for (const loc of locations) {
-      await ctx.db.patch(loc._id, { deviceId: newDeviceId });
+    // 2. Location history (batched to prevent silent truncation)
+    while (true) {
+      const locations = await ctx.db
+        .query("locationHistory")
+        .withIndex("by_deviceId_timestamp", (q) => q.eq("deviceId", oldDeviceId))
+        .take(500);
+      if (locations.length === 0) break;
+      for (const loc of locations) {
+        await ctx.db.patch(loc._id, { deviceId: newDeviceId });
+      }
+      migrated += locations.length;
+      if (locations.length < 500) break;
     }
-    migrated += locations.length;
 
     // 3. Journal notes
-    const notes = await ctx.db
-      .query("journalNotes")
-      .withIndex("by_deviceId_createdAt", (q) => q.eq("deviceId", oldDeviceId))
-      .take(MAX_NOTES);
-    for (const note of notes) {
-      await ctx.db.patch(note._id, { deviceId: newDeviceId });
+    while (true) {
+      const notes = await ctx.db
+        .query("journalNotes")
+        .withIndex("by_deviceId_createdAt", (q) => q.eq("deviceId", oldDeviceId))
+        .take(MAX_NOTES);
+      if (notes.length === 0) break;
+      for (const note of notes) {
+        await ctx.db.patch(note._id, { deviceId: newDeviceId });
+      }
+      migrated += notes.length;
+      if (notes.length < MAX_NOTES) break;
     }
-    migrated += notes.length;
 
     // 4. Expenses
-    const expenses = await ctx.db
-      .query("expenses")
-      .withIndex("by_deviceId_date", (q) => q.eq("deviceId", oldDeviceId))
-      .take(MAX_EXPENSES);
-    for (const exp of expenses) {
-      await ctx.db.patch(exp._id, { deviceId: newDeviceId });
+    while (true) {
+      const expenses = await ctx.db
+        .query("expenses")
+        .withIndex("by_deviceId_date", (q) => q.eq("deviceId", oldDeviceId))
+        .take(MAX_EXPENSES);
+      if (expenses.length === 0) break;
+      for (const exp of expenses) {
+        await ctx.db.patch(exp._id, { deviceId: newDeviceId });
+      }
+      migrated += expenses.length;
+      if (expenses.length < MAX_EXPENSES) break;
     }
-    migrated += expenses.length;
 
     // 5. Reminders
-    const reminders = await ctx.db
-      .query("reminders")
-      .withIndex("by_deviceId_dueAt", (q) => q.eq("deviceId", oldDeviceId))
-      .take(MAX_REMINDERS);
-    for (const rem of reminders) {
-      await ctx.db.patch(rem._id, { deviceId: newDeviceId });
+    while (true) {
+      const reminders = await ctx.db
+        .query("reminders")
+        .withIndex("by_deviceId_dueAt", (q) => q.eq("deviceId", oldDeviceId))
+        .take(MAX_REMINDERS);
+      if (reminders.length === 0) break;
+      for (const rem of reminders) {
+        await ctx.db.patch(rem._id, { deviceId: newDeviceId });
+      }
+      migrated += reminders.length;
+      if (reminders.length < MAX_REMINDERS) break;
     }
-    migrated += reminders.length;
 
     // 6. Tickets
-    const tickets = await ctx.db
-      .query("tickets")
-      .withIndex("by_deviceId_createdAt", (q) => q.eq("deviceId", oldDeviceId))
-      .take(MAX_TICKETS);
-    for (const ticket of tickets) {
-      await ctx.db.patch(ticket._id, { deviceId: newDeviceId });
+    while (true) {
+      const tickets = await ctx.db
+        .query("tickets")
+        .withIndex("by_deviceId_createdAt", (q) => q.eq("deviceId", oldDeviceId))
+        .take(MAX_TICKETS);
+      if (tickets.length === 0) break;
+      for (const ticket of tickets) {
+        await ctx.db.patch(ticket._id, { deviceId: newDeviceId });
+      }
+      migrated += tickets.length;
+      if (tickets.length < MAX_TICKETS) break;
     }
-    migrated += tickets.length;
 
     // 7. Budgets
-    const budgets = await ctx.db
-      .query("budgets")
-      .withIndex("by_deviceId", (q) => q.eq("deviceId", oldDeviceId))
-      .take(100);
-    for (const b of budgets) {
-      await ctx.db.patch(b._id, { deviceId: newDeviceId });
+    while (true) {
+      const budgets = await ctx.db
+        .query("budgets")
+        .withIndex("by_deviceId", (q) => q.eq("deviceId", oldDeviceId))
+        .take(100);
+      if (budgets.length === 0) break;
+      for (const b of budgets) {
+        await ctx.db.patch(b._id, { deviceId: newDeviceId });
+      }
+      migrated += budgets.length;
+      if (budgets.length < 100) break;
     }
-    migrated += budgets.length;
 
     // 8. Discovered POIs — preserve cached places under the new device ID
-    const userPois = await ctx.db
-      .query("pois")
-      .withIndex("by_deviceIds_category", (q) => q.eq("deviceIds", [oldDeviceId]))
-      .take(500);
-    for (const poi of userPois) {
-      await ctx.db.patch(poi._id, { deviceIds: [newDeviceId] });
+    while (true) {
+      const userPois = await ctx.db
+        .query("pois")
+        .withIndex("by_deviceIds_category", (q) => q.eq("deviceIds", [oldDeviceId]))
+        .take(500);
+      if (userPois.length === 0) break;
+      for (const poi of userPois) {
+        await ctx.db.patch(poi._id, { deviceIds: [newDeviceId] });
+      }
+      migrated += userPois.length;
+      if (userPois.length < 500) break;
     }
-    migrated += userPois.length;
 
     return { success: true, migrated };
   },
@@ -392,6 +420,89 @@ export const purgeExpiredCache = internalMutation({
       if (stale.length < BATCH_SIZE) break;
     }
 
+    return { deleted };
+  },
+});
+
+export const purgeExpiredCaches = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const cutoff90d = now - 90 * 24 * 60 * 60 * 1000;
+    const BATCH_SIZE = 500;
+    let deleted = 0;
+
+    // 1. Unified cache (>90d)
+    while (true) {
+      const stale = await ctx.db
+        .query("cache")
+        .withIndex("by_fetchedAt", (q) => q.lt("fetchedAt", cutoff90d))
+        .take(BATCH_SIZE);
+      if (stale.length === 0) break;
+      for (const row of stale) {
+        await ctx.db.delete(row._id);
+      }
+      deleted += stale.length;
+      if (stale.length < BATCH_SIZE) break;
+    }
+
+    // 2. Legacy highlights cache (24h)
+    const cutoffHighlights = now - 24 * 60 * 60 * 1000;
+    const staleHighlights = await ctx.db
+      .query("highlightsCache")
+      .filter((q) => q.lt(q.field("fetchedAt"), cutoffHighlights))
+      .take(BATCH_SIZE);
+    for (const row of staleHighlights) {
+      await ctx.db.delete(row._id);
+      deleted++;
+    }
+
+    // 3. Legacy dishes cache (7d)
+    const cutoffDishes = now - 7 * 24 * 60 * 60 * 1000;
+    const staleDishes = await ctx.db
+      .query("dishesCache")
+      .filter((q) => q.lt(q.field("fetchedAt"), cutoffDishes))
+      .take(BATCH_SIZE);
+    for (const row of staleDishes) {
+      await ctx.db.delete(row._id);
+      deleted++;
+    }
+
+    // 4. Legacy place enrichment cache (30d)
+    const cutoffPlaceEnrich = now - 30 * 24 * 60 * 60 * 1000;
+    const stalePlaceEnrich = await ctx.db
+      .query("placeEnrichCache")
+      .filter((q) => q.lt(q.field("fetchedAt"), cutoffPlaceEnrich))
+      .take(BATCH_SIZE);
+    for (const row of stalePlaceEnrich) {
+      await ctx.db.delete(row._id);
+      deleted++;
+    }
+
+    return { deleted };
+  },
+});
+
+/**
+ * One-off maintenance mutation to drain legacy cache tables so their
+ * schemas can be dropped safely in subsequent releases.
+ */
+export const purgeLegacyCaches = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    let deleted = 0;
+    const BATCH_SIZE = 500;
+    for (const table of ["highlightsCache", "dishesCache", "placeEnrichCache"] as const) {
+      while (true) {
+        const rows = await ctx.db.query(table).take(BATCH_SIZE);
+        if (rows.length === 0) break;
+        for (const row of rows) {
+          await ctx.db.delete(row._id);
+        }
+        deleted += rows.length;
+        if (rows.length < BATCH_SIZE) break;
+      }
+    }
     return { deleted };
   },
 });
@@ -549,7 +660,22 @@ export const deleteReminder = mutation({
 export const markReminderSent = internalMutation({
   args: { id: v.id("reminders") },
   handler: async (ctx, { id }) => {
-    await ctx.db.patch(id, { sentAt: Date.now() });
+    const reminder = await ctx.db.get(id);
+    if (!reminder) return;
+
+    if (reminder.repeat === "daily") {
+      await ctx.db.patch(id, {
+        dueAt: reminder.dueAt + 86_400_000,
+        sentAt: undefined,
+      });
+    } else if (reminder.repeat === "weekly") {
+      await ctx.db.patch(id, {
+        dueAt: reminder.dueAt + 7 * 86_400_000,
+        sentAt: undefined,
+      });
+    } else {
+      await ctx.db.patch(id, { sentAt: Date.now() });
+    }
   },
 });
 
