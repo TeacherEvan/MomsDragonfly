@@ -370,7 +370,7 @@ pnpm test:lhci
 
 ### Test Coverage
 
-- **Unit tests:** 238 passing across 30 test files
+- **Unit tests:** 245 passing across 31 test files
 - **Convex integration tests:** 37 passing across 4 test files
 - **E2E tests:** 26 passing across 5 spec files (including axe-core WCAG AA across all tabs and large-text mode)
 - **Lighthouse CI:** Enforced accessibility gate (`≥ 0.95`)

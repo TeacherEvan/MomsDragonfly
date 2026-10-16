@@ -14,7 +14,7 @@
 || TypeScript | Strict mode | ✅ Confirmed |
 || Build (`pnpm build`) | Passes (0 errors) | ✅ Confirmed |
 || Type check (`pnpm typecheck`) | Passes | ✅ Confirmed |
-|| Unit tests (`pnpm test`) | 238 passing in 30 files | ✅ Confirmed |
+|| Unit tests (`pnpm test`) | 245 passing in 31 files | ✅ Confirmed |
 || Convex tests (`pnpm test:convex`) | 37 passing in 4 files | ✅ Confirmed |
 || E2E tests (`pnpm test:e2e`) | 26 passing in 5 files | ✅ Confirmed |
 || Lint (`pnpm lint`) | Passes (0 warnings/errors) | ✅ Confirmed |

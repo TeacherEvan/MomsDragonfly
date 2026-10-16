@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { api } from "@/app/providers";
 import { Icon } from "@/components/ui/Icon";
@@ -10,6 +10,7 @@ import { getDeviceId } from "@/lib/utils/deviceId";
 interface LocalDishesCardProps {
   lat: number;
   lng: number;
+  searchQuery?: string;
 }
 
 interface Dish {
@@ -50,7 +51,7 @@ function DishThumb({ dish }: { dish: Dish }) {
 }
 
 /** "Taste of the area" — popular local dishes (cached ~7 days per city cell). */
-export function LocalDishesCard({ lat, lng }: LocalDishesCardProps) {
+export function LocalDishesCard({ lat, lng, searchQuery }: LocalDishesCardProps) {
   const { data, loading, failed, reload } = useActionData<
     { deviceId: string; lat: number; lng: number },
     Dishes
@@ -59,6 +60,18 @@ export function LocalDishesCard({ lat, lng }: LocalDishesCardProps) {
     { deviceId: getDeviceId(), lat, lng },
     { roundCoords: 1 }
   );
+
+  const filteredDishes = useMemo(() => {
+    if (!data?.dishes) return [];
+    if (!searchQuery?.trim()) return data.dishes;
+    const q = searchQuery.trim().toLowerCase();
+    return data.dishes.filter(
+      (dish) =>
+        dish.name.toLowerCase().includes(q) ||
+        dish.description.toLowerCase().includes(q) ||
+        (data.areaName && data.areaName.toLowerCase().includes(q))
+    );
+  }, [data?.dishes, data?.areaName, searchQuery]);
 
   if (loading && !data) {
     return (
@@ -112,34 +125,51 @@ export function LocalDishesCard({ lat, lng }: LocalDishesCardProps) {
       className="rounded-xl border border-dragonfly-navy-800 bg-surface-900/70 backdrop-blur-sm p-4 shadow-soft"
       aria-label="Popular local dishes"
     >
-      <div className="flex items-center gap-2">
-        <Icon name="restaurant" size={18} className="text-dragonfly-orange-400" />
-        <h2 className="font-bold text-dragonfly-navy-50 text-body">
-          Taste of {data.areaName ?? "the area"}
-        </h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Icon name="restaurant" size={18} className="text-dragonfly-orange-400" />
+          <h2 className="font-bold text-dragonfly-navy-50 text-body">
+            Taste of {data.areaName ?? "the area"}
+          </h2>
+        </div>
+        {searchQuery?.trim() && (
+          <span className="text-caption text-dragonfly-orange-400 font-medium">
+            {filteredDishes.length} {filteredDishes.length === 1 ? "dish" : "dishes"}
+          </span>
+        )}
       </div>
       <p className="mt-0.5 text-caption text-dragonfly-navy-500">
         Popular local dishes &amp; what they are
       </p>
-      <ul className="mt-3 space-y-3">
-        {data.dishes.map((dish) => (
-          <li key={dish.name} className="flex items-start gap-3">
-            <DishThumb dish={dish} />
-            <div className="min-w-0 flex-1">
-              <p className="text-body font-semibold text-dragonfly-navy-100">{dish.name}</p>
-              <p className="mt-0.5 text-caption text-dragonfly-navy-400">{dish.description}</p>
-              <a
-                href={buildMapsSearchUrl(`${dish.name} ${data.areaName ?? ""}`.trim())}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1.5 inline-flex items-center gap-1 text-caption font-medium text-dragonfly-teal-300 hover:text-dragonfly-teal-200 transition-colors"
-              >
-                <Icon name="compass" size={12} /> Find places serving this
-              </a>
-            </div>
-          </li>
-        ))}
-      </ul>
+
+      {filteredDishes.length === 0 ? (
+        <div className="mt-4 rounded-lg border border-dashed border-dragonfly-navy-700 bg-dragonfly-navy-950/40 p-6 text-center">
+          <p className="text-body font-medium text-dragonfly-navy-200">No dishes found</p>
+          <p className="mt-1 text-caption text-dragonfly-navy-400">
+            No local dishes match &ldquo;{searchQuery}&rdquo;. Try another ingredient or dish name.
+          </p>
+        </div>
+      ) : (
+        <ul className="mt-3 space-y-3">
+          {filteredDishes.map((dish) => (
+            <li key={dish.name} className="flex items-start gap-3">
+              <DishThumb dish={dish} />
+              <div className="min-w-0 flex-1">
+                <p className="text-body font-semibold text-dragonfly-navy-100">{dish.name}</p>
+                <p className="mt-0.5 text-caption text-dragonfly-navy-400">{dish.description}</p>
+                <a
+                  href={buildMapsSearchUrl(`${dish.name} ${data.areaName ?? ""}`.trim())}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 inline-flex items-center gap-1 text-caption font-medium text-dragonfly-teal-300 hover:text-dragonfly-teal-200 transition-colors"
+                >
+                  <Icon name="compass" size={12} /> Find places serving this
+                </a>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

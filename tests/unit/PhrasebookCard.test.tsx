@@ -118,4 +118,43 @@ describe("PhrasebookCard", () => {
 
     expect(screen.getByText("Essential Afrikaans")).toBeInTheDocument();
   });
+
+  it("filters phrases based on searchQuery and shows match count", async () => {
+    getLocalPhrasesMock.mockResolvedValue({
+      areaName: "Pretoria",
+      language: "Afrikaans",
+      phrases: [
+        { local: "Hallo", roman: "Hallo", english: "Hello", note: "Friendly greeting" },
+        { local: "Dankie", roman: "DUNK-ee", english: "Thank you", note: "Common" },
+      ],
+      fetchedAt: Date.now(),
+    });
+
+    await act(async () => {
+      render(<PhrasebookCard lat={-25.75} lng={28.24} searchQuery="thank" />);
+    });
+
+    expect(screen.getByText("Dankie")).toBeInTheDocument();
+    expect(screen.queryByText("Hallo")).not.toBeInTheDocument();
+    expect(screen.getByText("1 match")).toBeInTheDocument();
+  });
+
+  it("renders empty state when no phrases match searchQuery", async () => {
+    getLocalPhrasesMock.mockResolvedValue({
+      areaName: "Pretoria",
+      language: "Afrikaans",
+      phrases: [
+        { local: "Hallo", roman: "Hallo", english: "Hello", note: "Friendly greeting" },
+      ],
+      fetchedAt: Date.now(),
+    });
+
+    await act(async () => {
+      render(<PhrasebookCard lat={-25.75} lng={28.24} searchQuery="spaceship" />);
+    });
+
+    expect(screen.getByText("No phrases found")).toBeInTheDocument();
+    expect(screen.getByText(/No everyday phrases match “spaceship”/)).toBeInTheDocument();
+    expect(screen.queryByText("Hallo")).not.toBeInTheDocument();
+  });
 });

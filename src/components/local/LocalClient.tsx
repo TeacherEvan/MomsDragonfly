@@ -28,6 +28,7 @@ function isSegment(value: string | null): value is LocalSegment {
 export default function LocalClient() {
   const { lat, lng, error: geoError } = useGeolocation();
   const [segment, setSegment] = useState<LocalSegment>("news");
+  const [searchQuery, setSearchQuery] = useState("");
   const { showToast } = useToast();
 
   // Restore the last window on mount (client-only, so no hydration mismatch).
@@ -73,6 +74,33 @@ export default function LocalClient() {
 
       {hasPosition && lat != null && lng != null ? (
         <>
+          <div className="relative">
+            <label htmlFor="local-search-input" className="sr-only">
+              Filter local places, dishes, and phrases
+            </label>
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-dragonfly-navy-400">
+              <Icon name="search" size={18} />
+            </div>
+            <input
+              id="local-search-input"
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filter by location, dish, phrase, or keyword…"
+              className="w-full rounded-xl border border-dragonfly-navy-700 bg-dragonfly-navy-950/80 py-2.5 pl-10 pr-10 text-body text-dragonfly-navy-50 placeholder-dragonfly-navy-400 focus:border-dragonfly-teal-500 focus:outline-none focus:ring-2 focus:ring-dragonfly-teal-500/40 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-dragonfly-navy-400 hover:text-dragonfly-navy-200 transition-colors min-h-[44px] min-w-[44px] justify-center"
+              >
+                <Icon name="close" size={16} />
+              </button>
+            )}
+          </div>
+
           <div
             role="tablist"
             aria-label="Local windows"
@@ -109,11 +137,11 @@ export default function LocalClient() {
             className="flex flex-col gap-4"
           >
             {segment === "news" ? (
-              <HighlightsCard lat={lat} lng={lng} />
+              <HighlightsCard lat={lat} lng={lng} searchQuery={searchQuery} />
             ) : segment === "taste" ? (
-              <LocalDishesCard lat={lat} lng={lng} />
+              <LocalDishesCard lat={lat} lng={lng} searchQuery={searchQuery} />
             ) : (
-              <PhrasebookCard lat={lat} lng={lng} />
+              <PhrasebookCard lat={lat} lng={lng} searchQuery={searchQuery} />
             )}
           </div>
         </>

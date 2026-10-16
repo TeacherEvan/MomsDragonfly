@@ -57,4 +57,49 @@ describe("LocalDishesCard", () => {
       "https://www.google.com/maps/search/?api=1&query=Bobotie+Pretoria"
     );
   });
+
+  it("filters dishes based on searchQuery and shows match count", async () => {
+    getLocalDishesMock.mockResolvedValue({
+      areaName: "Pretoria",
+      dishes: [
+        {
+          name: "Bobotie",
+          description: "A spiced minced meat bake with egg custard.",
+          imageUrl: null,
+        },
+        {
+          name: "Bunny Chow",
+          description: "Hollowed-out loaf of white bread filled with curry.",
+          imageUrl: null,
+        },
+      ],
+      fetchedAt: Date.now(),
+    });
+
+    render(<LocalDishesCard lat={-25.75} lng={28.24} searchQuery="curry" />);
+
+    expect(await screen.findByText("Bunny Chow")).toBeInTheDocument();
+    expect(screen.queryByText("Bobotie")).not.toBeInTheDocument();
+    expect(screen.getByText("1 dish")).toBeInTheDocument();
+  });
+
+  it("renders empty state when no dishes match searchQuery", async () => {
+    getLocalDishesMock.mockResolvedValue({
+      areaName: "Pretoria",
+      dishes: [
+        {
+          name: "Bobotie",
+          description: "A spiced minced meat bake with egg custard.",
+          imageUrl: null,
+        },
+      ],
+      fetchedAt: Date.now(),
+    });
+
+    render(<LocalDishesCard lat={-25.75} lng={28.24} searchQuery="sushi" />);
+
+    expect(await screen.findByText("No dishes found")).toBeInTheDocument();
+    expect(screen.getByText(/No local dishes match “sushi”/)).toBeInTheDocument();
+    expect(screen.queryByText("Bobotie")).not.toBeInTheDocument();
+  });
 });

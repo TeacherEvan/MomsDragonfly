@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { api } from "@/app/providers";
 import { useToast } from "@/components/shell/Toast";
@@ -25,6 +25,7 @@ export interface PhrasesPayload {
 interface PhrasebookCardProps {
   lat: number;
   lng: number;
+  searchQuery?: string;
 }
 
 const BCP47_MAP: Record<string, string> = {
@@ -99,7 +100,7 @@ function PhraseRow({ phrase, language }: { phrase: PhraseItem; language: string 
 }
 
 /** 10 essential everyday local phrases, cached per area with offline fallbacks. */
-export function PhrasebookCard({ lat, lng }: PhrasebookCardProps) {
+export function PhrasebookCard({ lat, lng, searchQuery }: PhrasebookCardProps) {
   const { data, loading, failed, reload } = useActionData<
     { deviceId: string; lat: number; lng: number },
     PhrasesPayload
@@ -108,6 +109,19 @@ export function PhrasebookCard({ lat, lng }: PhrasebookCardProps) {
     { deviceId: getDeviceId(), lat, lng },
     { roundCoords: 1 }
   );
+
+  const filteredPhrases = useMemo(() => {
+    if (!data?.phrases) return [];
+    if (!searchQuery?.trim()) return data.phrases;
+    const q = searchQuery.trim().toLowerCase();
+    return data.phrases.filter(
+      (p) =>
+        p.english.toLowerCase().includes(q) ||
+        p.local.toLowerCase().includes(q) ||
+        p.roman.toLowerCase().includes(q) ||
+        (p.note && p.note.toLowerCase().includes(q))
+    );
+  }, [data?.phrases, searchQuery]);
 
   if (loading && !data) {
     return (
@@ -169,26 +183,42 @@ export function PhrasebookCard({ lat, lng }: PhrasebookCardProps) {
           <Icon name="message" size={18} className="text-dragonfly-teal-400" />
           <h2 className="font-bold text-dragonfly-navy-50 text-body">{headerTitle}</h2>
         </div>
-        {data.areaName && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-dragonfly-teal-500/15 px-2.5 py-1 text-caption font-medium text-dragonfly-teal-400">
-            <Icon name="map-pin" size={12} />
-            {data.areaName}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {searchQuery?.trim() && (
+            <span className="text-caption text-dragonfly-teal-300 font-medium">
+              {filteredPhrases.length} {filteredPhrases.length === 1 ? "match" : "matches"}
+            </span>
+          )}
+          {data.areaName && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-dragonfly-teal-500/15 px-2.5 py-1 text-caption font-medium text-dragonfly-teal-400">
+              <Icon name="map-pin" size={12} />
+              {data.areaName}
+            </span>
+          )}
+        </div>
       </div>
       <p className="mt-0.5 text-caption text-dragonfly-navy-500">
         Everyday words &amp; how to say them
       </p>
 
-      <ul className="mt-3 space-y-2.5">
-        {data.phrases.map((phrase, idx) => (
-          <PhraseRow
-            key={`${phrase.local}-${idx}`}
-            phrase={phrase}
-            language={data.language}
-          />
-        ))}
-      </ul>
+      {filteredPhrases.length === 0 ? (
+        <div className="mt-4 rounded-lg border border-dashed border-dragonfly-navy-700 bg-dragonfly-navy-950/40 p-6 text-center">
+          <p className="text-body font-medium text-dragonfly-navy-200">No phrases found</p>
+          <p className="mt-1 text-caption text-dragonfly-navy-400">
+            No everyday phrases match &ldquo;{searchQuery}&rdquo;. Try words like hello, thank you, or food.
+          </p>
+        </div>
+      ) : (
+        <ul className="mt-3 space-y-2.5">
+          {filteredPhrases.map((phrase, idx) => (
+            <PhraseRow
+              key={`${phrase.local}-${idx}`}
+              phrase={phrase}
+              language={data.language}
+            />
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
