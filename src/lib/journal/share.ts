@@ -59,16 +59,19 @@ export function buildGeoJson(points: SharePoint[]): string {
   return JSON.stringify(
     {
       type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "LineString",
-            coordinates: points.map((p) => [p.lng, p.lat]),
-          },
-        },
-      ],
+      features:
+        points.length >= 2
+          ? [
+              {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "LineString",
+                  coordinates: points.map((p) => [p.lng, p.lat]),
+                },
+              },
+            ]
+          : [],
     },
     null,
     2

@@ -20,7 +20,12 @@ for (const url of PAGES) {
     const blocking = results.violations.filter(
       (v) => v.impact === "critical" || v.impact === "serious"
     );
-    expect(blocking.map((v) => `${v.id} (${v.impact}): ${v.nodes.length} nodes`)).toEqual([]);
+    expect(
+      blocking.map(
+        (v) =>
+          `${v.id} (${v.impact}): ${v.nodes.length} nodes [${v.nodes.map((n) => `${n.target.join(" ")} (${n.failureSummary ?? ""})`).join("; ")}]`
+      )
+    ).toEqual([]);
   });
 
   test(`${url} in largeText/elderly mode has no critical or serious accessibility violations`, async ({ page }) => {
@@ -35,6 +40,11 @@ for (const url of PAGES) {
     const blocking = results.violations.filter(
       (v) => v.impact === "critical" || v.impact === "serious"
     );
-    expect(blocking.map((v) => `${v.id} (${v.impact}): ${v.nodes.length} nodes`)).toEqual([]);
+    expect(
+      blocking.map(
+        (v) =>
+          `${v.id} (${v.impact}): ${v.nodes.length} nodes [${v.nodes.map((n) => `${n.target.join(" ")} (${n.failureSummary ?? ""})`).join("; ")}]`
+      )
+    ).toEqual([]);
   });
 }

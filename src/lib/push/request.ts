@@ -28,11 +28,12 @@ export type PushUnsubscribeResult =
   | { ok: false; error: string };
 
 const INVALID_DEVICE_IDS = new Set(["", "ssr", "unknown"]);
+const MAX_DEVICE_ID_LEN = 64;
 
 function parseDeviceId(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const id = value.trim();
-  if (!id || INVALID_DEVICE_IDS.has(id)) return null;
+  if (!id || id.length > MAX_DEVICE_ID_LEN || INVALID_DEVICE_IDS.has(id)) return null;
   return id;
 }
 

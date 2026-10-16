@@ -278,15 +278,18 @@ export const fetchNearby = action({
     lng: v.number(),
     radius: v.number(),
     category: v.string(),
+    force: v.optional(v.boolean()),
   },
-  handler: async (ctx, { deviceId, lat, lng, radius, category }) => {
+  handler: async (ctx, { deviceId, lat, lng, radius, category, force }) => {
     validateDeviceId(deviceId);
-    const recent = await ctx.runQuery(api.queries.recentFetchCheck, {
-      deviceId,
-      category,
-      windowMs: 3_600_000,
-    });
-    if (recent) return { cached: true };
+    if (!force) {
+      const recent = await ctx.runQuery(api.queries.recentFetchCheck, {
+        deviceId,
+        category,
+        windowMs: 3_600_000,
+      });
+      if (recent) return { cached: true };
+    }
 
     const radiusToUse = effectiveRadius(category, radius);
     const key = process.env.GOOGLE_PLACES_API_KEY;
@@ -1030,14 +1033,23 @@ export const getPlaceDetails = action({
               const tags = nodeData?.elements?.[0]?.tags;
               if (tags) {
                 const osmImg = osmPhotoUrl(tags);
-                if (osmImg && !photos.includes(osmImg)) {
+                if (
+                  osmImg &&
+                  !photos.includes(osmImg) &&
+                  (osmImg.includes("wikimedia.org") ||
+                    osmImg.includes("/place-photo?") ||
+                    osmImg.includes("/streetview?"))
+                ) {
                   photos.push(osmImg);
                 }
                 if (tags.wikipedia && photos.length === 0) {
-                  const wikiTitle = tags.wikipedia.replace(/^[a-z]+:/i, "").trim();
+                  const rawWiki = tags.wikipedia.trim();
+                  const langMatch = rawWiki.match(/^([a-z]{2,3}):(.+)$/i);
+                  const wikiLang = langMatch ? langMatch[1].toLowerCase() : "en";
+                  const wikiTitle = (langMatch ? langMatch[2] : rawWiki).trim();
                   if (wikiTitle) {
                     const wikiSummary = await fetchJson<unknown>(
-                      wikiSummaryUrl(wikiTitle),
+                      wikiSummaryUrl(wikiTitle, wikiLang),
                       { "User-Agent": "MomsDragonfly/1.0 (travel companion PWA)" },
                       6000
                     );
@@ -1174,9 +1186,14 @@ export const sendDueReminders = internalAction({
 
     for (const reminder of due) {
       const prefs = prefsMap.get(reminder.deviceId);
-      if (!prefs?.vapidSubscription) continue;
-      // Respect the user's Notifications toggle in Settings.
-      if (!prefs.notificationsEnabled) continue;
+      if (!prefs?.vapidSubscription || !prefs.notificationsEnabled) {
+        // Device cannot receive push; advance recurring reminder or mark non-recurring
+        // as sent so upcomingRemindersQuery does not re-fetch it every 5 minutes forever.
+        await ctx.runMutation(internal.mutations.markReminderSent, {
+          id: reminder._id as import("./_generated/dataModel").Id<"reminders">,
+        });
+        continue;
+      }
 
       let subscription: PushSubscription;
       try {
@@ -1200,6 +1217,9 @@ export const sendDueReminders = internalAction({
           `Corrupt push subscription for device ${reminder.deviceId} — clearing it`
         );
         deadDevices.add(reminder.deviceId);
+        await ctx.runMutation(internal.mutations.markReminderSent, {
+          id: reminder._id as import("./_generated/dataModel").Id<"reminders">,
+        });
         continue;
       }
 
@@ -1222,6 +1242,9 @@ export const sendDueReminders = internalAction({
             `Push endpoint gone (${statusCode}) for device ${reminder.deviceId} — will prune subscription`
           );
           deadDevices.add(reminder.deviceId);
+          await ctx.runMutation(internal.mutations.markReminderSent, {
+            id: reminder._id as import("./_generated/dataModel").Id<"reminders">,
+          });
         } else {
           console.error(
             `Failed to send push for reminder ${reminder._id}:`,

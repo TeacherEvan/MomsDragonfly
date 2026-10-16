@@ -591,4 +591,126 @@ test("rekeyDevice rejects identical or invalid device IDs", async (t) => {
   ).rejects.toThrow("Invalid deviceId");
 });
 
+test("verifyPOI works across multiple devices and upsertPOIs preserves verifiedCount", async (t) => {
+  const deviceA = testDeviceId();
+  const deviceB = testDeviceId();
+  const now = Date.now();
+  const basePoi = {
+    placeId: "osm:shared-poi",
+    source: "osm" as const,
+    name: "Shared Cafe",
+    category: "restaurant",
+    lat: -25.75,
+    lng: 28.2,
+    verifiedCount: 1,
+    fetchedAt: now,
+  };
+
+  await t.mutation(api.mutations.upsertPOIs, { deviceId: deviceA, pois: [basePoi] });
+  await t.mutation(api.mutations.upsertPOIs, { deviceId: deviceB, pois: [basePoi] });
+
+  // Both devices share the same placeId; verifyPOI should not throw .unique() error
+  await t.mutation(api.mutations.verifyPOI, { deviceId: deviceA, placeId: "osm:shared-poi" });
+  const poisAfterVerify = await t.query(api.queries.poiQuery, {
+    deviceId: deviceA,
+    category: "restaurant",
+  });
+  expect(poisAfterVerify[0].verifiedCount).toBe(2);
+
+  // Subsequent background upsert with verifiedCount: 1 must not clobber verifiedCount: 2
+  await t.mutation(api.mutations.upsertPOIs, {
+    deviceId: deviceA,
+    pois: [{ ...basePoi, fetchedAt: now + 5000, verifiedCount: 1 }],
+  });
+  const poisAfterUpsert = await t.query(api.queries.poiQuery, {
+    deviceId: deviceA,
+    category: "restaurant",
+  });
+  expect(poisAfterUpsert[0].verifiedCount).toBe(2);
+});
+
+test("rekeyDevice deduplicates prefs, budgets, and overlapping POIs on target device", async (t) => {
+  const deviceA = testDeviceId();
+  const deviceB = testDeviceId();
+  const now = Date.now();
+
+  await t.mutation(api.mutations.savePrefs, { deviceId: deviceA, currency: "ZAR" });
+  await t.mutation(api.mutations.savePrefs, { deviceId: deviceB, currency: "USD" });
+  await t.mutation(api.mutations.upsertBudget, {
+    deviceId: deviceA,
+    totalBudget: 5000,
+    currency: "ZAR",
+    period: "trip",
+    startDate: now,
+  });
+  await t.mutation(api.mutations.upsertBudget, {
+    deviceId: deviceB,
+    totalBudget: 1000,
+    currency: "USD",
+    period: "trip",
+    startDate: now,
+  });
+
+  const poi = {
+    placeId: "osm:dup-1",
+    source: "osm" as const,
+    name: "Dup Place",
+    category: "park",
+    lat: 1,
+    lng: 2,
+    verifiedCount: 1,
+    fetchedAt: now,
+  };
+  await t.mutation(api.mutations.upsertPOIs, { deviceId: deviceA, pois: [poi] });
+  await t.mutation(api.mutations.upsertPOIs, { deviceId: deviceB, pois: [poi] });
+
+  await t.mutation(api.mutations.rekeyDevice, { oldDeviceId: deviceA, newDeviceId: deviceB });
+
+  // prefsQuery and budgetQuery use .unique() and must not throw
+  const prefsB = await t.query(api.queries.prefsQuery, { deviceId: deviceB });
+  expect(prefsB?.currency).toBe("ZAR");
+  const budgetB = await t.query(api.queries.budgetQuery, { deviceId: deviceB });
+  expect(budgetB?.totalBudget).toBe(5000);
+  const poisB = await t.query(api.queries.poiQuery, { deviceId: deviceB, category: "park" });
+  expect(poisB).toHaveLength(1);
+});
+
+test("markReminderSent advances overdue recurring reminder past Date.now()", async (t) => {
+  const device = testDeviceId();
+  const threeDaysAgo = Date.now() - 3 * 86_400_000 - 60_000;
+  const id = await t.mutation(api.mutations.addReminder, {
+    deviceId: device,
+    title: "Daily Vitamin",
+    dueAt: threeDaysAgo,
+    repeat: "daily",
+  });
+
+  await t.mutation(internal.mutations.markReminderSent, { id });
+  const reminders = await t.query(api.queries.remindersQuery, { deviceId: device });
+  expect(reminders[0].dueAt).toBeGreaterThan(Date.now());
+  expect(reminders[0].done).toBe(false);
+});
+
+test("addExpense rejects ticketId belonging to another device", async (t) => {
+  const deviceA = testDeviceId();
+  const deviceB = testDeviceId();
+
+  const ticketIdA = await t.mutation(api.mutations.createTicket, {
+    deviceId: deviceA,
+    ocrText: "Secret ticket",
+  });
+
+  await expect(
+    t.mutation(api.mutations.addExpense, {
+      deviceId: deviceB,
+      amount: 50,
+      currency: "USD",
+      category: "food",
+      date: Date.now(),
+      ticketId: ticketIdA,
+    })
+  ).rejects.toThrow("Ticket not found");
+});
+
+
 

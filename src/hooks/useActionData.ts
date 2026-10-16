@@ -29,7 +29,7 @@ export function useActionData<
 ): ActionDataState<Result> {
   const act = useAction(actionRef);
   const [data, setData] = useState<Result | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(() => Boolean(args));
   const [failed, setFailed] = useState(false);
   const [trigger, setTrigger] = useState(0);
 

@@ -25,6 +25,7 @@ export default function RemindersClient() {
   const addReminderMut = useMutation(api.mutations.addReminder);
   const toggleMut = useMutation(api.mutations.toggleReminder);
   const deleteMut = useMutation(api.mutations.deleteReminder);
+  const savePrefsMut = useMutation(api.mutations.savePrefs);
 
   const reminders: Reminder[] = rawReminders.map((r) => ({
     id: r._id,
@@ -39,7 +40,10 @@ export default function RemindersClient() {
 
   const handleAdd = async (r: Omit<Reminder, "id" | "done">) => {
     if (!pushEnabled) {
-      await requestPushPermission();
+      const ok = await requestPushPermission();
+      if (ok) {
+        await savePrefsMut({ deviceId, notificationsEnabled: true });
+      }
     }
     addReminderMut({ ...r, deviceId });
   };
@@ -65,8 +69,7 @@ export default function RemindersClient() {
             onClick={async () => {
               const ok = await requestPushPermission();
               if (ok) {
-                // Trigger a re-render by updating local state would be ideal
-                // but the prefs query will auto-update when the mutation completes
+                await savePrefsMut({ deviceId, notificationsEnabled: true });
               }
             }}
             className="px-2.5 py-1.5 bg-dragonfly-teal-500 hover:bg-dragonfly-teal-400 text-dragonfly-navy-950 font-semibold rounded-lg shrink-0 ml-2 transition-colors duration-fast"

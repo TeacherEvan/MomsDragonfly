@@ -176,7 +176,7 @@ export function JournalClient() {
             "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-semibold " +
             (tripActive
               ? "bg-dragonfly-orange-500/15 text-dragonfly-orange-400"
-              : "bg-dragonfly-navy-800 text-dragonfly-navy-400")
+              : "bg-dragonfly-navy-800 text-dragonfly-navy-300")
           }
         >
           <span
@@ -234,21 +234,21 @@ export function JournalClient() {
         <div className="h-40 animate-pulse rounded-xl border border-dragonfly-navy-800 bg-surface-900/60" />
       )}
 
-      {chrono.length >= 2 && (
-        <>
-          <div className="grid grid-cols-3 gap-2">
-            <Stat label="Distance" value={formatDistance(totalMetres)} />
-            <Stat label="Pins" value={String(chrono.length)} />
-            <Stat label="Notes" value={noteCount === null ? "—" : String(noteCount)} />
-          </div>
+      {(chrono.length >= 2 || (noteCount !== null && noteCount > 0)) && (
+        <div className="grid grid-cols-3 gap-2">
+          <Stat label="Distance" value={formatDistance(totalMetres)} />
+          <Stat label="Pins" value={String(chrono.length)} />
+          <Stat label="Notes" value={noteCount === null ? "—" : String(noteCount)} />
+        </div>
+      )}
 
-          <MapView
-            pois={[]}
-            center={latest ? [latest.lat, latest.lng] : undefined}
-            onVerify={() => {}}
-            trail={trail}
-          />
-        </>
+      {chrono.length >= 2 && (
+        <MapView
+          pois={[]}
+          center={latest ? [latest.lat, latest.lng] : undefined}
+          onVerify={() => {}}
+          trail={trail}
+        />
       )}
 
       <section aria-label="Share trip journal" className="rounded-xl border border-dragonfly-navy-800 bg-surface-900/70 p-3 flex flex-col gap-2">

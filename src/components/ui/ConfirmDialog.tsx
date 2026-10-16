@@ -1,6 +1,6 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useEffect } from "react";
+import React, { useEffect, useId } from "react";
 
 import { cn } from "@/lib/utils/cn";
 
@@ -25,6 +25,10 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const baseId = useId();
+  const titleId = `${baseId}-title`;
+  const messageId = `${baseId}-message`;
+
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,18 +52,18 @@ export function ConfirmDialog({
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="confirm-title"
-            aria-describedby="confirm-message"
+            aria-labelledby={titleId}
+            aria-describedby={messageId}
             className="relative z-10 w-full max-w-sm glass-panel rounded-2xl p-6 shadow-strong border border-dragonfly-navy-700 bg-dragonfly-navy-900/95"
             initial={{ scale: 0.92, opacity: 0, y: 12 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.92, opacity: 0, y: 12 }}
             transition={{ type: "spring", damping: 28, stiffness: 360 }}
           >
-            <h3 id="confirm-title" className="font-bold text-dragonfly-navy-50 text-base mb-2">
+            <h3 id={titleId} className="font-bold text-dragonfly-navy-50 text-base mb-2">
               {title}
             </h3>
-            <p id="confirm-message" className="text-caption text-dragonfly-navy-300 mb-6 leading-relaxed">
+            <p id={messageId} className="text-caption text-dragonfly-navy-300 mb-6 leading-relaxed">
               {message}
             </p>
             <div className="flex gap-2.5">

@@ -110,6 +110,7 @@ export function placeCacheKey(input: {
   const source = String(input.source ?? "").trim().toLowerCase();
   const placeId = String(input.placeId ?? "").trim();
   if (source === "google" && placeId) return `g:${placeId}`;
+  if (placeId) return `p:${source}:${placeId}`;
 
   const slug = slugifyPlaceName(input.name ?? "") || "place";
   // `w2:` — the gated Wikipedia lookup (category-aware search + relevance
@@ -207,15 +208,45 @@ export function googlePhotoMediaUrl(
  */
 export function osmPhotoUrl(tags?: Record<string, string>): string | undefined {
   if (!tags) return undefined;
-  const image = tags.image?.trim();
-  if (image && /^https?:\/\//i.test(image)) return image;
 
   const commons = tags.wikimedia_commons?.trim() || tags["wikimedia:commons"]?.trim();
-  if (commons) {
+  if (
+    commons &&
+    !/^(https?:\/\/commons\.wikimedia\.org\/wiki\/)?Category:/i.test(commons) &&
+    !/^https?:\/\//i.test(commons)
+  ) {
     const filename = commons.replace(/^File:/i, "").trim().replace(/ /g, "_");
     if (filename) {
       return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=800`;
     }
   }
+  if (commons && /^https?:\/\/commons\.wikimedia\.org\/wiki\/File:/i.test(commons)) {
+    const filePart = commons
+      .replace(/^https?:\/\/commons\.wikimedia\.org\/wiki\/File:/i, "")
+      .trim()
+      .replace(/ /g, "_");
+    if (filePart) {
+      return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filePart)}?width=800`;
+    }
+  }
+
+  const image = tags.image?.trim();
+  if (image && /^https?:\/\//i.test(image)) {
+    if (/^https?:\/\/commons\.wikimedia\.org\/wiki\/Category:/i.test(image)) {
+      return undefined;
+    }
+    if (/^https?:\/\/commons\.wikimedia\.org\/wiki\/File:/i.test(image)) {
+      const filePart = image
+        .replace(/^https?:\/\/commons\.wikimedia\.org\/wiki\/File:/i, "")
+        .trim()
+        .replace(/ /g, "_");
+      if (filePart) {
+        return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filePart)}?width=800`;
+      }
+    }
+    return image;
+  }
+
   return undefined;
 }
+

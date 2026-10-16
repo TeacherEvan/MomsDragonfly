@@ -1,6 +1,6 @@
 # Mom's Dragonfly — Task Status / Todos Sheet
 
-> **Last updated:** 2026-10-13  
+> **Last updated:** 2026-10-16  
 > **Source:** `docs/.scratch-audit/CODEBASE_STATE.md` + review follow-ups  
 > **Purpose:** Reflect what has been done and what still needs doing — no hidden gaps.
 
@@ -14,9 +14,9 @@
 || TypeScript | Strict mode | ✅ Confirmed |
 || Build (`pnpm build`) | Passes (0 errors) | ✅ Confirmed |
 || Type check (`pnpm typecheck`) | Passes | ✅ Confirmed |
-|| Unit tests (`pnpm test`) | 159 passing in 21 files | ✅ Confirmed |
-|| Convex tests (`pnpm test:convex`) | 23 passing in 2 files | ✅ Confirmed |
-|| E2E tests (`pnpm test:e2e`) | 22 passing | ✅ Confirmed |
+|| Unit tests (`pnpm test`) | 238 passing in 30 files | ✅ Confirmed |
+|| Convex tests (`pnpm test:convex`) | 37 passing in 4 files | ✅ Confirmed |
+|| E2E tests (`pnpm test:e2e`) | 26 passing in 5 files | ✅ Confirmed |
 || Lint (`pnpm lint`) | Passes (0 warnings/errors) | ✅ Confirmed |
 || Design system (dragonfly palette) | Implemented in `tailwind.config.ts` + `theme/dragonfly.ts` | ✅ Completed `7f588a7` |
 || Premium onboarding (Splash → Video → Slides) | Implemented (`IntroVideoModal`, `SplashScreen`) | ✅ Completed `7f588a7` |

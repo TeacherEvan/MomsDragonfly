@@ -56,6 +56,7 @@ export const upsertPOIs = mutation({
       if (existing) {
         await ctx.db.patch(existing._id, {
           ...data,
+          verifiedCount: Math.max(existing.verifiedCount, poi.verifiedCount),
           deviceIds: [deviceId],
         });
       } else {
@@ -222,6 +223,13 @@ export const rekeyDevice = mutation({
       .unique();
 
     if (oldPrefs) {
+      const newPrefsExisting = await ctx.db
+        .query("userPrefs")
+        .withIndex("by_deviceId", (q) => q.eq("deviceId", newDeviceId))
+        .take(100);
+      for (const p of newPrefsExisting) {
+        await ctx.db.delete(p._id);
+      }
       await ctx.db.patch(oldPrefs._id, {
         deviceId: newDeviceId,
         shareEnabled: false,
@@ -302,6 +310,13 @@ export const rekeyDevice = mutation({
     }
 
     // 7. Budgets
+    const newBudgetsExisting = await ctx.db
+      .query("budgets")
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", newDeviceId))
+      .take(100);
+    for (const b of newBudgetsExisting) {
+      await ctx.db.delete(b._id);
+    }
     while (true) {
       const budgets = await ctx.db
         .query("budgets")
@@ -323,7 +338,20 @@ export const rekeyDevice = mutation({
         .take(500);
       if (userPois.length === 0) break;
       for (const poi of userPois) {
-        await ctx.db.patch(poi._id, { deviceIds: [newDeviceId] });
+        const dup = await ctx.db
+          .query("pois")
+          .withIndex("by_placeId", (q) => q.eq("placeId", poi.placeId))
+          .filter((q) => q.eq(q.field("deviceIds"), [newDeviceId]))
+          .first();
+        if (dup) {
+          await ctx.db.patch(dup._id, {
+            verifiedCount: Math.max(dup.verifiedCount, poi.verifiedCount),
+            fetchedAt: Math.max(dup.fetchedAt, poi.fetchedAt),
+          });
+          await ctx.db.delete(poi._id);
+        } else {
+          await ctx.db.patch(poi._id, { deviceIds: [newDeviceId] });
+        }
       }
       migrated += userPois.length;
       if (userPois.length < 500) break;
@@ -514,8 +542,9 @@ export const verifyPOI = mutation({
     const poi = await ctx.db
       .query("pois")
       .withIndex("by_placeId", (q) => q.eq("placeId", placeId))
-      .unique();
-    if (poi && (poi.deviceIds ?? []).includes(deviceId)) {
+      .filter((q) => q.eq(q.field("deviceIds"), [deviceId]))
+      .first();
+    if (poi) {
       await ctx.db.patch(poi._id, {
         verifiedCount: poi.verifiedCount + 1,
       });
@@ -541,6 +570,12 @@ export const addExpense = mutation({
   },
   handler: async (ctx, args) => {
     validateDeviceId(args.deviceId);
+    if (args.ticketId) {
+      const ticket = await ctx.db.get(args.ticketId);
+      if (!ticket || ticket.deviceId !== args.deviceId) {
+        throw new Error("Ticket not found or access denied");
+      }
+    }
     return ctx.db.insert("expenses", args);
   },
 });
@@ -663,18 +698,19 @@ export const markReminderSent = internalMutation({
     const reminder = await ctx.db.get(id);
     if (!reminder) return;
 
-    if (reminder.repeat === "daily") {
+    const now = Date.now();
+    if (reminder.repeat === "daily" || reminder.repeat === "weekly") {
+      const stepMs = reminder.repeat === "daily" ? 86_400_000 : 7 * 86_400_000;
+      let nextDue = reminder.dueAt + stepMs;
+      while (nextDue <= now) {
+        nextDue += stepMs;
+      }
       await ctx.db.patch(id, {
-        dueAt: reminder.dueAt + 86_400_000,
-        sentAt: undefined,
-      });
-    } else if (reminder.repeat === "weekly") {
-      await ctx.db.patch(id, {
-        dueAt: reminder.dueAt + 7 * 86_400_000,
+        dueAt: nextDue,
         sentAt: undefined,
       });
     } else {
-      await ctx.db.patch(id, { sentAt: Date.now() });
+      await ctx.db.patch(id, { sentAt: now });
     }
   },
 });

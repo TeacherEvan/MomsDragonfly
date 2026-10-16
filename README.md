@@ -18,16 +18,15 @@ A mobile-first PWA travel companion — proximity-based verified POIs (10m→20k
 
 ## Tech Stack
 
-- **Framework:** Next.js 15 App Router (Vercel) — upgraded from 14.2.35 → 15.5.25
-- **Dependency Remediation:** See `repomedic/dependency-remediation` branch (audit: 34 → 10 advisories; critical `next` CVEs resolved)
+- **Framework:** Next.js 15 App Router (15.5.27 on Vercel)
 - **Language:** TypeScript (strict mode)
-- **Styling:** Tailwind CSS
-- **Database:** Convex (realtime DB + actions + scheduled functions)
-- **Maps:** Leaflet + react-leaflet
-- **OCR:** Tesseract.js (offline) with Gemini Vision fallback
-- **PWA:** next-pwa
-- **Testing:** Vitest (unit), Playwright (E2E), Lighthouse CI
-- **Deployment:** Vercel
+- **Styling:** Tailwind CSS (`dragonfly` dark palette, WCAG AA contrast)
+- **Database:** Convex (realtime DB + actions + scheduled crons + HTTP photo/streetview proxy)
+- **Maps:** Leaflet + react-leaflet (inline SVG pins, journal trail polylines)
+- **OCR:** Self-hosted Tesseract.js (`public/tesseract/`) with Gemini Vision fallback
+- **PWA:** Hand-rolled service worker (`public/sw.js`) with Web Push & offline support
+- **Testing:** Vitest (unit), `convex-test` (backend integration), Playwright + axe-core (E2E), Lighthouse CI
+- **Deployment:** Convex + Vercel (+ Bubblewrap Android TWA in `android/`)
 
 ---
 
@@ -306,75 +305,63 @@ After `pnpm convex dev`, open the printed dashboard URL to:
 ## Project Structure
 
 ```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── (tabs)/            # Tab-based navigation pages
-│   │   ├── explore/       # POI exploration + map
-│   │   ├── budget/        # Budget tracking + ring
-│   │   ├── reminders/     # Reminders & notifications
-│   │   ├── tickets/       # Ticket OCR & gallery
-│   │   └── settings/      # User preferences
-│   ├── providers.tsx      # Convex, Toast, Network providers
-│   └── layout.tsx         # Root layout + PWA manifest
-├── components/
-│   ├── map/               # Leaflet map components
-│   ├── poi/               # POI list, filter, card
-│   ├── budget/            # Budget dashboard, ring, forms
-│   ├── reminders/         # Reminder list, forms, days counter
-│   ├── tickets/           # Scanner, gallery, OCR results
-│   ├── shell/             # BottomNav, InstallPrompt, UpdateBanner
-│   └── onboarding/        # IntroVideo, DaysCounter
-├── convex/                # Convex backend
-│   ├── schema.ts          # Database schema
-│   ├── actions.ts         # External API calls (Google, OSM, Brave, Gemini)
-│   ├── mutations.ts       # Database mutations
-│   ├── queries.ts         # Database queries
-│   ├── crons.ts           # Scheduled functions (reminders, cleanup)
-│   └── auth.ts            # Device ID validation
-├── hooks/                 # Custom React hooks
-├── lib/
-│   ├── convex/            # Convex client singleton
-│   ├── tickets/           # OCR, parsing, IndexedDB
-│   └── utils/             # Currency, geo, deviceId, cn helpers
-├── types/                 # Shared TypeScript types
-└── ...
+├── convex/                 # Convex backend (schema, queries, mutations, actions, crons, http)
+├── convex-test/            # Convex backend integration test suite
+├── public/                 # Icons, manifest, sw.js, offline.html, tesseract/ (self-hosted OCR)
+├── src/
+│   ├── app/                # Next.js App Router pages
+│   │   ├── (tabs)/         # Tab-based navigation pages (7 tabs)
+│   │   │   ├── explore/    # POI exploration + map
+│   │   │   ├── local/      # Local area highlights, dishes & phrasebook
+│   │   │   ├── journal/    # Auto-recorded trip journal, notes & live share
+│   │   │   ├── budget/     # Budget tracking + ring
+│   │   │   ├── reminders/  # Reminders, countdown & push notifications
+│   │   │   ├── tickets/    # Ticket OCR & gallery
+│   │   │   └── settings/   # User preferences, display & device identity
+│   │   ├── api/push/       # Web Push subscription route
+│   │   ├── share/[token]/  # Public read-only shared trip journal view
+│   │   ├── providers.tsx   # Convex, Toast, Network providers
+│   │   └── layout.tsx      # Root layout + PWA metadata
+│   ├── components/         # UI components (shell, map, poi, journal, ride, explore, budget, etc.)
+│   ├── hooks/              # Custom React hooks (useGeolocation, useTripJournal, useActionData, etc.)
+│   └── lib/                # Utilities (idb, images, journal, notify, push, ride, theme, tickets)
+└── tests/                  # Unit (tests/unit/) and Playwright E2E (tests/e2e/) suites
 ```
 
 ---
 
 ## Key Implementation Details
 
-### Tesseract.js Production Handling
+### Self-Hosted Tesseract.js OCR
 
-Tesseract.js has known issues in production Next.js builds. The app uses a wrapper (`src/lib/tickets/tesseract-wrapper.js`) that:
-- Returns a mock implementation in production
-- Loads the real Tesseract.js only in development
-- Prevents runtime errors (`TypeError: r is not a function`) in production builds
+Tesseract.js runs 100% locally in the browser using self-hosted assets under `public/tesseract/` (`worker.min.js`, `tesseract-core-*.wasm`, and `eng.traineddata.gz`), avoiding CDN runtime fetches or bundler worker incompatibilities. When offline or when confidence is below threshold (`< 70%`), the user can optionally enrich the scan via Gemini Vision.
 
 ### Convex Backend
 
-- **Schema:** POIs, userPrefs, locationHistory, expenses, budgets, reminders, tickets
-- **Actions:** Google Places (New), Overpass (OSM), Brave Search, Gemini Vision
-- **Crons:** Reminder notifications, expired cache/ticket cleanup (batched, BATCH_SIZE=500)
-- **Auth:** Device ID validation via `validateDeviceId()` guards
+- **Schema:** `pois`, `userPrefs`, `locationHistory`, `journalNotes`, `cache` (plus legacy `highlightsCache`, `dishesCache`, `placeEnrichCache`), `expenses`, `budgets`, `reminders`, `tickets`
+- **Actions:** Google Places (New), Overpass (OSM), Brave Search, Open-Meteo, Nominatim, Wikipedia/Wikimedia Commons, Gemini Vision & Local Dishes/Phrases
+- **Crons:** Due reminder push notifications (every 5 min), expired POI cleanup (hourly), expired ticket cleanup (hourly), expired cache cleanup (daily)
+- **Auth & Bounds:** Every public query/mutation validates `deviceId` via `validateDeviceId()`, strips `deviceId` from public projections, and bounds all list reads via `convex/limits.ts` (`MAX_*`).
 
 ### PWA Configuration
 
-- `next-pwa` configured with service worker
-- Install prompts, update banners
-- Offline page (`/offline.html`)
-- Accessibility headers, WCAG AA compliance
-- Display & Layout prefs (large text, reduce motion, high contrast) stored per device in localStorage; CSS legacy `html.elderly` remains as an alias for `large-text`
+- Hand-rolled service worker (`public/sw.js`, cache `moms-dragonfly-v7`) with app-shell precaching, offline fallback (`/offline.html`), and Web Push (`push` + sanitized `notificationclick`) handlers
+- Chrome-enforced Android install routing (`src/lib/utils/install.ts`) so Samsung Internet / OEM browsers never mint blocked WebAPKs
+- Accessibility headers, WCAG AA contrast compliance across all 7 tabs
+- Display & Layout prefs (`largeText`, `reduceMotion`, `highContrast`) stored per device in `localStorage` (`mdf-display-prefs`)
 
 ---
 
 ## Testing
 
 ```bash
-# Unit tests
+# Unit tests (Vitest + jsdom)
 pnpm test
 
-# E2E tests (requires running dev server)
+# Convex backend integration tests (convex-test)
+pnpm test:convex
+
+# E2E tests (Playwright — run pnpm build first)
 pnpm test:e2e
 
 # Lighthouse CI
@@ -383,37 +370,31 @@ pnpm test:lhci
 
 ### Test Coverage
 
-- Unit tests: 84 passing (currency, geo, budget utils, etc.)
-- E2E tests: Accessibility, app load, dashboard navigation, reminders, tickets
-- Lighthouse CI: Performance, accessibility, best practices, SEO, PWA
+- **Unit tests:** 238 passing across 30 test files
+- **Convex integration tests:** 37 passing across 4 test files
+- **E2E tests:** 26 passing across 5 spec files (including axe-core WCAG AA across all tabs and large-text mode)
+- **Lighthouse CI:** Enforced accessibility gate (`≥ 0.95`)
 
 ---
 
 ## Deployment
 
-### Vercel (Recommended)
-
-1. Push to GitHub
-2. Import project in Vercel
-3. Add environment variables (from `.env.local`)
-4. Deploy
-
-### Convex Production
+### Vercel & Convex Production
 
 ```bash
-pnpm convex deploy
-# → Select production deployment
-# → Set production env vars in Convex dashboard
+pnpm deploy:prod            # Deploy Convex production functions first
+npx vercel --prod --yes     # Deploy Vercel frontend second
 ```
 
 ### Post-Deploy Checklist
 
-- [ ] Verify `NEXT_PUBLIC_CONVEX_URL` points to production deployment
-- [ ] Verify `NEXT_PUBLIC_CONVEX_SITE_URL` is correct
-- [ ] Test PWA install on mobile
+- [ ] Confirm the newest production deployment is **Ready** (`npx vercel ls`)
+- [ ] Verify `NEXT_PUBLIC_CONVEX_URL` and `NEXT_PUBLIC_CONVEX_SITE_URL` point to production
+- [ ] `curl -I` `/tesseract/worker.min.js` and `/tesseract/eng.traineddata.gz` (expect 200)
+- [ ] Test PWA install on mobile (Android Chrome, iOS Safari)
 - [ ] Test offline mode (Airplane mode → refresh)
 - [ ] Verify push notifications work (Reminders tab)
-- [ ] Run `pnpm test:lhci` against production URL
+- [ ] Run `pnpm test:lhci`
 
 ---
 
@@ -424,11 +405,11 @@ pnpm convex deploy
 
 ### "Convex connection failed"
 - **Fix:** Check `.env.local` has correct `NEXT_PUBLIC_CONVEX_URL`
-- **Fix:** Run `pnpm convex dev` to ensure backend is running
+- **Fix:** Run `npx convex dev` to ensure backend is running
 
 ### "Tesseract.js error in production"
-- **Expected:** The wrapper mocks Tesseract in production builds
-- **Fix:** Use Gemini fallback (set `GEMINI_API_KEY` in Convex env)
+- **Fix:** Ensure `public/tesseract/` contains the full `node_modules/tesseract.js-core/` `.wasm` files plus `worker.min.js` and `eng.traineddata.gz`
+- **Fix:** Use Gemini Vision enrichment fallback (`GEMINI_API_KEY` in Convex env)
 
 ### "Push notifications not working"
 - **Fix:** Enable in Settings → Push Notifications
@@ -437,11 +418,11 @@ pnpm convex deploy
 
 ### "Map not loading"
 - **Fix:** Check network — Leaflet tiles load from OpenStreetMap
-- **Fix:** Offline? Cached tiles only work for previously viewed areas
+- **Fix:** Failed tiles automatically retry 3× with exponential backoff before showing a calm placeholder
 
 ### "TypeScript errors after pull"
 - **Fix:** Run `pnpm install && pnpm typecheck`
-- **Fix:** Convex schema changes need `pnpm convex dev` to regenerate types
+- **Fix:** Convex schema changes need `npx convex dev` or `npx convex codegen` to regenerate types
 
 ---
 

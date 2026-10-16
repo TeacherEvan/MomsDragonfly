@@ -48,8 +48,9 @@ export function searchResultTitles(search: unknown, limit: number = 1): string[]
 }
 
 /** REST summary URL for an article title (spaces → underscores). */
-export function wikiSummaryUrl(title: string): string {
-  return `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+export function wikiSummaryUrl(title: string, lang: string = "en"): string {
+  const safeLang = /^[a-z]{2,3}$/i.test(lang) ? lang.toLowerCase() : "en";
+  return `https://${safeLang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
     title.replace(/ /g, "_")
   )}`;
 }

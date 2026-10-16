@@ -17,7 +17,7 @@ import {
   saveLocalTicketRecord,
   updateLocalTicket,
 } from "@/lib/idb/tickets";
-import { runTesseract } from "@/lib/tickets/ocr";
+import { runTesseract, TESSERACT_CONFIDENCE_THRESHOLD } from "@/lib/tickets/ocr";
 import { parseTicket } from "@/lib/tickets/parse";
 import { getDeviceId } from "@/lib/utils/deviceId";
 import type { Ticket } from "@/types";
@@ -103,12 +103,18 @@ export default function TicketsClient() {
     };
   }, []);
 
+  // Track in-flight syncs to prevent concurrent duplicate Convex inserts
+  const syncingIdsRef = useRef<Set<string>>(new Set());
+
   const trySync = useCallback(
     async (localId: string) => {
-      const recs = await listLocalTickets();
-      const rec = recs.find((r) => r.id === localId);
-      if (!rec || !rec.pendingSync) return;
+      if (syncingIdsRef.current.has(localId)) return;
+      syncingIdsRef.current.add(localId);
       try {
+        const recs = await listLocalTickets();
+        const rec = recs.find((r) => r.id === localId);
+        // Do not sync if not pending or still undergoing background OCR/enrichment
+        if (!rec || !rec.pendingSync || rec.enrichment === "pending") return;
         const cloudId = (await createTicketMut({
           deviceId,
           ocrText: rec.ocrText,
@@ -119,6 +125,8 @@ export default function TicketsClient() {
         await updateLocalTicket(localId, { cloudId, pendingSync: false });
       } catch {
         // still offline — stays pending, retried on next load
+      } finally {
+        syncingIdsRef.current.delete(localId);
       }
     },
     [createTicketMut, deviceId]
@@ -181,9 +189,12 @@ export default function TicketsClient() {
         // 2) Enrichment + sync in the background
         void (async () => {
           try {
-            const { text } = await runTesseract(blob);
+            const { text, confidence } = await runTesseract(blob);
             const parsed = parseTicket(text);
-            const hasData = Boolean(parsed.date || parsed.amount || parsed.venue);
+            const hasData = Boolean(
+              confidence >= TESSERACT_CONFIDENCE_THRESHOLD &&
+                (parsed.date || parsed.amount || parsed.venue)
+            );
             await updateLocalTicket(localId, {
               ocrText: text || undefined,
               parsedDate: parsed.date,
@@ -197,6 +208,8 @@ export default function TicketsClient() {
           } catch (ocrErr) {
             console.warn("Background OCR failed:", ocrErr);
             await updateLocalTicket(localId, { enrichment: "failed" });
+            await refreshLocal();
+            await trySync(localId);
             await refreshLocal();
           }
         })();
@@ -229,12 +242,15 @@ export default function TicketsClient() {
         return;
       }
       const parsed = parseTicket(result.text);
+      const allLocal = await listLocalTickets();
+      const existing = allLocal.find((r) => r.id === lastCaptureId);
       await updateLocalTicket(lastCaptureId, {
         ocrText: result.text || undefined,
         parsedDate: parsed.date,
         parsedAmount: parsed.amount,
         parsedVenue: parsed.venue,
         enrichment: "done",
+        ...(!existing?.cloudId ? { pendingSync: true } : {}),
       });
       setAiState("done");
       await refreshLocal();
@@ -270,7 +286,8 @@ export default function TicketsClient() {
   const lastCapture = tickets.find((t) => t.localId === lastCaptureId) ?? null;
   const showEnrichmentPanel = Boolean(
     lastCapture &&
-      (lastCapture.enrichment === "failed" ||
+      (lastCapture.enrichment === "done" ||
+        lastCapture.enrichment === "failed" ||
         aiState === "working" ||
         aiState === "done")
   );

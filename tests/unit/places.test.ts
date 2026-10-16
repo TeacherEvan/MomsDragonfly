@@ -200,7 +200,19 @@ describe("placeCacheKey / slugifyPlaceName", () => {
     ).toBe("g:ChIJN1t_tDeu");
   });
 
-  it("falls back to w2:{slug}:{lat},{lng} at 0.1° resolution", () => {
+  it("uses p:{source}:{placeId} for non-Google rows with an id", () => {
+    expect(
+      placeCacheKey({
+        source: "osm",
+        placeId: "osm-node-12345",
+        name: "Same Name",
+        lat: -25.74,
+        lng: 28.18,
+      })
+    ).toBe("p:osm:osm-node-12345");
+  });
+
+  it("falls back to w2:{slug}:{lat},{lng} at 0.1° resolution when placeId is empty", () => {
     expect(
       placeCacheKey({
         source: "osm",
@@ -755,9 +767,24 @@ describe("osmPhotoUrl", () => {
     );
   });
 
-  it("handles wikimedia:commons alias key", () => {
+  it("handles wikimedia:commons alias key and File: wiki URLs, and rejects Category: links", () => {
     expect(osmPhotoUrl({ "wikimedia:commons": "Union_Buildings.jpg" })).toBe(
       "https://commons.wikimedia.org/wiki/Special:FilePath/Union_Buildings.jpg?width=800"
+    );
+    expect(
+      osmPhotoUrl({ image: "https://commons.wikimedia.org/wiki/File:Voortrekker_Monument.jpg" })
+    ).toBe(
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Voortrekker_Monument.jpg?width=800"
+    );
+    expect(osmPhotoUrl({ wikimedia_commons: "Category:Union Buildings" })).toBeUndefined();
+    expect(
+      osmPhotoUrl({ wikimedia_commons: "https://commons.wikimedia.org/wiki/Category:Pretoria" })
+    ).toBeUndefined();
+  });
+
+  it("supports custom language codes in wikiSummaryUrl", () => {
+    expect(wikiSummaryUrl("Uniegebou", "af")).toBe(
+      "https://af.wikipedia.org/api/rest_v1/page/summary/Uniegebou"
     );
   });
 

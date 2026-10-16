@@ -79,4 +79,12 @@ Completed full-sweep audit, hardening, and feature completion:
    - Explicitly attached destination URL (`url: "/reminders"`) to reminder push payloads in `convex/actions.ts`.
    - Removed duplicate `@keyframes` animation utility classes in `src/app/globals.css`.
    - Added unit test coverage in `tests/unit/swPush.test.ts` (100% passing).
+12. **End-to-End Reliability, WCAG AA & Edge-Case Remediation**:
+   - **OSM & Places Enrichment (`convex/placeHelpers.ts`, `convex/wikiHelpers.ts`, `convex/actions.ts`)**: Normalized Commons `File:` URLs, rejected `Category:` links, guarded against non-showable OSM photo domains, parsed language prefixes (`lang:Title`) on `tags.wikipedia`, and isolated non-Google place cache keys (`p:${source}:${placeId}`).
+   - **Convex Mutations & Bounds (`convex/mutations.ts`)**: Preserved `verifiedCount` across background `upsertPOIs`, scoped `verifyPOI` to `.first()`, bounded `rekeyDevice` deletes with `.take(100)`, deduplicated POIs by `placeId` during `rekeyDevice`, enforced `ticketId` ownership in `addExpense`, and looped `markReminderSent` past `Date.now()` for overdue recurring reminders.
+   - **Ticket OCR & Sync Concurrency (`src/lib/tickets/parse.ts`, `TicketsClient.tsx`)**: Supported thousands-separated amounts, fixed sub-total regex lookbehind, enforced `TESSERACT_CONFIDENCE_THRESHOLD`, guarded against concurrent sync operations, held sync until background enrichment completes, and synced fallback tickets when local OCR throws.
+   - **Push Cron, Unsubscribe & Validation (`convex/actions.ts`, `src/app/api/push/route.ts`, `src/lib/push/request.ts`, `RemindersClient.tsx`, `SettingsClient.tsx`)**: Advanced recurring reminders even when push is disabled, cleared server `vapidSubscription` when browser subscription is already absent, bounded `parseDeviceId` to 64 chars, and verified `subscribeToPush()` results before persisting `notificationsEnabled: true`.
+   - **Service Worker Redirect & Click Hardening (`public/sw.js`)**: Bumped cache to `moms-dragonfly-v7`, excluded root redirect from precache, guarded against caching redirected navigation responses, and restricted `notificationclick` targets to same-origin paths.
+   - **WCAG AA Contrast & E2E Verification (`tailwind.config.ts`, `src/lib/theme/dragonfly.ts`, `tests/e2e/dashboards.spec.ts`)**: Lightened `dragonfly.navy[500]` (`#7894ad`) and `dragonfly.navy[600]` (`#6d8ba4`) to exceed 4.5:1 contrast on dark surfaces, resolving `/journal` axe-core violations; all 238 unit tests, 37 Convex tests, and 26 Playwright E2E tests pass.
+
 

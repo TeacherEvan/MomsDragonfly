@@ -1,11 +1,10 @@
 // Service worker for Mom's Dragonfly PWA
-const CACHE_NAME = 'moms-dragonfly-v6';
+const CACHE_NAME = 'moms-dragonfly-v7';
 const MEDIA_CACHE = 'moms-dragonfly-media-v1';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache on install
 const PRECACHE_URLS = [
-  '/',
   '/explore',
   '/local',
   '/journal',
@@ -91,7 +90,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response && response.status === 200 && response.type === 'basic') {
+          if (
+            response &&
+            response.status === 200 &&
+            response.type === 'basic' &&
+            !response.redirected
+          ) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(request, responseToCache);
@@ -100,9 +104,9 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(async () => {
-          const cached = await caches.match(request);
+          const cached = await caches.match(request, { ignoreSearch: true });
           if (cached) return cached;
-          const appShell = await caches.match('/');
+          const appShell = await caches.match('/explore');
           if (appShell) return appShell;
           const fallback = await caches.match(OFFLINE_URL);
           return fallback || Response.error();
@@ -181,7 +185,11 @@ self.addEventListener('push', (event) => {
 // Notification click - focus existing tab or navigate to destination
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/reminders';
+  const rawUrl = (event.notification.data && event.notification.data.url) || '/reminders';
+  const targetUrl =
+    typeof rawUrl === 'string' && rawUrl.startsWith('/') && !rawUrl.startsWith('//')
+      ? rawUrl
+      : '/reminders';
 
   event.waitUntil(
     self.clients
@@ -191,7 +199,10 @@ self.addEventListener('notificationclick', (event) => {
           if ('focus' in client) {
             const clientUrl = new URL(client.url);
             if (clientUrl.origin === self.location.origin) {
-              if (clientUrl.pathname === targetUrl || clientUrl.pathname.startsWith(targetUrl)) {
+              if (
+                clientUrl.pathname === targetUrl ||
+                clientUrl.pathname.startsWith(targetUrl + '/')
+              ) {
                 return client.focus();
               }
               if ('navigate' in client) {

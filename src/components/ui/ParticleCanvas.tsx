@@ -220,10 +220,13 @@ export function ParticleCanvas({
         if (p.x < -10) p.x = width + 10;
         if (p.x > width + 10) p.x = -10;
 
+        ctx.save();
+        ctx.globalAlpha = currentOpacity;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color.replace("rgb", "rgba").replace(")", `, ${currentOpacity})`);
+        ctx.fillStyle = p.color;
         ctx.fill();
+        ctx.restore();
       }
     });
 

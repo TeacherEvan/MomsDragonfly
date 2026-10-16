@@ -88,6 +88,8 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
     setTimeout(() => onComplete(), 500);
   }, [prefersReducedMotion, onComplete]);
 
+  const overlayRef = useRef<HTMLDivElement>(null);
+
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === "Escape") handleSkip();
     if (e.key === " " || e.key === "Spacebar") {
@@ -102,8 +104,13 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
   }, [isPlaying, handlePlay, handleSkip]);
 
   const handleKeyDownReact = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
     handleKeyDown(e.nativeEvent);
   };
+
+  useEffect(() => {
+    overlayRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
@@ -141,7 +148,7 @@ export function IntroVideoModal({ onComplete }: IntroVideoModalProps) {
       className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
       onKeyDown={handleKeyDownReact}
       tabIndex={-1}
-      ref={(el) => el?.focus()}
+      ref={overlayRef}
     >
       <ParticleCanvas 
         particleCount={20} 

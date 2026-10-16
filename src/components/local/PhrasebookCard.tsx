@@ -27,9 +27,30 @@ interface PhrasebookCardProps {
   lng: number;
 }
 
+const BCP47_MAP: Record<string, string> = {
+  afrikaans: "af",
+  thai: "th",
+  english: "en",
+  french: "fr",
+  spanish: "es",
+  german: "de",
+  italian: "it",
+  portuguese: "pt",
+  dutch: "nl",
+  japanese: "ja",
+  chinese: "zh",
+};
+
+function getBcp47(lang: string | null): string | undefined {
+  if (!lang) return undefined;
+  const lower = lang.trim().toLowerCase();
+  return BCP47_MAP[lower] ?? (lower.length === 2 || lower.length === 3 ? lower : undefined);
+}
+
 function PhraseRow({ phrase, language }: { phrase: PhraseItem; language: string | null }) {
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
+  const bcp47 = getBcp47(language);
 
   const handleCopy = useCallback(async () => {
     const textToCopy = `${phrase.local} (${phrase.roman}) — ${phrase.english}`;
@@ -47,7 +68,7 @@ function PhraseRow({ phrase, language }: { phrase: PhraseItem; language: string 
         <div className="flex items-baseline gap-2 flex-wrap">
           <span
             className="text-body font-bold text-dragonfly-navy-50"
-            {...(language ? { lang: language.toLowerCase() } : {})}
+            {...(bcp47 ? { lang: bcp47 } : {})}
           >
             {phrase.local}
           </span>

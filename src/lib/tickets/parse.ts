@@ -12,12 +12,12 @@ const DATE_PATTERNS = [
 ];
 
 const AMOUNT_PATTERNS = [
-  // Keyword-led totals first — "TOTAL R 187.50", "Grand Total: $12.50", "Amount due EUR 9,99"
-  /\b(?:grand\s+total|total|amount(?:\s+due)?|balance(?:\s+due)?|due)\b\s*[:\-]?\s*(?:R|ZAR|USD|EUR|GBP|THB|AUD|SGD|MYR|JPY|\$|€|£|¥|฿)?\s*(\d{1,6}(?:[.,]\d{1,2})?)/i,
-  // Currency-symbol / prefix amounts — "$12.50", "R 187.50", "฿450", "USD 12.50"
-  /(?:USD|EUR|GBP|THB|AUD|SGD|MYR|JPY|ZAR|[$€£¥฿]|\bR)\s?(\d{1,6}(?:[.,]\d{1,2})?)/i,
-  // Trailing currency — "12.50 USD"
-  /(\d{1,6}(?:[.,]\d{1,2}))\s?(?:USD|EUR|GBP|THB|AUD|SGD|ZAR)/i,
+  // Keyword-led totals first (excluding sub-totals) — "TOTAL R 187.50", "Grand Total: $1,250.00", "Amount due EUR 9,99"
+  /(?<!sub[\s\-_]*)\b(?:grand\s+total|total|amount(?:\s+due)?|balance(?:\s+due)?|due)\b\s*[:\-]?\s*(?:R|ZAR|USD|EUR|GBP|THB|AUD|SGD|MYR|JPY|[$€£¥฿])?\s*(\d{1,3}(?:[,\s]\d{3})+(?:\.\d{1,2})?|\d{1,6}(?:[.,]\d{1,2})?)/i,
+  // Currency-symbol / prefix amounts — "$1,250.00", "R 187.50", "฿450", "USD 12.50"
+  /(?:USD|EUR|GBP|THB|AUD|SGD|MYR|JPY|ZAR|[$€£¥฿]|\bR)\s?(\d{1,3}(?:[,\s]\d{3})+(?:\.\d{1,2})?|\d{1,6}(?:[.,]\d{1,2})?)/i,
+  // Trailing currency — "1,250.00 USD"
+  /(\d{1,3}(?:[,\s]\d{3})+(?:\.\d{1,2})?|\d{1,6}(?:[.,]\d{1,2}))\s?(?:USD|EUR|GBP|THB|AUD|SGD|ZAR)/i,
 ];
 
 const VENUE_PATTERN = /^([A-Z][A-Za-z &'\-]{2,50})$/m;
@@ -50,7 +50,12 @@ export function parseTicket(text: string): ParsedTicket {
   for (const pattern of AMOUNT_PATTERNS) {
     const m = text.match(pattern);
     if (m) {
-      const raw = (m[1] || m[0]).replace(",", ".");
+      let raw = (m[1] || m[0]).trim();
+      if (/\d[,\s]\d{3}/.test(raw)) {
+        raw = raw.replace(/[,\s](?=\d{3})/g, "");
+      } else {
+        raw = raw.replace(",", ".");
+      }
       const parsed = parseFloat(raw);
       if (!isNaN(parsed)) {
         result.amount = parsed;

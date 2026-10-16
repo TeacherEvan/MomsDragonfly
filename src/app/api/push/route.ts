@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
     await client.mutation(api.mutations.savePrefs, {
       deviceId: parsed.deviceId,
       vapidSubscription: JSON.stringify(parsed.subscription),
+      notificationsEnabled: true,
     });
     return NextResponse.json({ ok: true });
   } catch (err) {

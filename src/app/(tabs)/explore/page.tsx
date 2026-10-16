@@ -42,7 +42,6 @@ export default function ExplorePage() {
   const prefs = useQuery(api.queries.prefsQuery, { deviceId });
   const poisQuery = useQuery(api.queries.poiQuery, { deviceId, category });
   const fetchNearbyAct = useAction(api.actions.fetchNearby);
-  const fetchOverpassAct = useAction(api.actions.fetchOverpassNearby);
   const fetchEntertainmentAct = useAction(api.actions.fetchEntertainment);
   const verifyPOIMut = useMutation(api.mutations.verifyPOI);
 
@@ -80,12 +79,17 @@ export default function ExplorePage() {
       const radius = prefs?.defaultRadius ?? 1000;
       try {
         let result: { count?: number; mock?: boolean; cached?: boolean } | undefined;
-        if (cat === "toilets") {
-          result = await fetchOverpassAct({ deviceId, lat, lng, radius });
-        } else if (cat === "entertainment") {
+        if (cat === "entertainment") {
           result = await fetchEntertainmentAct({ deviceId, lat, lng, radius });
         } else {
-          result = await fetchNearbyAct({ deviceId, lat, lng, radius, category: cat });
+          result = await fetchNearbyAct({
+            deviceId,
+            lat,
+            lng,
+            radius,
+            category: cat,
+            ...(force ? { force: true } : {}),
+          });
         }
         fetchedRef.current.add(cat);
         const empty = result?.mock === true || result?.count === 0;
@@ -101,7 +105,6 @@ export default function ExplorePage() {
       deviceId,
       prefs?.defaultRadius,
       fetchNearbyAct,
-      fetchOverpassAct,
       fetchEntertainmentAct,
     ]
   );
@@ -109,14 +112,19 @@ export default function ExplorePage() {
   // Invalidate fetched cache when moving to a new area (> ~1km / 0.01 deg)
   useEffect(() => {
     if (lat == null || lng == null) return;
-    if (
-      !lastCoordsRef.current ||
-      Math.hypot(lat - lastCoordsRef.current.lat, lng - lastCoordsRef.current.lng) > 0.01
-    ) {
+    const prev = lastCoordsRef.current;
+    if (!prev) {
+      lastCoordsRef.current = { lat, lng };
+      return;
+    }
+    if (Math.hypot(lat - prev.lat, lng - prev.lng) > 0.01) {
       fetchedRef.current.clear();
       lastCoordsRef.current = { lat, lng };
+      CORE_CATEGORIES.forEach((c) => {
+        void fetchPoisForCategory(c, true);
+      });
     }
-  }, [lat, lng]);
+  }, [lat, lng, fetchPoisForCategory]);
 
   // Initial rich load: core categories in parallel
   useEffect(() => {
@@ -179,7 +187,7 @@ export default function ExplorePage() {
     }>;
     return rawPois
       .map((p): ComputedPOI => {
-        if (lat && lng) {
+        if (lat != null && lng != null) {
           return {
             ...p,
             id: p._id,
@@ -192,7 +200,7 @@ export default function ExplorePage() {
       .sort((a, b) => (a.distanceMetres ?? 0) - (b.distanceMetres ?? 0));
   }, [poisQuery, lat, lng, category]);
 
-  const mapCenter = lat && lng ? [lat, lng] : null;
+  const mapCenter = lat != null && lng != null ? ([lat, lng] as [number, number]) : null;
   // The "All" view never tracks its own phase (fetches are keyed by specific
   // category), so during the initial parallel load the list used to show the
   // empty state — "No places found nearby" — for the whole time the first
@@ -237,7 +245,7 @@ export default function ExplorePage() {
             </div>
           )}
 
-          {lat && lng && !geoError ? (
+          {lat != null && lng != null && !geoError ? (
             <MapView
               ref={mapRef}
               pois={computedPois}
@@ -302,7 +310,7 @@ export default function ExplorePage() {
 
           <RideSheet
             poi={rideTarget}
-            pickup={lat && lng ? { lat, lng } : null}
+            pickup={lat != null && lng != null ? { lat, lng } : null}
             onClose={() => setRideTarget(null)}
           />
         </>

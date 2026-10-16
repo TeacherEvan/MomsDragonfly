@@ -51,7 +51,7 @@ import { expect, test } from '@playwright/test';
      
      // Check heading/text
      if (isHeading) {
-       await expect(page.getByRole('heading', { name: heading })).toBeVisible({ timeout: 15000 });
+       await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible({ timeout: 15000 });
      } else {
        await expect(page.getByText(heading)).toBeVisible({ timeout: 15000 });
      }

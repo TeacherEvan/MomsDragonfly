@@ -58,7 +58,7 @@ export default function LocalClient() {
     }
   }, [showToast]);
 
-  const hasPosition = Boolean(lat && lng && !geoError);
+  const hasPosition = lat != null && lng != null && !geoError;
   // The hook exposes no pending flag, so pending = no position yet AND no error.
   // Keeps the failure panel (with its Retry button) hidden until geolocation
   // actually errors, instead of showing it while watchPosition is still resolving.
@@ -71,7 +71,7 @@ export default function LocalClient() {
         <p className="mt-1 text-caption text-dragonfly-navy-400">What&apos;s around you</p>
       </div>
 
-      {hasPosition && lat && lng ? (
+      {hasPosition && lat != null && lng != null ? (
         <>
           <div
             role="tablist"

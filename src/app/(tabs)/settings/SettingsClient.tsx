@@ -99,6 +99,9 @@ export default function SettingsClient() {
       }
 
       showSuccess("Settings saved");
+    } catch (err) {
+      console.warn("Failed to save settings:", err);
+      showError("Failed to save settings. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -284,18 +287,29 @@ export default function SettingsClient() {
         message="This will restore all preferences and cannot be undone."
         confirmLabel="Reset"
         danger
-        onConfirm={() => {
-          savePrefsMut({
-            deviceId,
-            defaultRadius: 1000,
-            currency: "USD",
-            notificationsEnabled: false,
-            onboardingComplete: false,
-            tripStartDate: undefined,
-          });
-          resetDisplay();
-          showSuccess("Settings reset to defaults");
-          setShowResetConfirm(false);
+        onConfirm={async () => {
+          try {
+            await savePrefsMut({
+              deviceId,
+              defaultRadius: 1000,
+              currency: "USD",
+              notificationsEnabled: false,
+              onboardingComplete: false,
+              tripStartDate: null,
+            });
+            await removePushSubscription();
+            setTripStartDate("");
+            setDefaultRadius(1000);
+            setCurrency("USD");
+            setNotificationsEnabled(false);
+            resetDisplay();
+            showSuccess("Settings reset to defaults");
+          } catch (err) {
+            console.warn("Failed to reset settings:", err);
+            showError("Could not reset settings. Please try again.");
+          } finally {
+            setShowResetConfirm(false);
+          }
         }}
         onCancel={() => setShowResetConfirm(false)}
       />

@@ -61,4 +61,14 @@ describe("parseTicket", () => {
     const result = parseTicket("Amount due EUR 9,99");
     expect(result.amount).toBeCloseTo(9.99);
   });
+
+  it("handles amounts with thousands separators ($1,250.00)", () => {
+    const result = parseTicket("Invoice Total: $1,250.00");
+    expect(result.amount).toBeCloseTo(1250.0);
+  });
+
+  it("ignores 'Sub Total' with spaces when TOTAL exists", () => {
+    const result = parseTicket("Sub Total: R 100.00\nTotal: R 115.00");
+    expect(result.amount).toBeCloseTo(115.0);
+  });
 });

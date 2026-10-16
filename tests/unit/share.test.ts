@@ -33,12 +33,19 @@ describe("buildGpx", () => {
 });
 
 describe("buildGeoJson", () => {
-  it("produces a LineString feature with [lng, lat] order", () => {
+  it("produces a LineString feature with [lng, lat] order when >= 2 points exist", () => {
     const parsed = JSON.parse(buildGeoJson(points));
     expect(parsed.type).toBe("FeatureCollection");
     expect(parsed.features).toHaveLength(1);
     expect(parsed.features[0].geometry.type).toBe("LineString");
     expect(parsed.features[0].geometry.coordinates[0]).toEqual([2.3522, 48.8566]);
+  });
+
+  it("omits the LineString feature when fewer than 2 points exist (RFC 7946 §3.1.4)", () => {
+    const empty = JSON.parse(buildGeoJson([]));
+    expect(empty.features).toEqual([]);
+    const single = JSON.parse(buildGeoJson([points[0]]));
+    expect(single.features).toEqual([]);
   });
 });
 
