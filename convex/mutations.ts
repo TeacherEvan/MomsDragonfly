@@ -430,13 +430,15 @@ export const purgeExpiredCache = internalMutation({
   handler: async (ctx) => {
     const cutoff = Date.now() - 24 * 60 * 60 * 1000;
     const BATCH_SIZE = 500;
+    const MAX_PURGE_PER_RUN = 2000;
     let deleted = 0;
 
-    while (true) {
+    while (deleted < MAX_PURGE_PER_RUN) {
+      const takeCount = Math.min(BATCH_SIZE, MAX_PURGE_PER_RUN - deleted);
       const stale = await ctx.db
         .query("pois")
         .withIndex("by_fetchedAt", (q) => q.lt("fetchedAt", cutoff))
-        .take(BATCH_SIZE);
+        .take(takeCount);
 
       if (stale.length === 0) break;
 
@@ -445,7 +447,7 @@ export const purgeExpiredCache = internalMutation({
       }
       deleted += stale.length;
 
-      if (stale.length < BATCH_SIZE) break;
+      if (stale.length < takeCount) break;
     }
 
     return { deleted };
@@ -458,20 +460,22 @@ export const purgeExpiredCaches = internalMutation({
     const now = Date.now();
     const cutoff90d = now - 90 * 24 * 60 * 60 * 1000;
     const BATCH_SIZE = 500;
+    const MAX_PURGE_PER_RUN = 2000;
     let deleted = 0;
 
     // 1. Unified cache (>90d)
-    while (true) {
+    while (deleted < MAX_PURGE_PER_RUN) {
+      const takeCount = Math.min(BATCH_SIZE, MAX_PURGE_PER_RUN - deleted);
       const stale = await ctx.db
         .query("cache")
         .withIndex("by_fetchedAt", (q) => q.lt("fetchedAt", cutoff90d))
-        .take(BATCH_SIZE);
+        .take(takeCount);
       if (stale.length === 0) break;
       for (const row of stale) {
         await ctx.db.delete(row._id);
       }
       deleted += stale.length;
-      if (stale.length < BATCH_SIZE) break;
+      if (stale.length < takeCount) break;
     }
 
     // 2. Legacy highlights cache (24h)
@@ -751,13 +755,15 @@ export const purgeExpiredTickets = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
     const BATCH_SIZE = 500;
+    const MAX_PURGE_PER_RUN = 2000;
     let deleted = 0;
 
-    while (true) {
+    while (deleted < MAX_PURGE_PER_RUN) {
+      const takeCount = Math.min(BATCH_SIZE, MAX_PURGE_PER_RUN - deleted);
       const expired = await ctx.db
         .query("tickets")
-        .filter((q) => q.lt(q.field("expiresAt"), now))
-        .take(BATCH_SIZE);
+        .withIndex("by_expiresAt", (q) => q.lt("expiresAt", now))
+        .take(takeCount);
 
       if (expired.length === 0) break;
 
@@ -766,7 +772,7 @@ export const purgeExpiredTickets = internalMutation({
       }
       deleted += expired.length;
 
-      if (expired.length < BATCH_SIZE) break;
+      if (expired.length < takeCount) break;
     }
 
     return { deleted };

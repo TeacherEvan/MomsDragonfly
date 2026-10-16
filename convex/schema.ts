@@ -138,5 +138,7 @@ export default defineSchema({
     parsedVenue: v.optional(v.string()),
     createdAt: v.number(),
     expiresAt: v.number(),
-  }).index("by_deviceId_createdAt", ["deviceId", "createdAt"]),
+  })
+    .index("by_deviceId_createdAt", ["deviceId", "createdAt"])
+    .index("by_expiresAt", ["expiresAt"]),
 });

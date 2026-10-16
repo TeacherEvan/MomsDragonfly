@@ -712,5 +712,82 @@ test("addExpense rejects ticketId belonging to another device", async (t) => {
   ).rejects.toThrow("Ticket not found");
 });
 
+test("purgeExpiredTickets removes tickets whose expiresAt has passed", async (t) => {
+  const device = testDeviceId();
+  const now = Date.now();
+
+  // Expired ticket (expired 1 hour ago)
+  await t.mutation(async (ctx) => {
+    await ctx.db.insert("tickets", {
+      deviceId: device,
+      ocrText: "Old ticket",
+      createdAt: now - 31 * 86_400_000,
+      expiresAt: now - 3600_000,
+    });
+    // Active ticket (expires in 10 days)
+    await ctx.db.insert("tickets", {
+      deviceId: device,
+      ocrText: "Active ticket",
+      createdAt: now,
+      expiresAt: now + 10 * 86_400_000,
+    });
+  });
+
+  const res = await t.mutation(internal.mutations.purgeExpiredTickets, {});
+  expect(res.deleted).toBe(1);
+
+  const remaining = await t.query(api.queries.ticketsQuery, { deviceId: device });
+  expect(remaining).toHaveLength(1);
+  expect(remaining[0].ocrText).toBe("Active ticket");
+});
+
+test("purgeExpiredCache removes POIs older than 24 hours", async (t) => {
+  const device = testDeviceId();
+  const now = Date.now();
+
+  const stalePoi = {
+    placeId: "osm:stale-1",
+    source: "osm" as const,
+    name: "Old Bakery",
+    category: "restaurant",
+    lat: -25.7,
+    lng: 28.2,
+    verifiedCount: 0,
+    fetchedAt: now - 25 * 3600_000,
+  };
+  const freshPoi = {
+    placeId: "osm:fresh-1",
+    source: "osm" as const,
+    name: "Fresh Cafe",
+    category: "restaurant",
+    lat: -25.7,
+    lng: 28.2,
+    verifiedCount: 0,
+    fetchedAt: now,
+  };
+
+  await t.mutation(async (ctx) => {
+    await ctx.db.insert("pois", {
+      ...stalePoi,
+      deviceIds: [device],
+    });
+    await ctx.db.insert("pois", {
+      ...freshPoi,
+      deviceIds: [device],
+    });
+  });
+
+  const purgeRes = await t.mutation(internal.mutations.purgeExpiredCache, {});
+  expect(purgeRes.deleted).toBeGreaterThanOrEqual(1);
+
+  const remaining = await t.query(api.queries.poiQuery, {
+    deviceId: device,
+    category: "restaurant",
+    now,
+  });
+  expect(remaining).toHaveLength(1);
+  expect(remaining[0].placeId).toBe("osm:fresh-1");
+});
+
 
 

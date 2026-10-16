@@ -287,6 +287,7 @@ export const fetchNearby = action({
         deviceId,
         category,
         windowMs: 3_600_000,
+        now: Date.now(),
       });
       if (recent) return { cached: true };
     }

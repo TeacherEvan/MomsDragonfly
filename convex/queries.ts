@@ -11,10 +11,14 @@ import {
 } from "./limits";
 
 export const poiQuery = query({
-  args: { deviceId: v.string(), category: v.string() },
-  handler: async (ctx, { deviceId, category }) => {
+  args: {
+    deviceId: v.string(),
+    category: v.string(),
+    now: v.optional(v.number()),
+  },
+  handler: async (ctx, { deviceId, category, now }) => {
     validateDeviceId(deviceId);
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    const cutoff = (now ?? Date.now()) - 24 * 60 * 60 * 1000;
     const pois = await ctx.db
       .query("pois")
       .withIndex("by_deviceIds_category", (q) =>
@@ -70,10 +74,15 @@ export const historyQuery = query({
 
 /** Returns true if a fetch was made within windowMs milliseconds. */
 export const recentFetchCheck = query({
-  args: { deviceId: v.string(), category: v.string(), windowMs: v.number() },
-  handler: async (ctx, { deviceId, category, windowMs }) => {
+  args: {
+    deviceId: v.string(),
+    category: v.string(),
+    windowMs: v.number(),
+    now: v.optional(v.number()),
+  },
+  handler: async (ctx, { deviceId, category, windowMs, now }) => {
     validateDeviceId(deviceId);
-    const cutoff = Date.now() - windowMs;
+    const cutoff = (now ?? Date.now()) - windowMs;
     const recent = await ctx.db
       .query("pois")
       .withIndex("by_deviceIds_category", (q) =>
